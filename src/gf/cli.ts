@@ -179,6 +179,7 @@ async function runRepl(options: CliOptions): Promise<void> {
   const runtime = buildRuntime(options);
   const gateway = new Gateway({ debounceSeconds: options.debounce });
   const rl = createInterface({ input: process.stdin, output: process.stdout });
+  let closed = false;
   rl.setPrompt("博士> ");
   rl.prompt();
 
@@ -216,6 +217,7 @@ async function runRepl(options: CliOptions): Promise<void> {
           console.log("M1 未启用 git 导出；状态已由 SQLite 事务持久化。");
           break;
         case "exit":
+          closed = true;
           rl.close();
           break;
       }
@@ -223,7 +225,7 @@ async function runRepl(options: CliOptions): Promise<void> {
       runtime.engine.processOnce();
       runtime.engine.processOnce();
     }
-    if (!rl.closed) {
+    if (!closed) {
       rl.prompt();
     }
   });

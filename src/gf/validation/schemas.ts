@@ -9,8 +9,16 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import Ajv2020, { type ValidateFunction } from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import { Ajv2020 } from "ajv/dist/2020.js";
+import * as AjvFormatsModule from "ajv-formats";
+import type { ValidateFunction } from "ajv/dist/2020.js";
+
+type AjvInstance = InstanceType<typeof Ajv2020>;
+const addFormats = (
+  AjvFormatsModule as unknown as {
+    default?: (ajv: AjvInstance) => void;
+  }
+).default!;
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -22,7 +30,7 @@ export class ValidationError extends Error {
 export class SchemaRegistry {
   private readonly documents = new Map<string, unknown>();
   private readonly validators = new Map<string, ValidateFunction>();
-  private readonly ajv: Ajv2020;
+  private readonly ajv: AjvInstance;
 
   constructor(schemasDir: string) {
     this.ajv = new Ajv2020({

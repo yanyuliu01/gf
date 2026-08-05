@@ -77,6 +77,9 @@ export class Gateway {
     if (this.firstMessageId === null) {
       this.firstMessageId = newId("msg");
     }
+    if (this.debounceSeconds <= 0) {
+      return { events: this.flush(), dropped: false };
+    }
     const nowMs = this.now().getTime();
     if (
       this.lastLineAt !== null &&

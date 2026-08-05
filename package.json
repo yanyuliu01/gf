@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/gf/cli.js",
-    "test": "npm run build && node --test dist/gf/tests/"
+    "test": "npm run build && node --test \"dist/gf/tests/*.test.js\""
   },
   "dependencies": {
     "ajv": "^8.17.1",

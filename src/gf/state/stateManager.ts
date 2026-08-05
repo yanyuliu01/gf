@@ -517,7 +517,7 @@ export class StateManager {
         `speech capability_revision ${speech.capability_revision} != current ${capability.revision}`,
       );
     }
-    const authzId = newId("authz");
+    const authzId = speech.authorization_decision_id ?? newId("authz");
     const authorizationJson = {
       channel: speech.channel,
       recipient_principal_id: speech.recipient_principal_id,

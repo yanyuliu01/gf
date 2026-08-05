@@ -141,6 +141,7 @@ export class Engine {
       recipient_principal_id: event.provenance.principal_id,
       privacy_scope: "private_im",
       capability_revision: capability.revision,
+      authorization_decision_id: newId("authz"),
       source_refs: [
         {
           source_type: "message",
@@ -208,7 +209,10 @@ export class Engine {
     const lastAt = messages
       .map((message) => new Date(message.created_at as string).getTime())
       .sort((a, b) => b - a)[0];
-    const idleSeconds = (now.getTime() - lastAt) / 1000;
+    // Clock skew between the captured `now` and message timestamps can make
+    // this negative; clamp to zero ("no idle time yet") so a just-finished
+    // exchange is not treated as already idle.
+    const idleSeconds = Math.max(0, (now.getTime() - lastAt) / 1000);
     if (
       messages.length < this.config.rolloverMessages &&
       idleSeconds < this.config.idleSettleSeconds
