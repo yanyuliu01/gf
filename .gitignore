@@ -10,6 +10,10 @@ runtime/
 *.sqlite
 *.sqlite3
 
+# Node.js / TypeScript build outputs and dependencies
+node_modules/
+dist/
+
 # Local IDE / OS noise
 .idea/
 .vscode/
