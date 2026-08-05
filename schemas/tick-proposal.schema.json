@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/tick-proposal.schema.json",
+  "title": "Tick proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "operation_id",
+    "trigger_event_id",
+    "base_state_revision",
+    "happened",
+    "channels",
+    "claims",
+    "patch_ops",
+    "salience_self",
+    "valence",
+    "intensity",
+    "involves"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "operation_id": { "$ref": "common.schema.json#/$defs/id" },
+    "trigger_event_id": { "$ref": "common.schema.json#/$defs/id" },
+    "base_state_revision": { "type": "integer", "minimum": 0 },
+    "happened": { "type": "string", "maxLength": 2000 },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["act", "monologue", "communication_intent", "speech_seed", "express"],
+      "properties": {
+        "act": { "type": ["string", "null"], "maxLength": 1000 },
+        "monologue": { "type": ["string", "null"], "maxLength": 1000 },
+        "communication_intent": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        },
+        "speech_seed": { "type": ["string", "null"], "maxLength": 1000 },
+        "express": { "type": "null" }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "claim.schema.json" }
+    },
+    "patch_ops": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "patch-op.schema.json" }
+    },
+    "salience_self": { "type": "number", "minimum": 0, "maximum": 1 },
+    "valence": { "type": "number", "minimum": -1, "maximum": 1 },
+    "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+    "involves": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+    }
+  }
+}

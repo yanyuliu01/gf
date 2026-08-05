@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/common.schema.json",
+  "title": "GF shared schema definitions",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_id"],
+      "properties": {
+        "source_type": {
+          "enum": ["message", "event", "claim", "external_action", "canon"]
+        },
+        "source_id": { "$ref": "#/$defs/id" },
+        "quote_hash": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "observed_at": {
+          "anyOf": [
+            { "$ref": "#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "causalActionRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_id"],
+      "properties": {
+        "source_type": { "enum": ["event", "external_action"] },
+        "source_id": { "$ref": "#/$defs/id" },
+        "quote_hash": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "observed_at": {
+          "anyOf": [
+            { "$ref": "#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "eventSourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_id"],
+      "properties": {
+        "source_type": { "const": "event" },
+        "source_id": { "$ref": "#/$defs/id" },
+        "quote_hash": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "observed_at": {
+          "anyOf": [
+            { "$ref": "#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal_id", "trust"],
+      "properties": {
+        "principal_id": { "$ref": "#/$defs/id" },
+        "connector_id": {
+          "anyOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "external_event_id": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "trust": {
+          "enum": ["authenticated", "attested", "verified", "generated", "inferred"]
+        }
+      }
+    },
+    "privacyScope": {
+      "enum": ["internal", "private_im", "public_allowed"]
+    }
+  }
+}

@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="950" viewBox="0 0 1800 950" role="img" aria-labelledby="title desc">
+  <title id="title">GF 运行时事件生命周期</title>
+  <desc id="desc">事件从入站、网关、原始持久化、排队、上下文组装、模型提议、校验、原子事务、outbox 投递，到场景结算和长期记忆的流程。</desc>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#718096"/>
+    </marker>
+    <marker id="arr-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4d8c72"/>
+    </marker>
+    <marker id="arr-red" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#b65b5b"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#26364a" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .title{font:600 36px "Microsoft YaHei","Segoe UI",sans-serif;fill:#1f2f43}
+      .subtitle{font:400 17px "Microsoft YaHei","Segoe UI",sans-serif;fill:#627086}
+      .step{font:600 18px "Microsoft YaHei","Segoe UI",sans-serif;fill:#213247}
+      .copy{font:400 13.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#536176}
+      .label{font:600 13px "Microsoft YaHei","Segoe UI",sans-serif;fill:#56657a}
+      .callout-title{font:600 16px "Microsoft YaHei","Segoe UI",sans-serif;fill:#26374c}
+      .callout{font:400 13px "Microsoft YaHei","Segoe UI",sans-serif;fill:#58667a}
+      .input{fill:#eef5ff;stroke:#5c82ac;stroke-width:1.6}
+      .store{fill:#f3f5f8;stroke:#99a5b5;stroke-width:1.5}
+      .work{fill:#fff4e8;stroke:#c47a2c;stroke-width:1.6}
+      .safe{fill:#eef8f3;stroke:#4d8c72;stroke-width:1.7}
+      .reject{fill:#fff1f1;stroke:#b65b5b;stroke-width:1.6}
+    </style>
+  </defs>
+
+  <rect width="1800" height="950" fill="#f7f9fc"/>
+  <text x="58" y="62" class="title">运行时事件生命周期</text>
+  <text x="58" y="94" class="subtitle">关键顺序：先保存事实，再调用模型；先校验并提交，再对外投递。</text>
+
+  <!-- Lane labels -->
+  <text x="58" y="144" class="label">入站与上下文</text>
+  <line x1="158" y1="139" x2="1740" y2="139" stroke="#d8e0ea" stroke-width="1.5"/>
+  <text x="58" y="428" class="label">校验、提交与投递</text>
+  <line x1="206" y1="423" x2="1740" y2="423" stroke="#d8e0ea" stroke-width="1.5"/>
+
+  <!-- Top row -->
+  <rect x="56" y="176" width="238" height="138" rx="18" class="input" filter="url(#shadow)"/>
+  <text x="175" y="214" text-anchor="middle" class="step">① 入站</text>
+  <text x="175" y="246" text-anchor="middle" class="copy">博士消息</text>
+  <text x="175" y="270" text-anchor="middle" class="copy">scheduled / impulse</text>
+  <text x="175" y="294" text-anchor="middle" class="copy">可信桥事件</text>
+
+  <rect x="342" y="176" width="238" height="138" rx="18" class="input" filter="url(#shadow)"/>
+  <text x="461" y="214" text-anchor="middle" class="step">② Gateway</text>
+  <text x="461" y="246" text-anchor="middle" class="copy">鉴权 · 去重 · 命令拦截</text>
+  <text x="461" y="270" text-anchor="middle" class="copy">标准化 WorldEvent</text>
+  <text x="461" y="294" text-anchor="middle" class="copy">保留 origin 与 provenance</text>
+
+  <rect x="628" y="176" width="238" height="138" rx="18" class="store" filter="url(#shadow)"/>
+  <text x="747" y="214" text-anchor="middle" class="step">③ 先持久化</text>
+  <text x="747" y="246" text-anchor="middle" class="copy">写原始事件和 message_id</text>
+  <text x="747" y="270" text-anchor="middle" class="copy">记录 provenance 与时间</text>
+  <text x="747" y="294" text-anchor="middle" class="copy">模型失败也不丢失入站事实</text>
+
+  <rect x="914" y="176" width="238" height="138" rx="18" class="store" filter="url(#shadow)"/>
+  <text x="1033" y="214" text-anchor="middle" class="step">④ 排队与取锁</text>
+  <text x="1033" y="246" text-anchor="middle" class="copy">统一 WorldEvent 队列</text>
+  <text x="1033" y="270" text-anchor="middle" class="copy">user 优先，但不取消在途轮次</text>
+  <text x="1033" y="294" text-anchor="middle" class="copy">进入 StateManager 单写顺序</text>
+
+  <rect x="1200" y="176" width="250" height="138" rx="18" class="work" filter="url(#shadow)"/>
+  <text x="1325" y="214" text-anchor="middle" class="step">⑤ 组装上下文</text>
+  <text x="1325" y="246" text-anchor="middle" class="copy">S1 / S2 / S3 + S4 / S5</text>
+  <text x="1325" y="270" text-anchor="middle" class="copy">当前场景尾 + memory / canon</text>
+  <text x="1325" y="294" text-anchor="middle" class="copy">保留来源 ID 与消息 role</text>
+
+  <rect x="1498" y="176" width="246" height="138" rx="18" class="work" filter="url(#shadow)"/>
+  <text x="1621" y="214" text-anchor="middle" class="step">⑥ 模型只提议</text>
+  <text x="1621" y="246" text-anchor="middle" class="copy">快段：角色文字</text>
+  <text x="1621" y="270" text-anchor="middle" class="copy">慢段：结构化 claim / patch / debt</text>
+  <text x="1621" y="294" text-anchor="middle" class="copy">不直接触碰数据库或通道</text>
+
+  <path d="M294 245 L342 245" fill="none" stroke="#718096" stroke-width="2.5" marker-end="url(#arr)"/>
+  <path d="M580 245 L628 245" fill="none" stroke="#718096" stroke-width="2.5" marker-end="url(#arr)"/>
+  <path d="M866 245 L914 245" fill="none" stroke="#718096" stroke-width="2.5" marker-end="url(#arr)"/>
+  <path d="M1152 245 L1200 245" fill="none" stroke="#718096" stroke-width="2.5" marker-end="url(#arr)"/>
+  <path d="M1450 245 L1498 245" fill="none" stroke="#c47a2c" stroke-width="2.8" marker-end="url(#arr)"/>
+
+  <!-- Bottom row, right to left -->
+  <rect x="1498" y="466" width="246" height="152" rx="18" class="safe" filter="url(#shadow)"/>
+  <text x="1621" y="504" text-anchor="middle" class="step">⑦ 严格校验</text>
+  <text x="1621" y="536" text-anchor="middle" class="copy">schema · 来源闭包 · 跨世界准入</text>
+  <text x="1621" y="560" text-anchor="middle" class="copy">persona cause · 能力 · 限速</text>
+  <text x="1621" y="584" text-anchor="middle" class="copy">state version · 幂等键</text>
+
+  <rect x="1186" y="466" width="250" height="152" rx="18" class="safe" filter="url(#shadow)"/>
+  <text x="1311" y="504" text-anchor="middle" class="step">⑧ 原子事务</text>
+  <text x="1311" y="536" text-anchor="middle" class="copy">event · claim · patch · debt</text>
+  <text x="1311" y="560" text-anchor="middle" class="copy">speech · processed ids · outbox</text>
+  <text x="1311" y="584" text-anchor="middle" class="copy">同一事务 + revision CAS</text>
+
+  <rect x="874" y="466" width="250" height="152" rx="18" class="safe" filter="url(#shadow)"/>
+  <text x="999" y="504" text-anchor="middle" class="step">⑨ Outbox 投递</text>
+  <text x="999" y="536" text-anchor="middle" class="copy">worker → adapter → 博士</text>
+  <text x="999" y="560" text-anchor="middle" class="copy">失败可重试，不重复生成</text>
+  <text x="999" y="584" text-anchor="middle" class="copy">回执作为新事件写回</text>
+
+  <rect x="562" y="466" width="250" height="152" rx="18" class="work" filter="url(#shadow)"/>
+  <text x="687" y="504" text-anchor="middle" class="step">⑩ 场景结算</text>
+  <text x="687" y="536" text-anchor="middle" class="copy">静默或滚动阈值触发</text>
+  <text x="687" y="560" text-anchor="middle" class="copy">只处理未结算 message IDs</text>
+  <text x="687" y="584" text-anchor="middle" class="copy">结算结果仍回到第 ⑦ 步</text>
+
+  <rect x="250" y="466" width="250" height="152" rx="18" class="safe" filter="url(#shadow)"/>
+  <text x="375" y="504" text-anchor="middle" class="step">⑪ 长期沉淀</text>
+  <text x="375" y="536" text-anchor="middle" class="copy">claims · debts · threads</text>
+  <text x="375" y="560" text-anchor="middle" class="copy">persona diff · memory</text>
+  <text x="375" y="584" text-anchor="middle" class="copy">全部保留 event / message 来源</text>
+
+  <path d="M1621 314 L1621 466" fill="none" stroke="#4d8c72" stroke-width="3" marker-end="url(#arr-green)"/>
+  <path d="M1498 542 L1436 542" fill="none" stroke="#4d8c72" stroke-width="3" marker-end="url(#arr-green)"/>
+  <text x="1468" y="525" text-anchor="middle" class="label">通过</text>
+  <path d="M1186 542 L1124 542" fill="none" stroke="#4d8c72" stroke-width="3" marker-end="url(#arr-green)"/>
+  <path d="M874 542 L812 542" fill="none" stroke="#718096" stroke-width="2.5" marker-end="url(#arr)"/>
+  <path d="M562 542 L500 542" fill="none" stroke="#4d8c72" stroke-width="2.5" marker-end="url(#arr-green)"/>
+
+  <!-- Rejection branch -->
+  <rect x="1480" y="692" width="282" height="96" rx="16" class="reject"/>
+  <text x="1621" y="728" text-anchor="middle" class="step">拒写 / 有限重掷</text>
+  <text x="1621" y="756" text-anchor="middle" class="copy">状态保持不变，记录精确原因</text>
+  <path d="M1621 618 L1621 692" fill="none" stroke="#b65b5b" stroke-width="2.5" marker-end="url(#arr-red)"/>
+  <text x="1642" y="660" class="label">不通过</text>
+  <path d="M1480 740 C1370 740 1400 340 1534 314" fill="none" stroke="#b65b5b" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-red)"/>
+  <text x="1372" y="716" class="label">可恢复错误才重掷</text>
+
+  <!-- Settlement loop and receipt -->
+  <path d="M1311 618 C1311 674 760 674 687 618" fill="none" stroke="#c47a2c" stroke-width="2.4" stroke-dasharray="8 5" marker-end="url(#arr)"/>
+  <text x="1000" y="689" text-anchor="middle" class="label">活动场景积累，达到阈值后结算</text>
+  <path d="M687 466 C687 392 1516 388 1584 466" fill="none" stroke="#c47a2c" stroke-width="2.4" stroke-dasharray="8 5" marker-end="url(#arr)"/>
+  <text x="1122" y="380" text-anchor="middle" class="label">settle proposal 复用同一校验与事务入口</text>
+  <path d="M999 466 C999 356 778 354 760 314" fill="none" stroke="#718096" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+  <text x="876" y="350" class="label">投递回执写回事件流</text>
+
+  <!-- Bottom invariants -->
+  <rect x="56" y="832" width="1688" height="72" rx="16" fill="#eef2f6" stroke="#d2dbe6"/>
+  <text x="82" y="860" class="callout-title">三个不可打乱的顺序</text>
+  <text x="314" y="860" class="callout">① 入站事实先持久化，模型不是事实来源</text>
+  <text x="720" y="860" class="callout">② proposal 先校验并原子提交，随后才能进入 outbox</text>
+  <text x="1234" y="860" class="callout">③ 场景结算仍走同一 validator 与 StateManager</text>
+  <text x="82" y="886" class="callout">结果：API 失败不丢消息，重试不重复发言，无来源的跨世界后果和 persona 变化不能写入。</text>
+</svg>

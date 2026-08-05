@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/claim.schema.json",
+  "title": "Evidence-bearing claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "scope",
+    "kind",
+    "text",
+    "epistemic_status",
+    "lands_in_terra",
+    "privacy_scope",
+    "source_refs"
+  ],
+  "properties": {
+    "claim_id": { "$ref": "common.schema.json#/$defs/id" },
+    "scope": {
+      "enum": ["doctor_world", "terra", "channel", "relationship"]
+    },
+    "kind": {
+      "enum": ["doctor_disclosure", "doctor_attestation", "terra_effect", "capability_change"]
+    },
+    "text": { "type": "string", "minLength": 1, "maxLength": 1200 },
+    "epistemic_status": {
+      "enum": ["reported", "attested", "verified", "inferred", "generated", "disputed"]
+    },
+    "lands_in_terra": { "type": "boolean" },
+    "privacy_scope": { "$ref": "common.schema.json#/$defs/privacyScope" },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+    },
+    "causal_action_ref": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/causalActionRef" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "doctor_disclosure" } } },
+      "then": {
+        "properties": {
+          "scope": { "enum": ["doctor_world", "relationship"] },
+          "epistemic_status": { "const": "reported" },
+          "lands_in_terra": { "const": false },
+          "causal_action_ref": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "doctor_attestation" } } },
+      "then": {
+        "properties": {
+          "scope": { "const": "terra" },
+          "epistemic_status": { "enum": ["attested", "verified"] },
+          "lands_in_terra": { "const": true },
+          "causal_action_ref": { "$ref": "common.schema.json#/$defs/causalActionRef" }
+        },
+        "required": ["causal_action_ref"]
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "terra_effect" } } },
+      "then": {
+        "properties": {
+          "scope": { "const": "terra" },
+          "epistemic_status": { "const": "verified" },
+          "lands_in_terra": { "const": true },
+          "causal_action_ref": { "$ref": "common.schema.json#/$defs/causalActionRef" }
+        },
+        "required": ["causal_action_ref"]
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "capability_change" } } },
+      "then": {
+        "properties": {
+          "scope": { "const": "channel" },
+          "epistemic_status": { "const": "verified" },
+          "lands_in_terra": { "const": false },
+          "causal_action_ref": { "$ref": "common.schema.json#/$defs/eventSourceRef" }
+        },
+        "required": ["causal_action_ref"]
+      }
+    }
+  ]
+}

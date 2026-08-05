@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/capabilities.schema.json",
+  "title": "Transport and diegetic channel capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transport", "diegetic", "last_changed_event_id"],
+  "properties": {
+    "transport": { "$ref": "#/$defs/capabilitySet" },
+    "diegetic": { "$ref": "#/$defs/capabilitySet" },
+    "last_changed_event_id": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "capabilitySet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "image", "audio", "files", "reaction", "realtime"],
+      "properties": {
+        "text": { "type": "boolean" },
+        "image": { "type": "boolean" },
+        "audio": { "type": "boolean" },
+        "files": { "type": "boolean" },
+        "reaction": { "type": "boolean" },
+        "realtime": { "type": "boolean" }
+      }
+    }
+  }
+}

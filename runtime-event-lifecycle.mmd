@@ -1,0 +1,35 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart LR
+  IN["① 入站<br/>博士消息 / scheduled / impulse / 可信桥事件"]
+  GW["② Gateway<br/>鉴权、去重、命令拦截<br/>标准化为 WorldEvent"]
+  SAVE["③ 先持久化<br/>写原始事件、message_id<br/>记录 provenance"]
+  QUEUE["④ 排队与取锁<br/>统一队列、user 优先<br/>StateManager 单写序"]
+  CTX["⑤ 组装上下文<br/>S1/S2/S3 + S4/S5<br/>当前场景尾 + memory / canon<br/>保留 source ids"]
+  MODEL["⑥ 模型只提议<br/>快段文字，或结构化<br/>claim / patch / debt proposal"]
+  CHECK{"⑦ 校验<br/>schema、来源闭包、跨世界准入<br/>persona cause、能力、state version"}
+  TX["⑧ 原子事务<br/>event / claim / patch / debt<br/>speech / processed ids / outbox"]
+  REJ["拒写 / 重掷<br/>状态不变，记录原因"]
+  OUT["⑨ Outbox 投递<br/>worker → adapter → 博士<br/>失败可安全重试"]
+  SETTLE["⑩ 场景结算<br/>静默或滚动阈值触发<br/>处理未结算 message ids"]
+  MEM["⑪ 长期沉淀<br/>claims / debts / threads<br/>persona diff / memory"]
+
+  IN --> GW --> SAVE --> QUEUE --> CTX --> MODEL --> CHECK
+  CHECK -->|"通过"| TX
+  CHECK -->|"不通过"| REJ
+  REJ -.->|"有限重掷或降级"| CTX
+  TX --> OUT
+  OUT -->|"回执写事件"| SAVE
+  TX -->|"消息进入活动场景"| SETTLE
+  SETTLE -->|"结算 proposal"| CHECK
+  TX --> MEM
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef work fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef safe fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef danger fill:#fff0f0,stroke:#b65b5b,color:#6b2929;
+  classDef store fill:#f3f5f8,stroke:#929eae,color:#394455;
+  class IN,GW input;
+  class CTX,MODEL,SETTLE work;
+  class CHECK,TX,OUT,MEM safe;
+  class REJ danger;
+  class SAVE,QUEUE store;

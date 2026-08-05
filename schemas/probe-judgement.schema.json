@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/probe-judgement.schema.json",
+  "title": "Blind A/B probe judgement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "operation_id", "probe_id", "pair_id",
+    "input_fingerprint", "verdicts", "notable_differences",
+    "drift_flags", "hard_violations"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "operation_id": { "$ref": "common.schema.json#/$defs/id" },
+    "probe_id": { "$ref": "common.schema.json#/$defs/id" },
+    "pair_id": { "$ref": "common.schema.json#/$defs/id" },
+    "input_fingerprint": {
+      "type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+    },
+    "verdicts": {
+      "type": "array", "minItems": 5, "maxItems": 5,
+      "items": { "$ref": "#/$defs/verdict" }
+    },
+    "notable_differences": {
+      "type": "array", "maxItems": 16,
+      "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+    },
+    "drift_flags": { "$ref": "#/$defs/sidesOfDrift" },
+    "hard_violations": { "$ref": "#/$defs/sidesOfViolation" }
+  },
+  "$defs": {
+    "verdict": {
+      "type": "object", "additionalProperties": false,
+      "required": ["aspect", "winner", "evidence_a", "evidence_b", "reason"],
+      "properties": {
+        "aspect": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "winner": { "enum": ["A", "B", "tie"] },
+        "evidence_a": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "evidence_b": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 800 }
+      }
+    },
+    "drift": {
+      "type": "object", "additionalProperties": false,
+      "required": ["drift_type", "evidence", "context_ref", "reason"],
+      "properties": {
+        "drift_type": {
+          "enum": ["register_shift", "value_reversal", "assistant_voice", "unsupported_history", "persona_discontinuity"]
+        },
+        "evidence": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "context_ref": { "$ref": "common.schema.json#/$defs/id" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 800 }
+      }
+    },
+    "violation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["constraint_id", "evidence", "reason"],
+      "properties": {
+        "constraint_id": { "$ref": "common.schema.json#/$defs/id" },
+        "evidence": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 800 }
+      }
+    },
+    "sidesOfDrift": {
+      "type": "object", "additionalProperties": false, "required": ["A", "B"],
+      "properties": {
+        "A": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/drift" } },
+        "B": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/drift" } }
+      }
+    },
+    "sidesOfViolation": {
+      "type": "object", "additionalProperties": false, "required": ["A", "B"],
+      "properties": {
+        "A": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/violation" } },
+        "B": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/violation" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "debt_id": "op_scene_0001:debt:01",
+  "promise_text": "稍后把样本变化说清楚。",
+  "source_refs": [
+    {
+      "source_type": "message",
+      "source_id": "msg_0001"
+    }
+  ],
+  "created_at": "2026-08-05T10:01:00+08:00",
+  "due_at": null,
+  "privacy_scope": "private_im",
+  "status": "open",
+  "attempts": 0,
+  "repaid_by_event_id": null
+}

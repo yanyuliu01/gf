@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "operation_id": "op_tick_0001",
+  "trigger_event_id": "evt_tick_0001",
+  "base_state_revision": 12,
+  "happened": "缪尔赛思在实验区完成了样本检查，准备稍后联系博士。",
+  "channels": {
+    "act": "记录样本状态",
+    "monologue": "这组变化值得告诉博士。",
+    "communication_intent": "分享实验观察",
+    "speech_seed": "样本出现了一个有趣变化",
+    "express": null
+  },
+  "claims": [],
+  "patch_ops": [],
+  "salience_self": 0.7,
+  "valence": 0.3,
+  "intensity": 0.4,
+  "involves": ["muelsyse", "doctor"]
+}

@@ -1,0 +1,340 @@
+manifest_version: "1.0"
+prompt_contract_version: "0.2"
+status: "active"
+
+authority:
+  call_contracts: "prompts/manifest.yaml"
+  human_readable_templates:
+    - "prompts/10-fast-reply.md"
+    - "prompts/20-tick.md"
+    - "prompts/30-scene-settle.md"
+    - "prompts/40-memory-compress.md"
+    - "prompts/50-probe-judge.md"
+  structured_schemas:
+    tick: "schemas/tick-proposal.schema.json"
+    scene_settle: "schemas/scene-settlement.schema.json"
+    memory_compress: "schemas/memory-compression.schema.json"
+    probe_judge: "schemas/probe-judgement.schema.json"
+    communication_surface: "schemas/surface-message.schema.json"
+  precedence:
+    - "JSON Schema governs structured output shape and enums."
+    - "This manifest governs message roles, required slots, commit semantics, and call routing."
+    - "The Markdown template governs semantic instructions and rendering guidance."
+    - "Role assets govern character identity and voice; templates must not duplicate them."
+
+role_assets:
+  immutable:
+    path: "prompts/slots/S1-immutable-v2.md"
+    section: "送进 prompt 的正文"
+  world_rules:
+    path: "prompts/slots/S2-world-v2.md"
+    section: "送进 prompt 的正文"
+  dialogue_samples:
+    status: "required_before_release"
+    source: "A7 human-approved asset"
+  bottom_anchor:
+    path: "prompts/slots/S9-role-bottom-anchor-muelsyse-v1.md"
+    section: "送进 prompt 的正文"
+    maximum_chinese_characters: 80
+
+source_reference_contract:
+  required_fields:
+    - "source_type"
+    - "source_id"
+  optional_fields:
+    - "quote_hash"
+    - "observed_at"
+  source_types:
+    - "message"
+    - "event"
+    - "claim"
+    - "external_action"
+    - "canon"
+  canon_rule: "Only stable content-addressed canon ids are accepted; sequential cs numbers are not runtime references."
+  closure_rule: "Every output source_id must belong to the call input or its validator-supplied legal source closure."
+
+assembly:
+  native_chat_roles_required: true
+  user_text_in_system_forbidden: true
+  optional_section_policy: "Remove the heading and body together when its slot is empty."
+  final_request_assertions:
+    - "No unresolved double-brace placeholder remains."
+    - "No IF marker, assembly arrow, template note, or design section remains."
+    - "Every user-authored message is carried in a native user role or an explicitly declared data payload user message."
+    - "Every prior delivered character message in an active scene is carried in assistant role."
+    - "All structured data is length-bounded and delimited from instructions."
+  examples:
+    handwritten_examples_are_golden: false
+    checked_in_examples_are_runtime_inputs: false
+    golden_generation_rule: "Generate from the assembler using this manifest, record manifest/template/asset hashes, then validate roles and unresolved-slot assertions."
+    generated_output_directory: "prompts/generated"
+
+proposal_commit_protocol:
+  direct_model_write_forbidden: true
+  direct_uncommitted_delivery_forbidden: true
+  idempotency_key: "operation_id"
+  optimistic_concurrency_field: "base_state_revision"
+  patch_revision_field: "expected_state_revision"
+  order:
+    - "buffer_model_output"
+    - "validate_shape_and_semantics"
+    - "validate_source_closure_and_claim_bindings"
+    - "compare_state_revision"
+    - "commit_proposal_and_outbox_atomically"
+    - "deliver_committed_outbox"
+
+communication_surface:
+  direct_tick_speech_delivery: false
+  text_surface_stage: "active v1 contract; implement for M1 reactive replies and require it before M2 proactive delivery"
+  multimodal_plan_stage: "reserved for M4; current surface-message schema remains text-only"
+  required_inputs:
+    - "communication_intent"
+    - "speech_seed"
+    - "S1_immutable"
+    - "S2_world_rules"
+    - "S3_dialogue_samples"
+    - "S4_persona"
+    - "S5_world_state"
+    - "active_scene_tail"
+  output_contract: "Same plain-text bubble constraints as fast_reply."
+  semantic_plan:
+    shared_fields:
+      - "intent_id"
+      - "purpose"
+      - "content_seed"
+      - "source_refs"
+      - "base_state_revision"
+      - "recipient_principal_id"
+      - "privacy_scope"
+      - "capability_revision"
+    invariants:
+      - "All modalities render the same intent, state revision, and legal source closure."
+      - "A modality renderer may change wording, prosody, or visual treatment but may not add facts, promises, actors, causes, or world outcomes."
+      - "Media failure emits a WorldEvent and falls back only to text already authorized by the same plan; otherwise it sends nothing."
+      - "Every modality uses the same StateManager and outbox path; no renderer has a direct delivery side channel."
+  release_gate: "Autonomous/proactive delivery remains disabled until the v1 text surface renderer implements this interface and commits through StateManager/outbox; media delivery remains disabled until the M4 multimodal plan is versioned."
+
+calls:
+  fast_reply:
+    contract_id: "fast_reply.v0.2"
+    template: "prompts/10-fast-reply.md"
+    trigger:
+      event_origin: "user"
+      authenticated_principal_required: true
+    operation_context:
+      required:
+        - "operation_id"
+        - "base_state_revision"
+        - "input_message_ids"
+        - "active_scene_cursor"
+    messages:
+      system:
+        slots_in_order:
+          - "S1_immutable"
+          - "S2_world_rules"
+          - "S3_dialogue_samples"
+          - "S4_persona"
+          - "S5_world_state"
+          - "S6_canon_hits"
+          - "S7_memories"
+          - "S9_role_bottom_anchor"
+        optional_slots:
+          - "S6_canon_hits"
+          - "S7_memories"
+        conditional_sections:
+          IF_owed:
+            source: "open_debts"
+            empty_action: "remove_marker_and_entire_instruction"
+      history:
+        slot: "active_scene_tail"
+        roles_allowed:
+          - "user"
+          - "assistant"
+        target_recent_messages: 12
+        include_all_when_scene_shorter: true
+        deduplicate_by: "message_id"
+      current:
+        slot: "S8_user_messages"
+        role: "user"
+        latest_message_must_be_last: true
+    output:
+      media_type: "text/plain"
+      minimum_bubbles: 1
+      maximum_bubbles: 3
+      bubble_separator: "---"
+      approximate_maximum_characters_per_bubble: 120
+      narration_forbidden: true
+    commit:
+      records:
+        - "speech_event"
+        - "active_scene_message"
+        - "outbox_item"
+      atomic: true
+      privacy_scope: "private_im"
+      recipient_principal_id_source: "authenticated trigger event"
+      capability_snapshot_required: true
+      stream_to_user_before_commit: false
+
+  tick:
+    contract_id: "tick.v0.2"
+    template: "prompts/20-tick.md"
+    trigger_kinds:
+      - "impulse"
+      - "scheduled"
+      - "system/crossworld_effect"
+      - "system/capability_changed"
+    operation_context:
+      required:
+        - "operation_id"
+        - "trigger_event_id"
+        - "base_state_revision"
+    required_slots:
+      - "S1_immutable"
+      - "S2_world_rules"
+      - "S4_persona"
+      - "S5_world_state"
+      - "S7_memories"
+      - "S8_trigger_event"
+      - "S8_situation"
+    optional_slots:
+      - "S6_canon_hits"
+      - "S8_association_object"
+    output:
+      media_type: "application/json"
+      schema: "schemas/tick-proposal.schema.json"
+      strict_schema: true
+    invariants:
+      - "operation_id, trigger_event_id, and base_state_revision echo operation_context exactly."
+      - "Every claim and patch source ref is inside the legal source closure."
+      - "Every patch expected_state_revision equals base_state_revision."
+      - "Every claim-derived patch binds claim_ids."
+      - "Claim kind uses its fixed scope, epistemic, and lands_in_terra combination; mixed combinations are rejected."
+      - "A capability_change claim has a legal verified system event causal_action_ref; an IM user cause is not mandatory."
+      - "communication_intent and speech_seed are never delivered directly."
+    commit:
+      atomic: true
+      stale_revision_action: "reject_and_recompute"
+
+  scene_settle:
+    contract_id: "scene_settle.v0.2"
+    template: "prompts/30-scene-settle.md"
+    trigger_kinds:
+      - "scene_idle_timeout"
+      - "scene_rolling_batch"
+    operation_context:
+      required:
+        - "operation_id"
+        - "scene_id"
+        - "batch_id"
+        - "base_state_revision"
+        - "processed_message_ids"
+        - "scene_event_id"
+    messages:
+      system_slots:
+        - "settlement_context"
+        - "S1_immutable"
+        - "S2_crossworld_rules"
+        - "S4_persona_with_ids"
+        - "S5_world_state"
+        - "open_debts"
+        - "trusted_crossworld_events"
+      optional_system_slots:
+        - "open_debts"
+        - "trusted_crossworld_events"
+      data_payload:
+        slot: "transcript_payload"
+        role: "user"
+        format: "application/json"
+    output:
+      media_type: "application/json"
+      schema: "schemas/scene-settlement.schema.json"
+      strict_schema: true
+    invariants:
+      - "processed_message_ids equal settlement_context exactly."
+      - "doctor disclosures are claims, never a parallel disclosures field."
+      - "Claim kind uses its fixed scope, epistemic, and lands_in_terra combination."
+      - "A capability_change claim has a legal verified system event causal_action_ref."
+      - "Debt repayment is a target=debt close patch with message source refs."
+      - "Every patch expected_state_revision equals base_state_revision."
+      - "Repeated operation_id returns the committed result without applying it twice."
+    commit:
+      atomic: true
+      cursor_advances_only_after_commit: true
+
+  memory_compress:
+    contract_id: "memory_compress.v0.2"
+    template: "prompts/40-memory-compress.md"
+    trigger_kinds:
+      - "event_count_threshold"
+      - "time_threshold"
+    messages:
+      system_slots: []
+      data_payload:
+        slot: "compression_payload"
+        role: "user"
+        format: "application/json"
+        required_fields:
+          - "operation_id"
+          - "batch_id"
+          - "input_fingerprint"
+          - "processed_event_ids"
+          - "events"
+          - "protected_event_ids"
+          - "reference_edges"
+          - "allowed_source_closure"
+    output:
+      media_type: "application/json"
+      schema: "schemas/memory-compression.schema.json"
+      strict_schema: true
+    invariants:
+      - "Original events and reference edges are append-only and never mutated."
+      - "All protected_event_ids are kept_as_is."
+      - "Derived memories reference only allowed_source_closure."
+      - "Epistemic status and privacy scope can never be loosened."
+      - "excluded_from_retrieval is not a delete command."
+    commit:
+      target: "derived_memory_index"
+      original_event_log_mutation: false
+
+  probe_judge:
+    contract_id: "probe_judge.v0.2"
+    template: "prompts/50-probe-judge.md"
+    trigger_kinds:
+      - "biweekly_probe"
+      - "model_migration_regression"
+      - "world_runtime_ablation"
+    model_policy:
+      different_from_evaluated_model: true
+      blind_main_control_identity: true
+      order_balanced: true
+    messages:
+      system_slots: []
+      data_payload:
+        slot: "evaluation_payload"
+        role: "user"
+        format: "application/json"
+        required_fields:
+          - "operation_id"
+          - "probe_id"
+          - "pair_id"
+          - "input_fingerprint"
+          - "probe_situation"
+          - "common_hard_constraints"
+          - "context_a"
+          - "context_b"
+          - "response_a"
+          - "response_b"
+          - "source_closure_a"
+          - "source_closure_b"
+          - "reproducibility"
+    output:
+      media_type: "application/json"
+      schema: "schemas/probe-judgement.schema.json"
+      strict_schema: true
+    invariants:
+      - "Exactly five aspect verdicts are returned."
+      - "Style verdicts never cancel hard violations."
+      - "Unsupported specific history is not rewarded."
+      - "A/B contexts use symmetric retrieval and truncation budgets."
+      - "World-runtime ablations use the same evaluated model, role assets, context/token budget, and frozen inputs; only the world simulation/adjudication layer differs."
+      - "A run without reproducibility hashes is excluded from trends."

@@ -1,0 +1,19 @@
+{
+  "transport": {
+    "text": true,
+    "image": true,
+    "audio": false,
+    "files": false,
+    "reaction": true,
+    "realtime": false
+  },
+  "diegetic": {
+    "text": true,
+    "image": false,
+    "audio": false,
+    "files": false,
+    "reaction": false,
+    "realtime": false
+  },
+  "last_changed_event_id": "evt_genesis_0001"
+}

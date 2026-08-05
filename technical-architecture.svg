@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">GF 技术架构</title>
+  <desc id="desc">从适配器和事件源，经网关、统一事件队列、Prompt 装配、模型提议、校验与 StateManager 单写者，到状态、记忆、outbox 和观测系统。</desc>
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#718096"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#3973ad"/>
+    </marker>
+    <marker id="arr-green" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#4d8c72"/>
+    </marker>
+    <marker id="arr-red" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#b65b5b"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#26364a" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .title{font:600 36px "Microsoft YaHei","Segoe UI",sans-serif;fill:#1f2f43}
+      .subtitle{font:400 17px "Microsoft YaHei","Segoe UI",sans-serif;fill:#627086}
+      .group-title{font:600 18px "Microsoft YaHei","Segoe UI",sans-serif;fill:#33445a}
+      .node-title{font:600 17px "Microsoft YaHei","Segoe UI",sans-serif;fill:#213247}
+      .node-copy{font:400 13.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#536176}
+      .small{font:400 12.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#637086}
+      .edge{font:600 12.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#56657a}
+      .group{fill:#fff;stroke:#d7e0eb;stroke-width:1.4}
+      .ingress{fill:#eef5ff;stroke:#5c82ac;stroke-width:1.5}
+      .engine{fill:#fff4e8;stroke:#c47a2c;stroke-width:1.5}
+      .state{fill:#eef8f3;stroke:#4d8c72;stroke-width:1.5}
+      .ops{fill:#f3f5f8;stroke:#99a5b5;stroke-width:1.4}
+      .danger{fill:#fff1f1;stroke:#b65b5b;stroke-width:1.4}
+    </style>
+  </defs>
+
+  <rect width="1800" height="1000" fill="#f7f9fc"/>
+  <text x="60" y="62" class="title">技术架构</text>
+  <text x="60" y="94" class="subtitle">LLM 只生成 proposal；可信性、状态变更和投递可靠性由确定性组件负责。</text>
+
+  <!-- Group surfaces -->
+  <rect x="42" y="132" width="242" height="518" rx="22" class="group" filter="url(#shadow)"/>
+  <rect x="312" y="132" width="246" height="518" rx="22" class="group" filter="url(#shadow)"/>
+  <rect x="586" y="132" width="664" height="518" rx="22" class="group" filter="url(#shadow)"/>
+  <rect x="1278" y="132" width="480" height="518" rx="22" class="group" filter="url(#shadow)"/>
+  <rect x="42" y="692" width="1716" height="232" rx="22" class="group" filter="url(#shadow)"/>
+
+  <text x="68" y="170" class="group-title">入口</text>
+  <text x="338" y="170" class="group-title">接入与事件化</text>
+  <text x="612" y="170" class="group-title">编排与模型</text>
+  <text x="1304" y="170" class="group-title">校验、提交与投递</text>
+  <text x="68" y="730" class="group-title">数据面与可观测性</text>
+
+  <!-- Ingress -->
+  <rect x="72" y="206" width="182" height="94" rx="14" class="ingress"/>
+  <text x="163" y="240" text-anchor="middle" class="node-title">IM Adapters</text>
+  <text x="163" y="268" text-anchor="middle" class="node-copy">CLI · 飞书 · 后续渠道</text>
+
+  <rect x="72" y="348" width="182" height="94" rx="14" class="ingress"/>
+  <text x="163" y="382" text-anchor="middle" class="node-title">Scheduler / Impulse</text>
+  <text x="163" y="410" text-anchor="middle" class="node-copy">时间、计划与世界自发事件</text>
+
+  <rect x="72" y="490" width="182" height="112" rx="14" class="ingress"/>
+  <text x="163" y="524" text-anchor="middle" class="node-title">可信游戏桥</text>
+  <text x="163" y="552" text-anchor="middle" class="node-copy">crossworld_effect</text>
+  <text x="163" y="578" text-anchor="middle" class="node-copy">capability_changed</text>
+
+  <!-- Gateway -->
+  <rect x="342" y="220" width="186" height="116" rx="15" class="ingress"/>
+  <text x="435" y="255" text-anchor="middle" class="node-title">Gateway</text>
+  <text x="435" y="282" text-anchor="middle" class="node-copy">鉴权 · 去重 · 命令拦截</text>
+  <text x="435" y="308" text-anchor="middle" class="node-copy">来源与通道能力检查</text>
+
+  <rect x="342" y="402" width="186" height="112" rx="15" class="ingress"/>
+  <text x="435" y="438" text-anchor="middle" class="node-title">WorldEvent Queue</text>
+  <text x="435" y="466" text-anchor="middle" class="node-copy">统一优先队列</text>
+  <text x="435" y="491" text-anchor="middle" class="node-copy">user 优先，不抢占在途轮次</text>
+
+  <rect x="342" y="554" width="186" height="60" rx="13" class="ops"/>
+  <text x="435" y="579" text-anchor="middle" class="node-title">原始事件先落库</text>
+  <text x="435" y="600" text-anchor="middle" class="small">message_id · provenance</text>
+
+  <!-- Orchestration -->
+  <rect x="616" y="220" width="178" height="116" rx="15" class="engine"/>
+  <text x="705" y="254" text-anchor="middle" class="node-title">Dispatcher / L2</text>
+  <text x="705" y="282" text-anchor="middle" class="node-copy">TTL · 预算 · 时段</text>
+  <text x="705" y="308" text-anchor="middle" class="node-copy">调用点选择与合法性门控</text>
+
+  <rect x="830" y="220" width="190" height="116" rx="15" class="engine"/>
+  <text x="925" y="254" text-anchor="middle" class="node-title">Prompt Assembler</text>
+  <text x="925" y="282" text-anchor="middle" class="node-copy">manifest · 槽位 · role</text>
+  <text x="925" y="308" text-anchor="middle" class="node-copy">预算、转义与来源保留</text>
+
+  <rect x="1056" y="220" width="164" height="116" rx="15" class="engine"/>
+  <text x="1138" y="254" text-anchor="middle" class="node-title">LLM Calls</text>
+  <text x="1138" y="282" text-anchor="middle" class="node-copy">fast · tick · settle</text>
+  <text x="1138" y="308" text-anchor="middle" class="node-copy">compress · probe</text>
+
+  <rect x="640" y="416" width="556" height="166" rx="18" class="ops"/>
+  <text x="918" y="452" text-anchor="middle" class="node-title">可信上下文只读视图</text>
+  <text x="692" y="490" class="node-copy">• S1 protected / S2 硬约束 / S3 语料</text>
+  <text x="692" y="519" class="node-copy">• S4 persona / S5 world_state / 当前场景尾</text>
+  <text x="692" y="548" class="node-copy">• S6 canon 门控命中 / S7 memory 检索</text>
+  <text x="986" y="490" class="node-copy">• user 文本保持 user role</text>
+  <text x="986" y="519" class="node-copy">• 技术 ID 只进慢段与校验</text>
+  <text x="986" y="548" class="node-copy">• 可选槽为空则整节删除</text>
+
+  <!-- Validate/commit/delivery -->
+  <rect x="1308" y="210" width="196" height="142" rx="15" class="engine"/>
+  <text x="1406" y="246" text-anchor="middle" class="node-title">Proposal Validators</text>
+  <text x="1406" y="274" text-anchor="middle" class="node-copy">JSON Schema · 来源闭包</text>
+  <text x="1406" y="300" text-anchor="middle" class="node-copy">跨界 · 隐私 · persona cause</text>
+  <text x="1406" y="326" text-anchor="middle" class="node-copy">版本 · 能力 · 幂等</text>
+
+  <rect x="1532" y="210" width="196" height="142" rx="15" class="state"/>
+  <text x="1630" y="246" text-anchor="middle" class="node-title">StateManager / Reducer</text>
+  <text x="1630" y="274" text-anchor="middle" class="node-copy">单写者 · 串行事务</text>
+  <text x="1630" y="300" text-anchor="middle" class="node-copy">合法 patch 原子提交</text>
+  <text x="1630" y="326" text-anchor="middle" class="node-copy">能力事件确定性归约</text>
+
+  <rect x="1308" y="426" width="196" height="110" rx="15" class="ops"/>
+  <text x="1406" y="462" text-anchor="middle" class="node-title">Outbox</text>
+  <text x="1406" y="490" text-anchor="middle" class="node-copy">提交后待投递</text>
+  <text x="1406" y="515" text-anchor="middle" class="node-copy">消息与状态同一事务</text>
+
+  <rect x="1532" y="426" width="196" height="110" rx="15" class="ops"/>
+  <text x="1630" y="462" text-anchor="middle" class="node-title">Outbox Worker</text>
+  <text x="1630" y="490" text-anchor="middle" class="node-copy">重试 · 回执 · 静默投递</text>
+  <text x="1630" y="515" text-anchor="middle" class="node-copy">经 adapter 返回博士侧</text>
+
+  <rect x="1308" y="570" width="420" height="52" rx="13" class="danger"/>
+  <text x="1518" y="602" text-anchor="middle" class="node-copy">无来源、越权或版本冲突：拒写 / 有限重掷 / 降级，不改变状态</text>
+
+  <!-- Data plane -->
+  <rect x="72" y="764" width="210" height="112" rx="15" class="ops"/>
+  <text x="177" y="799" text-anchor="middle" class="node-title">Event Store</text>
+  <text x="177" y="827" text-anchor="middle" class="node-copy">原始事件 · 派生事件</text>
+  <text x="177" y="853" text-anchor="middle" class="node-copy">场景 transcript · 来源链</text>
+
+  <rect x="310" y="764" width="210" height="112" rx="15" class="state"/>
+  <text x="415" y="799" text-anchor="middle" class="node-title">World State</text>
+  <text x="415" y="827" text-anchor="middle" class="node-copy">threads · entities</text>
+  <text x="415" y="853" text-anchor="middle" class="node-copy">inventory · location · flags</text>
+
+  <rect x="548" y="764" width="210" height="112" rx="15" class="state"/>
+  <text x="653" y="799" text-anchor="middle" class="node-title">Persona Store</text>
+  <text x="653" y="827" text-anchor="middle" class="node-copy">statements · diffs</text>
+  <text x="653" y="853" text-anchor="middle" class="node-copy">cause refs · history</text>
+
+  <rect x="786" y="764" width="210" height="112" rx="15" class="state"/>
+  <text x="891" y="799" text-anchor="middle" class="node-title">Memory Store</text>
+  <text x="891" y="827" text-anchor="middle" class="node-copy">observed · world</text>
+  <text x="891" y="853" text-anchor="middle" class="node-copy">inferred · generated</text>
+
+  <rect x="1024" y="764" width="210" height="112" rx="15" class="state"/>
+  <text x="1129" y="799" text-anchor="middle" class="node-title">Canon Store</text>
+  <text x="1129" y="827" text-anchor="middle" class="node-copy">self · known · world</text>
+  <text x="1129" y="853" text-anchor="middle" class="node-copy">独立索引，永不压缩</text>
+
+  <rect x="1262" y="764" width="210" height="112" rx="15" class="ops"/>
+  <text x="1367" y="799" text-anchor="middle" class="node-title">Capability / Scheduler</text>
+  <text x="1367" y="827" text-anchor="middle" class="node-copy">transport · diegetic · revision</text>
+  <text x="1367" y="853" text-anchor="middle" class="node-copy">phase · timers · settle cursor</text>
+
+  <rect x="1500" y="764" width="228" height="112" rx="15" class="ops"/>
+  <text x="1614" y="799" text-anchor="middle" class="node-title">Observability</text>
+  <text x="1614" y="827" text-anchor="middle" class="node-copy">日志 · 拒写 · 指标</text>
+  <text x="1614" y="853" text-anchor="middle" class="node-copy">dry-run · probes · 回归</text>
+
+  <!-- Main arrows -->
+  <path d="M254 253 L342 253" fill="none" stroke="#3973ad" stroke-width="2.5" marker-end="url(#arr-blue)"/>
+  <path d="M254 395 C300 395 300 292 342 292" fill="none" stroke="#3973ad" stroke-width="2.2" marker-end="url(#arr-blue)"/>
+  <path d="M254 546 C304 546 304 318 342 318" fill="none" stroke="#3973ad" stroke-width="2.2" marker-end="url(#arr-blue)"/>
+  <path d="M435 336 L435 402" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M528 318 L548 318 L548 584 L528 584" fill="none" stroke="#718096" stroke-width="1.8" marker-end="url(#arr)"/>
+  <path d="M528 458 L570 458 L570 278 L616 278" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M794 278 L830 278" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M1020 278 L1056 278" fill="none" stroke="#c47a2c" stroke-width="2.6" marker-end="url(#arr)"/>
+  <path d="M1220 278 L1308 278" fill="none" stroke="#c47a2c" stroke-width="2.6" marker-end="url(#arr)"/>
+  <text x="1264" y="260" text-anchor="middle" class="edge">proposal</text>
+  <path d="M1504 278 L1532 278" fill="none" stroke="#4d8c72" stroke-width="3" marker-end="url(#arr-green)"/>
+  <path d="M1630 352 C1630 382 1490 390 1406 426" fill="none" stroke="#4d8c72" stroke-width="2.6" marker-end="url(#arr-green)"/>
+  <path d="M1504 481 L1532 481" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M1728 481 L1774 481 L1774 670 L28 670 L28 253 L72 253" fill="none" stroke="#718096" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr)"/>
+  <text x="1550" y="666" class="edge">投递回适配器</text>
+  <path d="M1406 352 L1518 570" fill="none" stroke="#b65b5b" stroke-width="2.2" marker-end="url(#arr-red)"/>
+
+  <!-- Context feed -->
+  <path d="M918 416 L925 336" fill="none" stroke="#718096" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M177 764 C177 690 700 690 848 336" fill="none" stroke="#718096" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M415 764 C415 694 788 684 886 336" fill="none" stroke="#4d8c72" stroke-width="1.7" marker-end="url(#arr-green)"/>
+  <path d="M653 764 C653 692 842 676 913 336" fill="none" stroke="#4d8c72" stroke-width="1.7" marker-end="url(#arr-green)"/>
+  <path d="M891 764 C891 690 928 610 934 336" fill="none" stroke="#4d8c72" stroke-width="1.7" marker-end="url(#arr-green)"/>
+  <path d="M1129 764 C1129 680 1006 618 964 336" fill="none" stroke="#4d8c72" stroke-width="1.7" marker-end="url(#arr-green)"/>
+
+  <!-- State writes: one transaction bus, then deterministic fan-out -->
+  <path d="M1728 281 L1760 281 L1760 684 L177 684" fill="none" stroke="#4d8c72" stroke-width="2" opacity=".85"/>
+  <text x="1190" y="680" class="edge">StateManager 原子写总线</text>
+  <path d="M177 684 L177 764" fill="none" stroke="#4d8c72" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <path d="M415 684 L415 764" fill="none" stroke="#4d8c72" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <path d="M653 684 L653 764" fill="none" stroke="#4d8c72" stroke-width="1.8" marker-end="url(#arr-green)"/>
+  <path d="M891 684 L891 764" fill="none" stroke="#4d8c72" stroke-width="1.8" marker-end="url(#arr-green)"/>
+
+  <!-- Observability dotted feeds -->
+  <path d="M435 614 C435 700 1510 700 1580 764" fill="none" stroke="#929eae" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#arr)"/>
+  <path d="M1518 622 L1604 764" fill="none" stroke="#b65b5b" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#arr-red)"/>
+
+  <text x="60" y="960" class="small">数据方向：蓝色为入站，橙色为模型编排，绿色为受校验的读写，灰色虚线为投递与观测。Canon 只读；能力变更由可信事件确定性归约。</text>
+</svg>

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/memory-compression.schema.json",
+  "title": "Derived memory compression proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "operation_id", "batch_id", "input_fingerprint",
+    "processed_event_ids", "derived_memories", "kept_as_is",
+    "excluded_from_retrieval"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "operation_id": { "$ref": "common.schema.json#/$defs/id" },
+    "batch_id": { "$ref": "common.schema.json#/$defs/id" },
+    "input_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+    },
+    "processed_event_ids": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "derived_memories": {
+      "type": "array", "maxItems": 64,
+      "items": { "$ref": "#/$defs/derivedMemory" }
+    },
+    "kept_as_is": {
+      "type": "array", "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "excluded_from_retrieval": {
+      "type": "array", "maxItems": 256,
+      "items": { "$ref": "#/$defs/exclusion" }
+    }
+  },
+  "$defs": {
+    "claimRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_type", "source_id"],
+      "properties": {
+        "source_type": { "const": "claim" },
+        "source_id": { "$ref": "common.schema.json#/$defs/id" }
+      }
+    },
+    "derivedMemory": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "memory_id", "namespace", "memory_kind", "text", "source_refs", "valence", "involves",
+        "period_start", "period_end", "epistemic_status", "privacy_scope",
+        "crossworld_claim_refs"
+      ],
+      "properties": {
+        "memory_id": { "$ref": "common.schema.json#/$defs/id" },
+        "namespace": { "enum": ["observed", "world", "inferred", "generated"] },
+        "memory_kind": { "enum": ["episodic", "semantic", "relationship", "persona_diff"] },
+        "text": { "type": "string", "minLength": 1, "maxLength": 2400 },
+        "source_refs": {
+          "type": "array", "minItems": 2, "maxItems": 64, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+        },
+        "valence": { "type": "number", "minimum": -1, "maximum": 1 },
+        "involves": {
+          "type": "array", "uniqueItems": true, "maxItems": 32,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "period_start": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "period_end": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "epistemic_status": {
+          "enum": ["reported", "attested", "verified", "inferred", "generated", "disputed"]
+        },
+        "privacy_scope": { "$ref": "common.schema.json#/$defs/privacyScope" },
+        "crossworld_claim_refs": {
+          "type": "array", "uniqueItems": true, "maxItems": 32,
+          "items": { "$ref": "#/$defs/claimRef" }
+        }
+      }
+    },
+    "exclusion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event_id", "reason_code", "reason"],
+      "properties": {
+        "event_id": { "$ref": "common.schema.json#/$defs/id" },
+        "reason_code": { "enum": ["routine_duplicate", "empty_progress"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    }
+  }
+}

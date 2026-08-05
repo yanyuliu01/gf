@@ -1,0 +1,37 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart LR
+  subgraph W["世界中的冲突与选择"]
+    direction LR
+    R["① NPC 请求<br/>与既有承诺冲突"]
+    F["② 事实 / 有限信念快照<br/>日程、资源、关系事件"]
+    C["③ 合法候选过滤<br/>物理、权限、价值、能力"]
+    A["④ 局部仲裁<br/>关切、承诺、appraisal、机会成本<br/>不设全局 Utility"]
+    J["⑤ World Engine 裁决<br/>他人、组织、资源与环境产生代价"]
+  end
+
+  subgraph S["提交、认知与联系"]
+    direction LR
+    T["⑥ StateManager 原子提交<br/>event / claim / commitment / patch"]
+    B["⑦ 信念、计划与关系证据变化"]
+    G{"⑧ 是否联系博士？<br/>联系目的是什么？"}
+    P["⑨ 统一 communication plan<br/>同 intent / state / source closure"]
+    IM["⑩ 当前 IM 跨界终端<br/>博士回应先成为 observed 社会证据"]
+  end
+
+  L["数小时 / 数天后的世界事件<br/>再次触发选择，差异必须可观察"]
+  E["验证：完整运行时 vs 同模型 Prompt+记忆基线<br/>固定角色资产、输入、检索与 token 预算"]
+
+  R --> F --> C --> A --> J --> T --> B --> G
+  G -->|"联系"| P --> IM --> L --> F
+  G -->|"不联系"| L
+  T --> E
+  L --> E
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef decision fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef commit fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef validate fill:#f3f5f8,stroke:#929eae,color:#394455;
+  class R,F,IM input;
+  class C,A,J,G decision;
+  class T,B,P,L commit;
+  class E validate;

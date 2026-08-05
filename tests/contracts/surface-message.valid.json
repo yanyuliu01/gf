@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "speech_id": "speech_0001",
+  "operation_id": "op_fast_0001",
+  "channel": "private_im",
+  "recipient_principal_id": "doctor",
+  "privacy_scope": "private_im",
+  "capability_revision": 0,
+  "authorization_decision_id": "authz_0001",
+  "source_refs": [
+    {
+      "source_type": "message",
+      "source_id": "msg_0001"
+    }
+  ],
+  "bubbles": ["今天这边也下过一阵。", "不过没你那边那么久。"]
+}

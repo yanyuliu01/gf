@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/message-payload.schema.json",
+  "title": "Normalized private IM message payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["message_id", "sender_principal_id", "content"],
+  "properties": {
+    "message_id": { "$ref": "common.schema.json#/$defs/id" },
+    "sender_principal_id": { "$ref": "common.schema.json#/$defs/id" },
+    "reply_to_message_id": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "content": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "anyOf": [
+          { "$ref": "#/$defs/textPart" },
+          { "$ref": "#/$defs/assetPart" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "textPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 12000 }
+      }
+    },
+    "assetPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "asset_id"],
+      "properties": {
+        "type": { "enum": ["image", "audio", "file"] },
+        "asset_id": { "$ref": "common.schema.json#/$defs/id" },
+        "mime_type": { "type": ["string", "null"], "maxLength": 128 },
+        "caption": { "type": ["string", "null"], "maxLength": 1000 }
+      }
+    }
+  }
+}

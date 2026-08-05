@@ -1,0 +1,17 @@
+{
+  "op_id": "op_scene_0001:patch:01",
+  "target": "debt",
+  "path": "debt_0001.status",
+  "op": "close",
+  "value": "repaid",
+  "claim_ids": [],
+  "source_refs": [
+    {
+      "source_type": "message",
+      "source_id": "msg_0001"
+    }
+  ],
+  "cause_event_ids": ["evt_user_0001"],
+  "expected_state_revision": 12,
+  "reason": "本段消息已经实际完成此前承诺。"
+}

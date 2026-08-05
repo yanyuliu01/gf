@@ -1,0 +1,80 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart LR
+  subgraph I["入口"]
+    direction TB
+    AD["IM Adapters<br/>CLI / 飞书 / 后续渠道"]
+    SCH["Scheduler / Impulse<br/>时间与世界自发事件"]
+    BR["可信游戏桥<br/>crossworld_effect<br/>capability_changed"]
+  end
+
+  subgraph C["接入与事件化"]
+    direction TB
+    GW["Gateway<br/>鉴权、去重、命令拦截、能力检查"]
+    Q["WorldEvent Queue<br/>统一优先队列"]
+    ES[("Event Store<br/>原始事件先持久化")]
+  end
+
+  subgraph O["编排与模型"]
+    direction TB
+    DISP["Dispatcher / L2 Gate<br/>TTL、预算、时段、合法性"]
+    PA["Prompt Assembler<br/>按调用点装配可信上下文"]
+    LLM["LLM Calls<br/>fast reply / tick / settle<br/>compress / probe"]
+    VAL["Proposal Validators<br/>JSON schema / 来源闭包 / 隐私<br/>跨世界准入 / 人格归因 / 状态版本"]
+  end
+
+  subgraph S["单写者与状态"]
+    direction TB
+    SM["StateManager / Reducer<br/>串行事务、幂等、拒写与重试"]
+    WS[("World State<br/>threads / entities / inventory")]
+    CAP[("Capability Snapshots<br/>transport / diegetic / revision")]
+    PS[("Persona Store<br/>statements / diffs / causes")]
+    MS[("Memory Store<br/>namespace: observed / world / inferred / generated<br/>kind: episodic / semantic / relationship / persona_diff")]
+    CS[("Canon Store<br/>self / known / world")]
+  end
+
+  subgraph D["投递与运维"]
+    direction TB
+    OB[("Outbox<br/>提交后待投递")]
+    OW["Outbox Worker<br/>重试、回执、静默投递"]
+    OBS["Observability<br/>日志、拒写、指标、dry-run、probes"]
+  end
+
+  AD --> GW
+  SCH --> GW
+  BR --> GW
+  GW --> ES
+  GW --> Q
+  Q --> DISP
+  DISP --> PA
+  PA --> LLM
+  LLM -->|"proposal"| VAL
+  VAL -->|"通过"| SM
+  VAL -->|"拒绝 / 重掷"| OBS
+  SM --> ES
+  SM --> WS
+  SM --> CAP
+  SM --> PS
+  SM --> MS
+  SM --> OB
+  OB --> OW
+  OW --> AD
+
+  WS -->|"只读快照"| PA
+  CAP -->|"能力交集"| PA
+  PS -->|"S4"| PA
+  MS -->|"S7 检索"| PA
+  CS -->|"S6 门控命中"| PA
+  ES -->|"当前场景与来源链"| PA
+  GW --> OBS
+  DISP --> OBS
+  SM --> OBS
+  OW --> OBS
+
+  classDef ingress fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef engine fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef state fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef ops fill:#f3f5f8,stroke:#929eae,color:#394455;
+  class AD,SCH,BR,GW,Q ingress;
+  class DISP,PA,LLM,VAL engine;
+  class SM,WS,PS,MS,CS state;
+  class ES,OB,OW,OBS ops;

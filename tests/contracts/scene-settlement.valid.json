@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "operation_id": "op_scene_0001",
+  "scene_id": "scene_0001",
+  "batch_id": "batch_0001",
+  "base_state_revision": 12,
+  "processed_message_ids": ["msg_0001"],
+  "scene_summary": "博士分享了彼侧的天气；缪尔赛思将它当作博士的亲历报告，而非已验证的客观资料。",
+  "claims": [
+    {
+      "claim_id": "claim_0001",
+      "scope": "doctor_world",
+      "kind": "doctor_disclosure",
+      "text": "博士报告其所在地点正在下雨。",
+      "epistemic_status": "reported",
+      "lands_in_terra": false,
+      "privacy_scope": "private_im",
+      "source_refs": [
+        {
+          "source_type": "message",
+          "source_id": "msg_0001",
+          "quote_hash": null,
+          "observed_at": "2026-08-05T10:00:01+08:00"
+        }
+      ]
+    }
+  ],
+  "patch_ops": [],
+  "debts_add": [],
+  "valence": 0.2,
+  "intensity": 0.2,
+  "involves": ["muelsyse", "doctor"]
+}

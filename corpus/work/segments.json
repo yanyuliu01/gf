@@ -1,0 +1,1304 @@
+[
+ {
+  "file": "act15d0-孤岛风云/01-MB-1-密会-行动前.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/01-MB-1-密会-行动前.txt",
+  "a": 2,
+  "b": 15,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/01-MB-1-密会-行动前.txt",
+  "a": 16,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/02-MB-1-密会-行动后.txt",
+  "a": 0,
+  "b": 8,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/03-MB-2-另一个视角-行动前.txt",
+  "a": 0,
+  "b": 9,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/03-MB-2-另一个视角-行动前.txt",
+  "a": 10,
+  "b": 10,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/04-MB-2-另一个视角-行动后.txt",
+  "a": 0,
+  "b": 12,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/05-MB-3-首次遇袭-行动前.txt",
+  "a": 0,
+  "b": 13,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/05-MB-3-首次遇袭-行动前.txt",
+  "a": 14,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/06-MB-3-首次遇袭-行动后.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/06-MB-3-首次遇袭-行动后.txt",
+  "a": 2,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/06-MB-3-首次遇袭-行动后.txt",
+  "a": 4,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/07-MB-ST-1-邀请-幕间.txt",
+  "a": 0,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/07-MB-ST-1-邀请-幕间.txt",
+  "a": 8,
+  "b": 10,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/07-MB-ST-1-邀请-幕间.txt",
+  "a": 11,
+  "b": 14,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/08-MB-4-勇敢，莽撞-行动前.txt",
+  "a": 0,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/09-MB-4-勇敢，莽撞-行动后.txt",
+  "a": 0,
+  "b": 7,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/10-MB-5-危险交易-行动前.txt",
+  "a": 0,
+  "b": 5,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/11-MB-5-危险交易-行动后.txt",
+  "a": 0,
+  "b": 9,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/12-MB-6-制定计划-行动前.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/12-MB-6-制定计划-行动前.txt",
+  "a": 4,
+  "b": 6,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/13-MB-6-制定计划-行动后.txt",
+  "a": 0,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/14-MB-7-背叛-行动前.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/14-MB-7-背叛-行动前.txt",
+  "a": 1,
+  "b": 5,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/15-MB-7-背叛-行动后.txt",
+  "a": 0,
+  "b": 9,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/16-MB-8-激战之末-行动前.txt",
+  "a": 0,
+  "b": 14,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/17-MB-8-激战之末-行动后.txt",
+  "a": 0,
+  "b": 11,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/18-MB-ST-2-正确的代价-幕间.txt",
+  "a": 0,
+  "b": 17,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act15d0-孤岛风云/18-MB-ST-2-正确的代价-幕间.txt",
+  "a": 18,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/01-DV-ST-1-逆行-幕间.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/01-DV-ST-1-逆行-幕间.txt",
+  "a": 1,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/01-DV-ST-1-逆行-幕间.txt",
+  "a": 8,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/02-DV-1-特里蒙街道-行动前.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/02-DV-1-特里蒙街道-行动前.txt",
+  "a": 3,
+  "b": 5,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/02-DV-1-特里蒙街道-行动前.txt",
+  "a": 6,
+  "b": 16,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/02-DV-1-特里蒙街道-行动前.txt",
+  "a": 17,
+  "b": 18,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/02-DV-1-特里蒙街道-行动前.txt",
+  "a": 19,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/03-DV-1-特里蒙街道-行动后.txt",
+  "a": 0,
+  "b": 21,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/04-DV-2-拓荒者小屋-行动前.txt",
+  "a": 0,
+  "b": 19,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/05-DV-2-拓荒者小屋-行动后.txt",
+  "a": 0,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/06-DV-3-动力装甲-行动前.txt",
+  "a": 0,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/07-DV-3-动力装甲-行动后.txt",
+  "a": 0,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/08-DV-4-无人的小巷-行动前.txt",
+  "a": 0,
+  "b": 12,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/08-DV-4-无人的小巷-行动前.txt",
+  "a": 13,
+  "b": 13,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/08-DV-4-无人的小巷-行动前.txt",
+  "a": 14,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/09-DV-4-无人的小巷-行动后.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/09-DV-4-无人的小巷-行动后.txt",
+  "a": 4,
+  "b": 4,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/09-DV-4-无人的小巷-行动后.txt",
+  "a": 5,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/10-DV-5-多萝西的承诺-行动前.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/10-DV-5-多萝西的承诺-行动前.txt",
+  "a": 4,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/11-DV-S-1-困心-幕间.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/12-DV-5-多萝西的承诺-行动后.txt",
+  "a": 0,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/13-DV-6-挣脱美梦-行动前.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/13-DV-6-挣脱美梦-行动前.txt",
+  "a": 5,
+  "b": 5,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/13-DV-6-挣脱美梦-行动前.txt",
+  "a": 6,
+  "b": 13,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/13-DV-6-挣脱美梦-行动前.txt",
+  "a": 14,
+  "b": 17,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/14-DV-6-挣脱美梦-行动后.txt",
+  "a": 0,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/15-DV-7-疯狂的信号-行动前.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/15-DV-7-疯狂的信号-行动前.txt",
+  "a": 4,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/16-DV-S-2-衡虑-幕间.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 4,
+  "b": 8,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 9,
+  "b": 9,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 10,
+  "b": 16,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 17,
+  "b": 18,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt",
+  "a": 19,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/18-DV-8-连接内心-行动前.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/18-DV-8-连接内心-行动前.txt",
+  "a": 5,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/18-DV-8-连接内心-行动前.txt",
+  "a": 8,
+  "b": 26,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/19-DV-8-连接内心-行动后.txt",
+  "a": 0,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/20-DV-ST-2-启程-幕间.txt",
+  "a": 0,
+  "b": 9,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/20-DV-ST-2-启程-幕间.txt",
+  "a": 10,
+  "b": 11,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act19side-绿野幻梦/20-DV-ST-2-启程-幕间.txt",
+  "a": 12,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/01-CW-ST-1-阴云密布-幕间.txt",
+  "a": 0,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/01-CW-ST-1-阴云密布-幕间.txt",
+  "a": 19,
+  "b": 23,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/01-CW-ST-1-阴云密布-幕间.txt",
+  "a": 24,
+  "b": 34,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/02-CW-1-迷雾重重-行动前.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/02-CW-1-迷雾重重-行动前.txt",
+  "a": 1,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/02-CW-1-迷雾重重-行动前.txt",
+  "a": 4,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/03-CW-1-迷雾重重-行动后.txt",
+  "a": 0,
+  "b": 24,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/04-CW-2-无迹可寻-行动前.txt",
+  "a": 0,
+  "b": 29,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/05-CW-2-无迹可寻-行动后.txt",
+  "a": 0,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/05-CW-2-无迹可寻-行动后.txt",
+  "a": 16,
+  "b": 17,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/05-CW-2-无迹可寻-行动后.txt",
+  "a": 18,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/05-CW-2-无迹可寻-行动后.txt",
+  "a": 21,
+  "b": 22,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/05-CW-2-无迹可寻-行动后.txt",
+  "a": 23,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/06-CW-3-台前幕后-行动前.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/06-CW-3-台前幕后-行动前.txt",
+  "a": 3,
+  "b": 4,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/06-CW-3-台前幕后-行动前.txt",
+  "a": 5,
+  "b": 26,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/07-CW-3-台前幕后-行动后.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/07-CW-3-台前幕后-行动后.txt",
+  "a": 2,
+  "b": 2,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/07-CW-3-台前幕后-行动后.txt",
+  "a": 3,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/08-CW-ST-2-一波未平-幕间.txt",
+  "a": 0,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/08-CW-ST-2-一波未平-幕间.txt",
+  "a": 28,
+  "b": 31,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/08-CW-ST-2-一波未平-幕间.txt",
+  "a": 32,
+  "b": 32,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/09-CW-4-一波又起-行动前.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/09-CW-4-一波又起-行动前.txt",
+  "a": 1,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/09-CW-4-一波又起-行动前.txt",
+  "a": 4,
+  "b": 8,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/09-CW-4-一波又起-行动前.txt",
+  "a": 9,
+  "b": 13,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/09-CW-4-一波又起-行动前.txt",
+  "a": 14,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/10-CW-4-一波又起-行动后.txt",
+  "a": 0,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/10-CW-4-一波又起-行动后.txt",
+  "a": 18,
+  "b": 19,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/10-CW-4-一波又起-行动后.txt",
+  "a": 20,
+  "b": 38,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/11-CW-5-柳暗花明-行动前.txt",
+  "a": 0,
+  "b": 14,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/11-CW-5-柳暗花明-行动前.txt",
+  "a": 15,
+  "b": 29,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/11-CW-5-柳暗花明-行动前.txt",
+  "a": 30,
+  "b": 33,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/12-CW-5-柳暗花明-行动后.txt",
+  "a": 0,
+  "b": 24,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/12-CW-5-柳暗花明-行动后.txt",
+  "a": 25,
+  "b": 26,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/12-CW-5-柳暗花明-行动后.txt",
+  "a": 27,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/13-CW-6-群英荟萃-行动前.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/13-CW-6-群英荟萃-行动前.txt",
+  "a": 3,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/13-CW-6-群英荟萃-行动前.txt",
+  "a": 4,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/13-CW-6-群英荟萃-行动前.txt",
+  "a": 19,
+  "b": 23,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/13-CW-6-群英荟萃-行动前.txt",
+  "a": 24,
+  "b": 24,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 1,
+  "b": 2,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 3,
+  "b": 7,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 8,
+  "b": 14,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 15,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 21,
+  "b": 23,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/14-CW-6-群英荟萃-行动后.txt",
+  "a": 24,
+  "b": 25,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/15-CW-7-空中楼阁-行动前.txt",
+  "a": 0,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/16-CW-7-空中楼阁-行动后.txt",
+  "a": 0,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/17-CW-8-过去与现在的交会-行动前.txt",
+  "a": 0,
+  "b": 25,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/18-CW-8-过去与现在的交会-行动后.txt",
+  "a": 0,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/19-CW-9-恩怨纠葛-行动前.txt",
+  "a": 0,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/20-CW-9-恩怨纠葛-行动后.txt",
+  "a": 0,
+  "b": 29,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/21-CW-10-散于星辰之间-行动前.txt",
+  "a": 0,
+  "b": 5,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/21-CW-10-散于星辰之间-行动前.txt",
+  "a": 6,
+  "b": 18,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/21-CW-10-散于星辰之间-行动前.txt",
+  "a": 19,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/22-CW-10-散于星辰之间-行动后.txt",
+  "a": 0,
+  "b": 46,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/23-CW-ST-3-留下的人-幕间.txt",
+  "a": 0,
+  "b": 8,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/23-CW-ST-3-留下的人-幕间.txt",
+  "a": 9,
+  "b": 16,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/23-CW-ST-3-留下的人-幕间.txt",
+  "a": 17,
+  "b": 69,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/23-CW-ST-3-留下的人-幕间.txt",
+  "a": 70,
+  "b": 78,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/24-CW-ST-4-推开未来之门-幕间.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act25side-孤星/24-CW-ST-4-推开未来之门-幕间.txt",
+  "a": 3,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act25side-孤星/24-CW-ST-4-推开未来之门-幕间.txt",
+  "a": 8,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/01-UR-ST-1-倒映河水之中-幕间.txt",
+  "a": 0,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/02-UR-1-嘈杂的天空-行动前.txt",
+  "a": 0,
+  "b": 16,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/03-UR-1-嘈杂的天空-行动后.txt",
+  "a": 0,
+  "b": 14,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/04-UR-2-擅闯者-行动前.txt",
+  "a": 0,
+  "b": 13,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/05-UR-2-擅闯者-行动后.txt",
+  "a": 0,
+  "b": 9,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/06-UR-3-跌落保护-行动前.txt",
+  "a": 0,
+  "b": 16,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/07-UR-3-跌落保护-行动后.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/07-UR-3-跌落保护-行动后.txt",
+  "a": 2,
+  "b": 5,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act47side-未许之地/07-UR-3-跌落保护-行动后.txt",
+  "a": 6,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/08-UR-4-晴空湍流-行动前.txt",
+  "a": 0,
+  "b": 21,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/09-UR-4-晴空湍流-行动后.txt",
+  "a": 0,
+  "b": 12,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/10-UR-ST-2-试飞日-幕间.txt",
+  "a": 0,
+  "b": 25,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/11-UR-5-注目礼-行动前.txt",
+  "a": 0,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/12-UR-5-注目礼-行动后.txt",
+  "a": 0,
+  "b": 20,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/13-UR-6-交叉航线-行动前.txt",
+  "a": 0,
+  "b": 24,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/14-UR-6-交叉航线-行动后.txt",
+  "a": 0,
+  "b": 15,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/15-UR-7-停机坪-行动前.txt",
+  "a": 0,
+  "b": 8,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/15-UR-7-停机坪-行动前.txt",
+  "a": 9,
+  "b": 9,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act47side-未许之地/15-UR-7-停机坪-行动前.txt",
+  "a": 10,
+  "b": 16,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/16-UR-7-停机坪-行动后.txt",
+  "a": 0,
+  "b": 28,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/16-UR-7-停机坪-行动后.txt",
+  "a": 29,
+  "b": 29,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act47side-未许之地/16-UR-7-停机坪-行动后.txt",
+  "a": 30,
+  "b": 30,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/17-UR-8-栖脚地-行动前.txt",
+  "a": 0,
+  "b": 57,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/18-UR-8-栖脚地-行动后.txt",
+  "a": 0,
+  "b": 35,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/19-UR-ST-3-复航-幕间.txt",
+  "a": 0,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "act47side-未许之地/19-UR-ST-3-复航-幕间.txt",
+  "a": 18,
+  "b": 24,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "act47side-未许之地/19-UR-ST-3-复航-幕间.txt",
+  "a": 25,
+  "b": 28,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "memory-干员密录/卡夫卡密录(提及缪尔赛思)-许以秘密.txt",
+  "a": 0,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "memory-干员密录/塞雷娅密录(提及缪尔赛思)-沃土.txt",
+  "a": 0,
+  "b": 28,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "memory-干员密录/星源密录(提及缪尔赛思)-谢拉格假期.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "memory-干员密录/星源密录(提及缪尔赛思)-谢拉格假期.txt",
+  "a": 3,
+  "b": 33,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "memory-干员密录/缪尔赛思-无根之雨-无根之雨.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "memory-干员密录/缪尔赛思-无根之雨-无根之雨.txt",
+  "a": 1,
+  "b": 23,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act15mini-眠于树影之中-ST-未见之景-幕间.txt",
+  "a": 0,
+  "b": 28,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act15mini-眠于树影之中-ST-沉于冰寒-幕间.txt",
+  "a": 0,
+  "b": 37,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act15mini-眠于树影之中-ST-终有一日-幕间.txt",
+  "a": 0,
+  "b": 38,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-8-极限时速-行动后.txt",
+  "a": 0,
+  "b": 33,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-8-极限时速-行动后.txt",
+  "a": 34,
+  "b": 35,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-8-极限时速-行动后.txt",
+  "a": 36,
+  "b": 45,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-ST-3-终点站-幕间.txt",
+  "a": 0,
+  "b": 31,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-ST-3-终点站-幕间.txt",
+  "a": 32,
+  "b": 32,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act30side-银心湖列车-RS-ST-3-终点站-幕间.txt",
+  "a": 33,
+  "b": 45,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act34side-生路-BP-ST-3-歧路者与同行者-幕间.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act34side-生路-BP-ST-3-歧路者与同行者-幕间.txt",
+  "a": 5,
+  "b": 7,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act34side-生路-BP-ST-3-歧路者与同行者-幕间.txt",
+  "a": 8,
+  "b": 26,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act43side-红丝绒-AD-ST-3-致观众-幕间.txt",
+  "a": 0,
+  "b": 19,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-1-呼号声中-行动前.txt",
+  "a": 0,
+  "b": 21,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-1-呼号声中-行动后.txt",
+  "a": 0,
+  "b": 16,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-1-呼号声中-行动后.txt",
+  "a": 17,
+  "b": 17,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-2-甜蜜的邻人-行动前.txt",
+  "a": 0,
+  "b": 31,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-5-雪夜独行-行动前.txt",
+  "a": 0,
+  "b": 13,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-5-雪夜独行-行动前.txt",
+  "a": 14,
+  "b": 22,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-5-雪夜独行-行动后.txt",
+  "a": 0,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-6-绿翡翠-行动前.txt",
+  "a": 0,
+  "b": 37,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-6-绿翡翠-行动后.txt",
+  "a": 0,
+  "b": 18,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-ST-1-崩落-幕间.txt",
+  "a": 0,
+  "b": 26,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-ST-4-“降临”-幕间.txt",
+  "a": 0,
+  "b": 19,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-ST-4-“降临”-幕间.txt",
+  "a": 20,
+  "b": 24,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/act46side-雪山降临1101-OS-ST-4-“降临”-幕间.txt",
+  "a": 25,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act4d0-战地秘闻-ST-北极星-幕间.txt",
+  "a": 0,
+  "b": 23,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act7d5-午间逸话-ST-日记本-幕间.txt",
+  "a": 0,
+  "b": 27,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act8mini-如我所见-ST-我不曾怀揣希望-幕间.txt",
+  "a": 0,
+  "b": 52,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/act8mini-如我所见-ST-我无惧前路何往-幕间.txt",
+  "a": 0,
+  "b": 22,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/activities-act38d1-guide-guide_act38d1_entry.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-challenge-challenge_rogue_3_1_1.txt",
+  "a": 0,
+  "b": 1,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-endbook-endbook_rogue_3_1_1.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-endbook-endbook_rogue_3_4_1.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-endbook-endbook_rogue_3_4_3.txt",
+  "a": 0,
+  "b": 2,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-endbook-endbook_rogue_3_4_3.txt",
+  "a": 3,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-endbook-endbook_rogue_3_4_3.txt",
+  "a": 4,
+  "b": 5,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-monthrecord-month_record_rogue_3_6_1.txt",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-monthrecord-month_record_rogue_3_6_1.txt",
+  "a": 1,
+  "b": 2,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-monthrecord-month_record_rogue_3_6_2.txt",
+  "a": 0,
+  "b": 4,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-monthrecord-month_record_rogue_3_6_3.txt",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "mentions-零散提及/obt-rogue-rogue_3-monthrecord-month_record_rogue_3_6_3.txt",
+  "a": 4,
+  "b": 4,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "muelsyse/模组故事-梳妆流形",
+  "a": 0,
+  "b": 0,
+  "signal": "ABSENT"
+ },
+ {
+  "file": "muelsyse/模组故事-梳妆流形",
+  "a": 1,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "muelsyse/模组故事-落叶四季",
+  "a": 0,
+  "b": 3,
+  "signal": "PRESENT"
+ },
+ {
+  "file": "muelsyse/模组故事-落叶四季",
+  "a": 4,
+  "b": 4,
+  "signal": "ABSENT"
+ }
+]

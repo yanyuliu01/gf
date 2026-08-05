@@ -1,0 +1,75 @@
+{
+  "build_contract_version": "2",
+  "id_strategy": "prefix + sha256(label,kind,work,file,node,text)[0:16]",
+  "inputs": {
+    "canon_script": {
+      "path": "scripts/build_canon.py",
+      "sha256": "5f54147059643f0534cda1d0cf019215632b91945fa37e70dc3ba53c86bb6d9f"
+    },
+    "chunk_script": {
+      "path": "scripts/chunk.py",
+      "sha256": "a883e0fd83f6a3195264670c0230646b41224b4bb91f92af488cb025666f8fe0"
+    },
+    "chunks": {
+      "path": "work/chunks.jsonl",
+      "sha256": "d95d1678daf83034994e132a2fd824ac8072ccfef9154bf34b5f14ecec6ca6fd"
+    },
+    "facts": {
+      "path": "work/facts.jsonl",
+      "sha256": "e2e56b05a901a4016adf63b58567cea9fbd1ab79173a042d255779ad98d02b70"
+    },
+    "labels": {
+      "path": "work/labels.json",
+      "sha256": "e336dc8ce74211c3e8fe6295a23add2cec25f49c0c0b70a4a56557c93f21feb0"
+    },
+    "source_manifest": {
+      "path": "source-manifest.json",
+      "sha256": "372af91edbe90bf893922a4401a539a02cb2bd500e8e06ed65fe60402ea31c0a"
+    }
+  },
+  "outputs": {
+    "known": {
+      "entries": 104,
+      "path": "canon/canon_known.jsonl",
+      "runtime_safe": 104,
+      "sha256": "520e7709e67065e60e309913f7850550ffcea03a9224fbdcc54d5d02e6feea90"
+    },
+    "self": {
+      "entries": 351,
+      "path": "canon/canon_self.jsonl",
+      "runtime_safe": 284,
+      "sha256": "b8943bc52ef40792ec084ac8cc15a639a5a154030e53e269c893dc60cdf3b465"
+    },
+    "stats": {
+      "path": "canon/stats.md",
+      "sha256": "7401b7f4d8361da3828f46b08c4004007bb3033ade4fe063c034fb7fada9ba27"
+    },
+    "world": {
+      "entries": 2303,
+      "path": "canon/canon_world.jsonl",
+      "runtime_safe": 2129,
+      "sha256": "b5e519a822ba79b9f57f3eae6c9a425f6f08fd265913f50e043b408a49e12e68"
+    }
+  },
+  "runtime_text_contract": "only entries with runtime_safe=true and non-null role_safe_text may enter role context",
+  "schema_version": "1.0",
+  "source_snapshot": {
+    "collected_on": "2026-08-04",
+    "dataset": "ArknightsGameData",
+    "extraction_scope": [
+      "act15d0",
+      "act19side",
+      "act25side",
+      "act47side",
+      "selected memory and mention scripts",
+      "Muelsyse profile, voice, and module records",
+      "Rhine Lab related operator profiles"
+    ],
+    "integrity_status": "unverified_unpinned_snapshot",
+    "repository": "https://github.com/Kengxxiao/ArknightsGameData",
+    "requested_ref": "master",
+    "resolved_commit": null,
+    "schema_version": "1.0",
+    "warning": "The original resolved Git commit was not recorded at collection time. Treat raw data as a local snapshot; do not claim byte-for-byte upstream reproducibility until a commit or archive hash is backfilled."
+  }
+}

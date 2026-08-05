@@ -1,0 +1,73 @@
+{
+  "_doc": "视角分拣标注（人工判定，2026-08-04）。default 适用未被 ranges 覆盖的块；未列出的文件整体 canon_world。range 含两端。判定依据见 work/sorting-notes.md",
+  "files": {
+    "act15d0-孤岛风云/01-MB-1-密会-行动前.txt": {"default": "world", "self": [[1, 15]], "known": [[16, 20]]},
+    "act15d0-孤岛风云/02-MB-1-密会-行动后.txt": {"default": "known"},
+    "act15d0-孤岛风云/03-MB-2-另一个视角-行动前.txt": {"default": "self"},
+    "act15d0-孤岛风云/04-MB-2-另一个视角-行动后.txt": {"default": "known"},
+    "act15d0-孤岛风云/05-MB-3-首次遇袭-行动前.txt": {"default": "known", "self": [[0, 13]]},
+    "act15d0-孤岛风云/06-MB-3-首次遇袭-行动后.txt": {"default": "known", "self": [[2, 3]]},
+    "act15d0-孤岛风云/07-MB-ST-1-邀请-幕间.txt": {"default": "self", "known": [[8, 10]]},
+    "act15d0-孤岛风云/08-MB-4-勇敢，莽撞-行动前.txt": {"default": "world"},
+    "act15d0-孤岛风云/09-MB-4-勇敢，莽撞-行动后.txt": {"default": "world"},
+    "act15d0-孤岛风云/10-MB-5-危险交易-行动前.txt": {"default": "self"},
+    "act15d0-孤岛风云/11-MB-5-危险交易-行动后.txt": {"default": "known"},
+    "act15d0-孤岛风云/12-MB-6-制定计划-行动前.txt": {"default": "known", "self": [[0, 3]]},
+    "act15d0-孤岛风云/13-MB-6-制定计划-行动后.txt": {"default": "self"},
+    "act15d0-孤岛风云/14-MB-7-背叛-行动前.txt": {"default": "known", "self": [[0, 0]]},
+    "act15d0-孤岛风云/15-MB-7-背叛-行动后.txt": {"default": "known"},
+    "act15d0-孤岛风云/16-MB-8-激战之末-行动前.txt": {"default": "known"},
+    "act15d0-孤岛风云/17-MB-8-激战之末-行动后.txt": {"default": "known"},
+    "act15d0-孤岛风云/18-MB-ST-2-正确的代价-幕间.txt": {"default": "self", "world": [[18, 18]]},
+
+    "act19side-绿野幻梦/01-DV-ST-1-逆行-幕间.txt": {"default": "world", "self": [[1, 7]]},
+    "act19side-绿野幻梦/05-DV-2-拓荒者小屋-行动后.txt": {"default": "world"},
+    "act19side-绿野幻梦/09-DV-4-无人的小巷-行动后.txt": {"default": "world", "self": [[0, 3]]},
+    "act19side-绿野幻梦/10-DV-5-多萝西的承诺-行动前.txt": {"default": "world", "self": [[0, 3]]},
+    "act19side-绿野幻梦/13-DV-6-挣脱美梦-行动前.txt": {"default": "world", "self": [[5, 5], [14, 17]]},
+    "act19side-绿野幻梦/15-DV-7-疯狂的信号-行动前.txt": {"default": "world", "self": [[0, 3]]},
+    "act19side-绿野幻梦/17-DV-7-疯狂的信号-行动后.txt": {"default": "world", "self": [[0, 4], [9, 10], [17, 18]]},
+    "act19side-绿野幻梦/18-DV-8-连接内心-行动前.txt": {"default": "world", "self": [[5, 7]]},
+    "act19side-绿野幻梦/20-DV-ST-2-启程-幕间.txt": {"default": "world", "self": [[10, 11]]},
+
+    "act25side-孤星/01-CW-ST-1-阴云密布-幕间.txt": {"default": "world", "self": [[19, 23]]},
+    "act25side-孤星/02-CW-1-迷雾重重-行动前.txt": {"default": "world", "self": [[1, 3]]},
+    "act25side-孤星/05-CW-2-无迹可寻-行动后.txt": {"default": "world", "self": [[16, 16], [21, 22]]},
+    "act25side-孤星/06-CW-3-台前幕后-行动前.txt": {"default": "world", "self": [[3, 4]]},
+    "act25side-孤星/07-CW-3-台前幕后-行动后.txt": {"default": "world", "self": [[2, 2]]},
+    "act25side-孤星/08-CW-ST-2-一波未平-幕间.txt": {"default": "world", "self": [[28, 31]]},
+    "act25side-孤星/09-CW-4-一波又起-行动前.txt": {"default": "world", "self": [[1, 3], [9, 13]]},
+    "act25side-孤星/10-CW-4-一波又起-行动后.txt": {"default": "world", "self": [[18, 19]]},
+    "act25side-孤星/11-CW-5-柳暗花明-行动前.txt": {"default": "world", "self": [[15, 29]]},
+    "act25side-孤星/12-CW-5-柳暗花明-行动后.txt": {"default": "world", "self": [[25, 26]]},
+    "act25side-孤星/13-CW-6-群英荟萃-行动前.txt": {"default": "world", "self": [[19, 23]]},
+    "act25side-孤星/14-CW-6-群英荟萃-行动后.txt": {"default": "world", "self": [[1, 2], [8, 14], [21, 21]]},
+    "act25side-孤星/21-CW-10-散于星辰之间-行动前.txt": {"default": "world", "self": [[6, 18]]},
+    "act25side-孤星/23-CW-ST-3-留下的人-幕间.txt": {"default": "world", "self": [[9, 16], [69, 78]]},
+    "act25side-孤星/24-CW-ST-4-推开未来之门-幕间.txt": {"default": "world", "self": [[3, 7]]},
+
+    "act47side-未许之地/07-UR-3-跌落保护-行动后.txt": {"default": "world", "self": [[2, 4]]},
+    "act47side-未许之地/19-UR-ST-3-复航-幕间.txt": {"default": "world", "self": [[18, 24]]},
+
+    "memory-干员密录/缪尔赛思-无根之雨-无根之雨.txt": {"default": "self"},
+    "memory-干员密录/星源密录(提及缪尔赛思)-谢拉格假期.txt": {"default": "world", "self": [[0, 2]]},
+
+    "mentions-零散提及/act30side-银心湖列车-RS-8-极限时速-行动后.txt": {"default": "world", "self": [[34, 35]]},
+    "mentions-零散提及/act30side-银心湖列车-RS-ST-3-终点站-幕间.txt": {"default": "world", "self": [[32, 32]]},
+    "mentions-零散提及/act34side-生路-BP-ST-3-歧路者与同行者-幕间.txt": {"default": "world", "self": [[5, 7]]},
+    "mentions-零散提及/act46side-雪山降临1101-OS-1-呼号声中-行动后.txt": {"default": "world", "self": [[0, 16]]},
+    "mentions-零散提及/act46side-雪山降临1101-OS-5-雪夜独行-行动前.txt": {"default": "world", "self": [[14, 22]]},
+    "mentions-零散提及/act46side-雪山降临1101-OS-ST-4-“降临”-幕间.txt": {"default": "world", "self": [[20, 24]]},
+
+    "muelsyse/模组故事-梳妆流形": {"default": "self"},
+    "muelsyse/模组故事-落叶四季": {"default": "self"}
+  },
+  "file_notes": {
+    "act15d0-孤岛风云": "框架叙事：她包场酒吧听赫默/梅尔复盘曼斯菲尔德越狱。框架内她在场=self；狱中戏=向她转述的事件内容=known；梅尔↔赫默的私下交谈(08/09)她未闻=world",
+    "mentions-零散提及/obt-rogue": "集成战略语境（假想/模拟），一律 world 且标 hypothetical=true，不作既定事实",
+    "act25side-孤星/14-CW-6-群英荟萃-行动后.txt#21": "发射前蒙太奇块，含迷迭香/洛肯他处切镜少量混入，保留因含她对克丽斯腾的告别台词",
+    "act25side-孤星/01-CW-ST-1-阴云密布-幕间.txt#19": "块首含一行监狱场景切镜（布莱克），可忽略",
+    "act19side-绿野幻梦/09#0-3": "她被困于动力甲内的亲身经历（窒息、被塞雷娅击中），后文博士点破「你好，缪尔赛思」",
+    "act47side-未许之地/07#2-4": "她人在谢拉格，以水分身赴特里蒙给娜斯提送行——本人亲历（远程）"
+  }
+}

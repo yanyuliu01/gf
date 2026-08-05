@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/patch-op.schema.json",
+  "title": "State patch proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "op_id",
+    "target",
+    "path",
+    "op",
+    "source_refs",
+    "cause_event_ids",
+    "expected_state_revision"
+  ],
+  "properties": {
+    "op_id": { "$ref": "common.schema.json#/$defs/id" },
+    "target": {
+      "enum": ["world_state", "thread", "persona", "inventory", "debt"]
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "op": { "enum": ["add", "replace", "retire", "close"] },
+    "value": {},
+    "claim_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 16,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+    },
+    "cause_event_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "expected_state_revision": { "type": "integer", "minimum": 0 },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "op": { "enum": ["add", "replace"] } } },
+      "then": { "required": ["value"] }
+    },
+    {
+      "if": { "properties": { "op": { "const": "retire" } } },
+      "then": { "properties": { "value": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "op": { "const": "close" } } },
+      "then": {
+        "required": ["value"],
+        "properties": {
+          "value": { "enum": ["repaid", "cancelled", "expired", "resolved"] }
+        }
+      }
+    }
+  ]
+}

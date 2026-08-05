@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/world-event.schema.json",
+  "title": "WorldEvent envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "origin",
+    "kind",
+    "occurred_at",
+    "received_at",
+    "provenance",
+    "privacy_scope",
+    "idempotency_key",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "event_id": { "$ref": "common.schema.json#/$defs/id" },
+    "origin": {
+      "enum": ["user", "system", "impulse", "scheduled", "genesis", "admin"]
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "channel": {
+      "type": ["string", "null"],
+      "maxLength": 80
+    },
+    "occurred_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+    "received_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+    "world_day": { "type": ["integer", "null"], "minimum": 0 },
+    "world_phase": {
+      "type": ["string", "null"],
+      "enum": ["dawn", "morning", "noon", "afternoon", "evening", "night", null]
+    },
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "privacy_scope": { "$ref": "common.schema.json#/$defs/privacyScope" },
+    "causation_event_id": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "correlation_id": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "origin": { "const": "system" } } },
+      "then": {
+        "properties": {
+          "provenance": {
+            "required": ["principal_id", "connector_id", "trust"],
+            "properties": {
+              "connector_id": { "$ref": "common.schema.json#/$defs/id" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "im.message.received" } } },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "message-payload.schema.json" }
+        }
+      }
+    }
+  ]
+}

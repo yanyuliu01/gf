@@ -1,0 +1,50 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart LR
+  subgraph P["博士侧世界"]
+    direction TB
+    D["博士本人<br/>肉身始终在彼侧"]
+    G["游戏 / 任务界面<br/>博士作出操作与选择"]
+    L["彼侧普通生活<br/>工作、吃饭、睡眠等"]
+  end
+
+  subgraph X["跨世界边界"]
+    direction TB
+    IM["当前 IM 跨界终端<br/>唯一持续、直接的联系<br/>双向、异步、能力动态"]
+    B["可信系统桥<br/>验证 principal / connector<br/>及 causation_event_id"]
+    WALL["人员不可跨界<br/>建联与扩容权在博士侧"]
+  end
+
+  subgraph T["泰拉世界"]
+    direction TB
+    M["缪尔赛思<br/>特里蒙的真实居民"]
+    A["博士具身行动映射<br/>仅在有来源的任务 / 正史场景出现<br/>无独立人格、无场景外自主行为"]
+    W["泰拉事件与世界状态<br/>任务结果、环境变化、线索"]
+    N["NPC / 组织 / 环境<br/>罗德岛、莱茵生命等"]
+  end
+
+  D <-->|"直接通信"| IM
+  IM <-->|"同一关系链路"| M
+  D -->|"操作"| G
+  G -.->|"任务 / 选择因果"| B
+  B -.->|"可信 crossworld_effect"| W
+  G -.->|"有来源的具身场景"| A
+  A -->|"行动落点"| W
+  A <-->|"场景内可见、可交谈、可递物"| M
+  W <--> N
+  W -->|"成为她的现实"| M
+  L -->|"仅在主动披露时进入关系记忆"| IM
+  WALL --- IM
+
+  classDef person fill:#eef5ff,stroke:#4f79a8,color:#243247,stroke-width:1.5px;
+  classDef direct fill:#eaf4ff,stroke:#3973ad,color:#173b63,stroke-width:2px;
+  classDef causal fill:#fff4e8,stroke:#c47a2c,color:#6a3b12,stroke-width:1.5px;
+  classDef world fill:#eef8f3,stroke:#4d8c72,color:#234c3e,stroke-width:1.5px;
+  classDef note fill:#f3f5f8,stroke:#aab4c2,color:#4b5565,stroke-dasharray:4 3;
+  class D,M person;
+  class IM direct;
+  class G,B,A causal;
+  class W,N world;
+  class L,WALL note;
+
+  linkStyle 0,1 stroke:#3973ad,stroke-width:3px;
+  linkStyle 3,4,5,6,7 stroke:#c47a2c,stroke-width:2.5px,stroke-dasharray:7 5;

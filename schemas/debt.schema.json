@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/debt.schema.json",
+  "title": "Reply debt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "debt_id",
+    "promise_text",
+    "source_refs",
+    "created_at",
+    "privacy_scope",
+    "status",
+    "attempts"
+  ],
+  "properties": {
+    "debt_id": { "$ref": "common.schema.json#/$defs/id" },
+    "promise_text": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+    "privacy_scope": { "$ref": "common.schema.json#/$defs/privacyScope" },
+    "due_at": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "status": { "enum": ["open", "repaid", "cancelled", "expired"] },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "repaid_by_event_id": {
+      "anyOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "repaid" } } },
+      "then": {
+        "required": ["repaid_by_event_id"],
+        "properties": {
+          "repaid_by_event_id": { "$ref": "common.schema.json#/$defs/id" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["open", "cancelled", "expired"] } } },
+      "then": {
+        "properties": { "repaid_by_event_id": { "type": "null" } }
+      }
+    }
+  ]
+}

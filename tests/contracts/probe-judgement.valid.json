@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "operation_id": "op_probe_0001",
+  "probe_id": "probe_0001",
+  "pair_id": "pair_0001",
+  "input_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "verdicts": [
+    { "aspect": 1, "winner": "tie", "evidence_a": "无可引用片段", "evidence_b": "无可引用片段", "reason": "证据不足" },
+    { "aspect": 2, "winner": "tie", "evidence_a": "无可引用片段", "evidence_b": "无可引用片段", "reason": "证据不足" },
+    { "aspect": 3, "winner": "tie", "evidence_a": "无可引用片段", "evidence_b": "无可引用片段", "reason": "证据不足" },
+    { "aspect": 4, "winner": "tie", "evidence_a": "无可引用片段", "evidence_b": "无可引用片段", "reason": "证据不足" },
+    { "aspect": 5, "winner": "tie", "evidence_a": "无可引用片段", "evidence_b": "无可引用片段", "reason": "证据不足" }
+  ],
+  "notable_differences": [],
+  "drift_flags": { "A": [], "B": [] },
+  "hard_violations": { "A": [], "B": [] }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "dataset": "ArknightsGameData",
+  "repository": "https://github.com/Kengxxiao/ArknightsGameData",
+  "requested_ref": "master",
+  "resolved_commit": null,
+  "collected_on": "2026-08-04",
+  "integrity_status": "unverified_unpinned_snapshot",
+  "extraction_scope": [
+    "act15d0",
+    "act19side",
+    "act25side",
+    "act47side",
+    "selected memory and mention scripts",
+    "Muelsyse profile, voice, and module records",
+    "Rhine Lab related operator profiles"
+  ],
+  "warning": "The original resolved Git commit was not recorded at collection time. Treat raw data as a local snapshot; do not claim byte-for-byte upstream reproducibility until a commit or archive hash is backfilled."
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "operation_id": "op_memory_0001",
+  "batch_id": "batch_memory_0001",
+  "input_fingerprint": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "processed_event_ids": ["evt_memory_0001", "evt_memory_0002", "evt_memory_0003"],
+  "derived_memories": [
+    {
+      "memory_id": "op_memory_0001:memory:01",
+      "namespace": "observed",
+      "memory_kind": "relationship",
+      "text": "博士连续两次提到彼侧的雨天。",
+      "source_refs": [
+        { "source_type": "event", "source_id": "evt_memory_0001" },
+        { "source_type": "event", "source_id": "evt_memory_0002" }
+      ],
+      "valence": 0.1,
+      "involves": ["doctor", "muelsyse"],
+      "period_start": "2026-08-04T10:00:00+08:00",
+      "period_end": "2026-08-05T10:00:00+08:00",
+      "epistemic_status": "reported",
+      "privacy_scope": "private_im",
+      "crossworld_claim_refs": []
+    }
+  ],
+  "kept_as_is": ["evt_memory_0003"],
+  "excluded_from_retrieval": []
+}

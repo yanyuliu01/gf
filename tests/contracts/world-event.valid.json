@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "event_id": "evt_user_0001",
+  "origin": "user",
+  "kind": "im.message.received",
+  "channel": "private_im",
+  "occurred_at": "2026-08-05T10:00:00+08:00",
+  "received_at": "2026-08-05T10:00:01+08:00",
+  "world_day": null,
+  "world_phase": null,
+  "provenance": {
+    "principal_id": "doctor",
+    "connector_id": "im_bridge",
+    "external_event_id": "provider_msg_42",
+    "trust": "authenticated"
+  },
+  "privacy_scope": "private_im",
+  "causation_event_id": null,
+  "correlation_id": "conversation_01",
+  "idempotency_key": "im_bridge:provider_msg_42",
+  "payload": {
+    "message_id": "msg_0001",
+    "sender_principal_id": "doctor",
+    "content": [
+      {
+        "type": "text",
+        "text": "今天这边下雨了。"
+      }
+    ]
+  }
+}

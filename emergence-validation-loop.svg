@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1100" viewBox="0 0 1900 1100" role="img" aria-labelledby="title desc">
+  <title id="title">GF 最小涌现式陪伴验证闭环</title>
+  <desc id="desc">NPC 请求与既有承诺冲突，经事实和有限信念、合法候选过滤、局部仲裁、世界裁决、原子提交、信念变化、联系决策与博士回应，影响数小时或数天后的选择；同时与同模型 Prompt 加记忆基线比较。</desc>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#718096"/></marker>
+    <marker id="arr-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#4f79a8"/></marker>
+    <marker id="arr-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#4d8c72"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="135%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#26364a" flood-opacity=".08"/></filter>
+    <style>
+      .title{font:600 36px "Microsoft YaHei","Segoe UI",sans-serif;fill:#1f2f43}
+      .subtitle{font:400 17px "Microsoft YaHei","Segoe UI",sans-serif;fill:#627086}
+      .lane{font:600 14px "Microsoft YaHei","Segoe UI",sans-serif;fill:#657287;letter-spacing:.08em}
+      .step{font:600 18px "Microsoft YaHei","Segoe UI",sans-serif;fill:#213247}
+      .copy{font:400 13.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#536176}
+      .small{font:400 12.5px "Microsoft YaHei","Segoe UI",sans-serif;fill:#657287}
+      .pill{font:600 13px "Microsoft YaHei","Segoe UI",sans-serif;fill:#4d5c70}
+      .input{fill:#eef5ff;stroke:#4f79a8;stroke-width:1.7}
+      .decision{fill:#fff4e8;stroke:#c47a2c;stroke-width:1.7}
+      .commit{fill:#eef8f3;stroke:#4d8c72;stroke-width:1.7}
+      .validate{fill:#f3f5f8;stroke:#929eae;stroke-width:1.6}
+    </style>
+  </defs>
+
+  <rect width="1900" height="1100" fill="#f7f9fc"/>
+  <text x="58" y="62" class="title">最小涌现式陪伴验证闭环</text>
+  <text x="58" y="94" class="subtitle">生命感不是事件数量：一次有代价的选择，必须穿过事实、承诺、裁决、联系和后续生活。</text>
+
+  <text x="58" y="146" class="lane">世界中的冲突与选择</text>
+  <line x1="230" y1="141" x2="1840" y2="141" stroke="#d8e0ea" stroke-width="1.5"/>
+
+  <rect x="55" y="175" width="300" height="170" rx="18" class="input" filter="url(#shadow)"/>
+  <text x="205" y="215" text-anchor="middle" class="step">① NPC 请求</text>
+  <text x="205" y="250" text-anchor="middle" class="copy">与一项已存在的承诺冲突</text>
+  <text x="205" y="278" text-anchor="middle" class="copy">NPC 有自己的目标与有限知识</text>
+  <text x="205" y="306" text-anchor="middle" class="small">请求、承诺都有 source refs</text>
+
+  <rect x="420" y="175" width="300" height="170" rx="18" class="input" filter="url(#shadow)"/>
+  <text x="570" y="215" text-anchor="middle" class="step">② 事实 / 信念快照</text>
+  <text x="570" y="250" text-anchor="middle" class="copy">事件账本持有客观事实</text>
+  <text x="570" y="278" text-anchor="middle" class="copy">她与 NPC 只能读各自可见信息</text>
+  <text x="570" y="306" text-anchor="middle" class="small">误解可以存在，但不能冒充事实</text>
+
+  <rect x="785" y="175" width="300" height="170" rx="18" class="decision" filter="url(#shadow)"/>
+  <text x="935" y="215" text-anchor="middle" class="step">③ 合法候选过滤</text>
+  <text x="935" y="250" text-anchor="middle" class="copy">物理 · 权限 · 资源 · 能力</text>
+  <text x="935" y="278" text-anchor="middle" class="copy">重大价值与跨世界边界</text>
+  <text x="935" y="306" text-anchor="middle" class="small">非法候选不进入“偏好比较”</text>
+
+  <rect x="1150" y="175" width="320" height="170" rx="18" class="decision" filter="url(#shadow)"/>
+  <text x="1310" y="215" text-anchor="middle" class="step">④ 局部仲裁</text>
+  <text x="1310" y="250" text-anchor="middle" class="copy">关切 · 承诺 · appraisal · 情绪</text>
+  <text x="1310" y="278" text-anchor="middle" class="copy">显式机会成本与被牺牲事项</text>
+  <text x="1310" y="306" text-anchor="middle" class="small">无全局 Utility；随机只打破近似平局</text>
+
+  <rect x="1535" y="175" width="310" height="170" rx="18" class="decision" filter="url(#shadow)"/>
+  <text x="1690" y="215" text-anchor="middle" class="step">⑤ World Engine 裁决</text>
+  <text x="1690" y="250" text-anchor="middle" class="copy">把意图解释为世界动作</text>
+  <text x="1690" y="278" text-anchor="middle" class="copy">组织、他人、资源与环境产生代价</text>
+  <text x="1690" y="306" text-anchor="middle" class="small">LLM 只提议，不能写事实</text>
+
+  <path d="M355 260 L420 260" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M720 260 L785 260" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M1085 260 L1150 260" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M1470 260 L1535 260" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+
+  <text x="58" y="422" class="lane">提交、认知与联系</text>
+  <line x1="205" y1="417" x2="1840" y2="417" stroke="#d8e0ea" stroke-width="1.5"/>
+
+  <rect x="55" y="455" width="300" height="170" rx="18" class="input" filter="url(#shadow)"/>
+  <text x="205" y="495" text-anchor="middle" class="step">⑩ 当前 IM 联系博士</text>
+  <text x="205" y="530" text-anchor="middle" class="copy">唯一持续、直接的跨界纽带</text>
+  <text x="205" y="558" text-anchor="middle" class="copy">博士回应先成为 observed 社会证据</text>
+  <text x="205" y="586" text-anchor="middle" class="small">普通彼侧生活仍不改写泰拉</text>
+
+  <rect x="420" y="455" width="300" height="170" rx="18" class="commit" filter="url(#shadow)"/>
+  <text x="570" y="495" text-anchor="middle" class="step">⑨ 统一通信计划</text>
+  <text x="570" y="530" text-anchor="middle" class="copy">同 intent / state / source closure</text>
+  <text x="570" y="558" text-anchor="middle" class="copy">文本、语音、图像只做渲染</text>
+  <text x="570" y="586" text-anchor="middle" class="small">媒体失败回流并安全降级</text>
+
+  <rect x="785" y="455" width="300" height="170" rx="18" class="decision" filter="url(#shadow)"/>
+  <text x="935" y="495" text-anchor="middle" class="step">⑧ 是否联系博士？</text>
+  <text x="935" y="530" text-anchor="middle" class="copy">联系与沉默都是合法结果</text>
+  <text x="935" y="558" text-anchor="middle" class="copy">若联系，必须先有明确目的</text>
+  <text x="935" y="586" text-anchor="middle" class="small">响应率不进入角色 Utility</text>
+
+  <rect x="1150" y="455" width="320" height="170" rx="18" class="commit" filter="url(#shadow)"/>
+  <text x="1310" y="495" text-anchor="middle" class="step">⑦ 认知与计划变化</text>
+  <text x="1310" y="530" text-anchor="middle" class="copy">信念、安排、关系证据被更新</text>
+  <text x="1310" y="558" text-anchor="middle" class="copy">人格变化仍需 cause 与限速</text>
+  <text x="1310" y="586" text-anchor="middle" class="small">代价不会在下一轮自动消失</text>
+
+  <rect x="1535" y="455" width="310" height="170" rx="18" class="commit" filter="url(#shadow)"/>
+  <text x="1690" y="495" text-anchor="middle" class="step">⑥ 原子提交</text>
+  <text x="1690" y="530" text-anchor="middle" class="copy">event / claim / commitment / patch</text>
+  <text x="1690" y="558" text-anchor="middle" class="copy">StateManager 校验 revision 与来源</text>
+  <text x="1690" y="586" text-anchor="middle" class="small">结果可重放，失败不部分落账</text>
+
+  <path d="M1690 345 L1690 455" fill="none" stroke="#4d8c72" stroke-width="2.6" marker-end="url(#arr-green)"/>
+  <path d="M1535 540 L1470 540" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M1150 540 L1085 540" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M785 540 L720 540" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+  <path d="M420 540 L355 540" fill="none" stroke="#718096" stroke-width="2.4" marker-end="url(#arr)"/>
+
+  <rect x="285" y="700" width="1330" height="105" rx="20" class="commit" filter="url(#shadow)"/>
+  <text x="950" y="741" text-anchor="middle" class="step">数小时或数天后的生活再次触发选择</text>
+  <text x="950" y="774" text-anchor="middle" class="copy">同一 NPC、承诺、资源或博士回应在后续世界事件中留下可观察差异；没有“剧情用完即清零”。</text>
+
+  <path d="M205 625 C205 675 330 714 330 752" fill="none" stroke="#4f79a8" stroke-width="2.6" marker-end="url(#arr-blue)"/>
+  <path d="M285 752 C120 752 25 680 25 520 L25 125 C25 115 40 110 55 110 L570 110 L570 175" fill="none" stroke="#4d8c72" stroke-width="2.6" marker-end="url(#arr-green)"/>
+  <path d="M935 625 L935 700" fill="none" stroke="#718096" stroke-width="2.2" stroke-dasharray="7 6" marker-end="url(#arr)"/>
+  <text x="952" y="669" class="small">不联系</text>
+
+  <text x="58" y="878" class="lane">证明不是“定时脚本 + 随机文案”</text>
+  <line x1="330" y1="873" x2="1840" y2="873" stroke="#d8e0ea" stroke-width="1.5"/>
+  <rect x="180" y="910" width="1540" height="125" rx="20" class="validate" filter="url(#shadow)"/>
+  <text x="950" y="951" text-anchor="middle" class="step">盲测：完整世界运行时 vs 同模型 Prompt+记忆基线</text>
+  <text x="950" y="984" text-anchor="middle" class="copy">固定初始角色资产、输入事件、检索/截断、采样参数与 token 预算；只移除离线世界推进、承诺裁决和后果状态。</text>
+  <text x="950" y="1012" text-anchor="middle" class="copy">出口：完整方案在跨时因果、承诺兑现、事实一致性与不同状态下的合理差异上稳定胜出。</text>
+
+  <rect x="55" y="1050" width="260" height="30" rx="15" fill="#fff4e8" stroke="#c47a2c"/>
+  <text x="185" y="1070" text-anchor="middle" class="pill">随机不越过硬约束</text>
+  <rect x="335" y="1050" width="260" height="30" rx="15" fill="#eef8f3" stroke="#4d8c72"/>
+  <text x="465" y="1070" text-anchor="middle" class="pill">事实权只在事件账本</text>
+  <rect x="615" y="1050" width="260" height="30" rx="15" fill="#eef5ff" stroke="#4f79a8"/>
+  <text x="745" y="1070" text-anchor="middle" class="pill">联系可以不发生</text>
+  <rect x="895" y="1050" width="260" height="30" rx="15" fill="#f3f5f8" stroke="#929eae"/>
+  <text x="1025" y="1070" text-anchor="middle" class="pill">不优化留存</text>
+  <rect x="1175" y="1050" width="330" height="30" rx="15" fill="#eef8f3" stroke="#4d8c72"/>
+  <text x="1340" y="1070" text-anchor="middle" class="pill">多模态共享同一意图与状态</text>
+  <rect x="1525" y="1050" width="320" height="30" rx="15" fill="#fff4e8" stroke="#c47a2c"/>
+  <text x="1685" y="1070" text-anchor="middle" class="pill">复杂度不等于事件数量</text>
+</svg>
