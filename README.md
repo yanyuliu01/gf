@@ -23,6 +23,7 @@ gf/
     ├── 10-crossworld-protocol-v1.md        ← 跨世界本体与通信协议
     ├── 11-repair-plan-v1.md                ← M0 修复路线与验收门
     ├── 12-supplement-integration-review-v1.md ← 补充方案融合裁决
+    ├── 13-memory-affect-hybrid-architecture-v1.md ← 可拆卸记忆 + Affect Utility 架构
     └── archive/     ← 已废弃版本（仅供追溯设计理由）+ 原始下载包
 ├── prompts/         ← 运行 Prompt、manifest、槽位、装配示例与校验约定
 ├── schemas/         ← 运行时 JSON Schema 唯一机器契约
@@ -31,7 +32,9 @@ gf/
 └── corpus/          ← 正史语料、稳定构建脚本、工作产物与 canon 表
 ```
 
-第一次了解项目先读 `PROJECT-OVERVIEW.md` 和四张总览图；要理解本次补充如何并入，读 `docs/12-supplement-integration-review-v1.md`；要做实现则从 `docs/11-repair-plan-v1.md`、`prompts/manifest.yaml`、`schemas/README.md` 与 `migrations/README.md` 开始。运行代码后续建在本目录下的 `src/`，与 docs 平级。
+第一次了解项目先读 `PROJECT-OVERVIEW.md`；M1 基线看原有四张总览图，本次 M2 认知/情绪增量看 `docs/13-memory-affect-hybrid-architecture-v1.md` 和两张新版图。第一轮融合裁决仍保留在 `docs/12-supplement-integration-review-v1.md`；要做实现则从 `docs/11-repair-plan-v1.md`、`prompts/manifest.yaml`、`schemas/README.md` 与 `migrations/README.md` 开始。运行代码后续建在本目录下的 `src/`，与 docs 平级。
+
+新版图：[记忆与 Affect 混合架构](memory-affect-hybrid-architecture-v1.png)（[SVG](memory-affect-hybrid-architecture-v1.svg) / [Mermaid](memory-affect-hybrid-architecture-v1.mmd)）｜[混合运行循环](memory-affect-runtime-loop-v1.png)（[SVG](memory-affect-runtime-loop-v1.svg) / [Mermaid](memory-affect-runtime-loop-v1.mmd)）。原有图均保留为 M1 历史基线，便于对照与回退。
 
 当前跨世界设定以 `docs/10-crossworld-protocol-v1.md` 为语义权威，并由 `prompts/slots/S2-world-v2.md` 落到运行时。游戏内博士是彼侧博士的具身行动映射：可在有来源的任务／正史场景中交互，但没有独立意识，也不是本人肉身穿越。实现交接时：机制给 02、触点给 03、跨世界协议给 10、任务分解给 08、实例数据给 06。
 

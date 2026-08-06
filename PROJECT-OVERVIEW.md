@@ -19,17 +19,19 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 7. 唯一出口：所有出向内容经同一 outbox 与 adapter 投递，不允许旁路。
 8. 不优化留存：指标只用于健康审计，不反馈成诱导用户停留的角色策略。
 9. 事实、信念与承诺分离：事件账本持有事实；角色可以误解；承诺有自己的生命周期，不能从台词中静默消失。
-10. 决策采用局部仲裁：先过物理、权限、能力、资源和重大价值硬约束，再比较相关关切、承诺、情绪 appraisal 与机会成本；不设全局 Utility。
+10. 开放行动、情绪动力与世界裁决分离：Affect Utility 只改变连续情绪、检索显著性与注意，不给动作打总分；LLM 根据 Working Self 直接生成开放行动，World Adjudicator 再按物理、权限、能力、资源和 NPC 意志裁决后果。
 11. 多模态语义守恒：文字、语音、图像从同一 communication plan 渲染，共享 intent、state revision 与 source closure；媒体失败只能安全降级。
 
 ## 架构图
 
+- [记忆与 Affect 混合架构 v1](memory-affect-hybrid-architecture-v1.png)（[SVG](memory-affect-hybrid-architecture-v1.svg) / [Mermaid](memory-affect-hybrid-architecture-v1.mmd)）：展示记忆、appraisal、可拆卸 Affect Utility、Working Self、开放 Policy 与世界裁决的权责边界。
+- [混合运行循环 v1](memory-affect-runtime-loop-v1.png)（[SVG](memory-affect-runtime-loop-v1.svg) / [Mermaid](memory-affect-runtime-loop-v1.mmd)）：展示 `off / shadow / active` 三种模式怎样共享同一个事件、提交与投递闭环。
 - [产品交互架构](product-interaction-architecture.png)（[SVG](product-interaction-architecture.svg) / [Mermaid](product-interaction-architecture.mmd)）：区分 IM 直接通信、游戏任务因果路径和可信系统桥。
-- [技术架构](technical-architecture.png)（[SVG](technical-architecture.svg) / [Mermaid](technical-architecture.mmd)）：展示接入、事件化、Prompt 装配、模型 proposal、校验、状态与投递。
+- [技术架构（M1 基线）](technical-architecture.png)（[SVG](technical-architecture.svg) / [Mermaid](technical-architecture.mmd)）：展示接入、事件化、Prompt 装配、模型 proposal、校验、状态与投递；原文件保留用于回退对照。
 - [运行时事件生命周期](runtime-event-lifecycle.png)（[SVG](runtime-event-lifecycle.svg) / [Mermaid](runtime-event-lifecycle.mmd)）：展示从入站、持久化到事务提交、outbox 投递和场景结算的完整顺序。
 - [最小涌现验证闭环](emergence-validation-loop.png)（[SVG](emergence-validation-loop.svg) / [Mermaid](emergence-validation-loop.mmd)）：展示 NPC 请求、承诺冲突、局部选择、世界裁决、联系目的与跨时后果怎样形成可回放闭环。
 
-每张图同时提供 PNG 预览、可缩放 SVG 和 Mermaid 语义源文件；`scripts/render_architecture_diagrams.js` 可从 SVG 重建 PNG。
+每张图同时提供 PNG 预览、可缩放 SVG 和 Mermaid 语义源文件；`scripts/render_architecture_diagrams.js` 可从 SVG 重建 PNG。原有四张图继续作为 M1 历史基线，不因 M2 增量被覆盖或删除。
 
 ## 建议的代码目录
 
@@ -43,6 +45,9 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
       validation/        # provenance、跨世界、人格归因与状态版本校验
       state/             # StateManager、reducers、事务与 repositories
       memory/            # 检索、压缩、canon 门控与向量索引
+      cognition/         # Working Self 与开放行动 Policy；不依赖 Affect 也可运行
+      affect/            # 可拆卸 appraisal/Utility 动力学；off/shadow/active
+      world/adjudication/# 将开放行动裁决为实际世界后果
       delivery/          # outbox、投递 worker、回执与静默投递
       scheduler/         # phase、scheduled 与 impulse 事件
       observability/     # 日志、指标、拒写审计、dry-run 与 probes
@@ -80,9 +85,10 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 - 跨世界协议：[docs/10-crossworld-protocol-v1.md](docs/10-crossworld-protocol-v1.md)
 - 修复计划：[docs/11-repair-plan-v1.md](docs/11-repair-plan-v1.md)
 - 补充融合决策记录：[docs/12-supplement-integration-review-v1.md](docs/12-supplement-integration-review-v1.md)
+- M2 记忆与 Affect 混合架构：[docs/13-memory-affect-hybrid-architecture-v1.md](docs/13-memory-affect-hybrid-architecture-v1.md)
 - Prompt 调用清单：[prompts/manifest.yaml](prompts/manifest.yaml)
 - 机器契约：[schemas/README.md](schemas/README.md)
 - SQLite 迁移：[migrations/README.md](migrations/README.md)
 - canon 构建清单：[corpus/canon/manifest.json](corpus/canon/manifest.json)
 
-本文和四张图用于快速建立共同理解，不替代上述权威文档；docs/12 是融合决策记录，也不覆盖对应主题权威与机器契约。
+本文和六张图用于快速建立共同理解，不替代上述权威文档；docs/12 是第一轮融合决策记录。docs/13 持有 M2 认知/情绪增量，但不覆盖 docs/02 的 M1 契约、docs/10 的跨世界本体或任何现役机器 Schema。
