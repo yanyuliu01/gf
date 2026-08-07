@@ -114,6 +114,7 @@ def validate_diagrams() -> int:
         "computable-world-architecture-v1",
         "world-interaction-structure-v1",
         "cognitive-wake-token-energy-v1",
+        "cognitive-wake-token-energy-v2",
     )
     for name in names:
         svg = ROOT / f"{name}.svg"

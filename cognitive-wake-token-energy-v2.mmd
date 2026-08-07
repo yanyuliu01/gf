@@ -1,0 +1,79 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph ADMISSION["A. 已提交变化进入主体认知前"]
+    direction LR
+    EVENTS["Committed changes<br/>WorldEvents + state"]
+    AGG["ChangeAggregator"]
+    PERCEPTION["PerceptionProjector"]
+    CANDIDATE["WakeCandidate"]
+    GATE["CognitiveGate · pure TypeScript"]
+    DECISION["ignore / accumulate / wake"]
+    ATTENTION["AttentionContext"]
+    ENERGY[("Numeric cognitive-energy account<br/>engine only")]
+    EVENTS --> AGG --> PERCEPTION --> CANDIDATE --> GATE --> DECISION
+    ATTENTION --> GATE
+    ENERGY --> GATE
+  end
+
+  IGNORE["ignore"]
+  BUFFER["accumulate"]
+  WAKE["wake"]
+  AUDIT[("Wake Audit · includes non-wake<br/>derived, not WorldEvent")]
+  DECISION --> IGNORE
+  DECISION --> BUFFER
+  DECISION --> WAKE
+  DECISION -.-> AUDIT
+  BUFFER -.-> AGG
+
+  subgraph COGNITION["B. 连续精力约束实际能力，Policy 自主形成体验"]
+    direction LR
+    PLANNER["CognitiveBudgetPlanner"]
+    ENVELOPE["CognitiveCapacityEnvelope<br/>engine only; never Prompt"]
+    RESERVE["EnergyReservation proposal"]
+    STATE_MANAGER["StateManager<br/>numeric account writer"]
+    LEASE[("Committed reservation")]
+    EVIDENCE["Lived evidence<br/>CognitiveEpisodeEvidence / sleep / physiology<br/>memory / commitments / current event"]
+    ASSEMBLY["Working Self assembly<br/>mandatory sources first"]
+    POLICY["Open Policy · one call<br/>joint open generation"]
+    ACTION["OpenAction / Surface proposal"]
+    EXPERIENCE["optional free-form<br/>SelfExperienceProposal"]
+    SUBJECTIVE[("subjective derived record<br/>may later become memory")]
+    WAKE --> PLANNER --> RESERVE --> STATE_MANAGER --> LEASE --> ENVELOPE
+    ENERGY --> PLANNER
+    ENVELOPE -.-> ASSEMBLY
+    ENVELOPE --> POLICY
+    EVIDENCE --> ASSEMBLY --> POLICY
+    POLICY --> ACTION --> STATE_MANAGER
+    POLICY --> EXPERIENCE --> STATE_MANAGER
+    STATE_MANAGER --> SUBJECTIVE
+    SUBJECTIVE -.-> EVIDENCE
+  end
+
+  subgraph SETTLEMENT["C. 真实 Usage 结算与恢复"]
+    direction LR
+    RECEIPT["InferenceUsageReceipt"]
+    BREAKDOWN["ExperiencedUsageBreakdown<br/>semantic input + deliberation + expression"]
+    SETTLEMENT_PROPOSAL["Settlement proposal"]
+    RECOVERY["Recovery engine<br/>time + sleep + physiology + activity"]
+    RECEIPT --> BREAKDOWN --> SETTLEMENT_PROPOSAL --> STATE_MANAGER
+    RECOVERY --> STATE_MANAGER
+    STATE_MANAGER --> ENERGY
+  end
+
+  BILLING[("Operator billing audit<br/>price / cache discount / retry / SDK")]
+  RECEIPT -.-> BILLING
+  ISOLATION["No path from billing, counters, envelope, or authored fatigue labels into character Prompt"]
+  BILLING -.-> ISOLATION
+
+  classDef source fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef cognition fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef energy fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef writer fill:#fceef1,stroke:#a64d63,color:#5c2635,stroke-width:3px;
+  classDef derived fill:#f3f5f8,stroke:#7d8998,color:#394455;
+  classDef isolated fill:#ffffff,stroke:#7d8998,color:#394455,stroke-dasharray:6 4;
+  class EVENTS,AGG,PERCEPTION,CANDIDATE,ATTENTION,DECISION,EVIDENCE,ASSEMBLY source;
+  class GATE,WAKE,PLANNER,POLICY,ACTION,EXPERIENCE cognition;
+  class ENERGY,ENVELOPE,RESERVE,LEASE,BREAKDOWN,SETTLEMENT_PROPOSAL,RECOVERY energy;
+  class STATE_MANAGER writer;
+  class IGNORE,BUFFER,AUDIT,RECEIPT,SUBJECTIVE derived;
+  class BILLING,ISOLATION isolated;

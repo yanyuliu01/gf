@@ -27,11 +27,12 @@
 | 14 | `14-owner-input-workbook-v1.md` | Owner 需要补哪些世界规则、Concern、A7、校准与纵向评测 | 待 Owner 填写；输入模板，不持有运行字段权威 |
 | 15 | `15-world-runtime-interaction-rules-draft-v1.md` | 开放行动怎样被时间、移动、流形、NPC 与失败规则裁定 | **交互/裁定层保留草案**；不是可计算世界模型 |
 | 16 | `16-computable-world-model-draft-v1.md` | 资源禀赋、生产过程、容量、生态、组织与离散事件怎样构成可编码世界 | **OWN-001 当前 Owner 评审主草案**；未签字，不持有运行字段权威 |
-| 17 | `17-cognitive-wake-token-energy-v1.md` | 哪些变化唤醒主体、模型 token 怎样结算为认知精力、角色为何看不到数值 | **Owner 方向已确认的 M2 基线增量**；参数与机器契约待冻结 |
+| 17 | `17-cognitive-wake-token-energy-v1.md` | Wake、token 精力账本与人工定性体感投影 | **历史 v1**；账本机制被继承，体感 projector 已由 18 废弃 |
+| 18 | `18-emergent-cognitive-experience-v2.md` | 连续精力怎样真实限制认知，Open Policy 怎样从生活证据形成主观体验 | **当前 M2 权威增量**；Owner 方向已确认，机器契约待冻结 |
 
 `archive/` 存放已被取代的早期版本，仅供追溯设计理由。
 
-**docs 之外的产物**：`../PROJECT-HANDOFF.md`（完整交接入口）、`../TODO.md`（现役项目任务板）、`../AGENTS.md`（编码模型/贡献者约束）、`../corpus/`（A9 正史语料库与 fail-closed 构建管线；数量和构建版本以 stats/manifest 为准）、`../prompts/`（5 个现役调用点与 manifest）、`../schemas/`（唯一机器输出契约）、`../migrations/`（SQLite DDL）。OWN-001 配套图为 `../computable-world-architecture-v1.*`（世界内部组成）和 `../world-interaction-structure-v1.*`（事件、认知、裁定、单写者提交与反馈闭环）；认知准入与精力配套图为 `../cognitive-wake-token-energy-v1.*`。
+**docs 之外的产物**：`../PROJECT-HANDOFF.md`（完整交接入口）、`../TODO.md`（现役项目任务板）、`../AGENTS.md`（编码模型/贡献者约束）、`../corpus/`（A9 正史语料库与 fail-closed 构建管线；数量和构建版本以 stats/manifest 为准）、`../prompts/`（5 个现役调用点与 manifest）、`../schemas/`（唯一机器输出契约）、`../migrations/`（SQLite DDL）。OWN-001 配套图为 `../computable-world-architecture-v1.*` 和 `../world-interaction-structure-v1.*`；当前认知准入与精力图为 `../cognitive-wake-token-energy-v2.*`，v1 图保留用于回退。
 
 ## 权威关系与冲突顺序
 
@@ -46,7 +47,8 @@
 7. 07 是实例机制提案，09 是未定稿语料骨架，08/11 是工作清单；12 是第一轮融合决策记录。它们都不能覆盖对应主题权威或机器 Schema。
 8. 13 持有 M2 的记忆驱动行动、appraisal 与 Affect Utility 增量设计；它不覆盖 02 的 M1 事件、StateManager、来源闭包、事务、Prompt/outbox 契约，也不覆盖 10 的跨世界本体。
 9. 14 是 Owner 填写模板；16 是 `OWN-001` 的可计算世界主草案，15 只保留开放行动的交互/裁定接口。Owner 签字前，三者都不能反向覆盖产品、世界、机制或机器 Schema 权威。根目录 handoff/TODO/AGENTS 只负责交接、进度与工程纪律。
-10. 17 持有 M2 的 Cognitive Gate、token usage 到认知精力的预留/结算、恢复、非数值体感和 billing 隔离；它不让角色读取 token/金额，也不让精力或 Gate 变成行动选择器。
+10. 17 保留 M2 Cognitive Gate、token usage 到认知精力的预留/结算、恢复与 billing 隔离 v1；其中人工 `CognitiveConditionProjector` 不再是当前设计。
+11. 18 在继承 17 账本机制的基础上，持有 engine-only CapacityEnvelope 与 Open Policy 自主形成 SelfExperience 的当前设计；出现冲突时 18 在主观体验主题上优先。
 
 运行 Prompt 是上述权威的**派生产物**，不能靠重复立法、旧示例或 canon 片段反向改写规范。`archive/` 仅供追溯，现役规范不得依赖其中章节才能实现。
 

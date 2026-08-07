@@ -32,6 +32,11 @@ documents still describe the historical finite-candidate M1/M2 design; task
   actor's versioned cognitive-energy resource. Raw token counts, balances,
   percentages, provider prices, and billing limits never enter character
   prompts or surfaces; operator billing cannot masquerade as fatigue.
+- Cognitive energy constrains engine-side context, deliberation, tool, and
+  expression capacity. Do not map account ranges to authored fatigue labels,
+  capability prose, dialogue, or actions. Open Policy may derive an optional,
+  source-linked free-form self-experience from lived evidence; it may be absent,
+  uncertain, or mistaken and never writes the energy account.
 - Cognitive wake decisions are versioned and audited, including non-wake
   outcomes. Audit rows are derived records, not objective WorldEvents.
 - `WorldAdjudicator` determines what actually happens. An action proposal may

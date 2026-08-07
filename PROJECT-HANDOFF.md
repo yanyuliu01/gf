@@ -176,10 +176,12 @@ objective WorldEvent ledger.
 
 On `wake`, the runtime reserves cognitive energy before the model call and
 settles actual experienced semantic input, deliberation, and expression tokens
-afterward. The Policy sees only a qualitative `CognitiveCondition`; exact token
-counts, balances, percentages, prices, and billing caps stay outside the
-character surface. The complete contract is in
-`docs/17-cognitive-wake-token-energy-v1.md`.
+afterward. The hidden account produces an engine-only capacity envelope that
+limits optional context, deliberation, tools, and expression. Policy sees lived
+evidence, not counters, envelope fields, or authored fatigue tiers; it may
+jointly propose an optional free-form self-experience with the open action. The
+current contract is in `docs/18-emergent-cognitive-experience-v2.md`; docs/17 is
+retained as the superseded qualitative-projector design.
 
 ## 6. Detachable Affect Architecture
 
@@ -233,8 +235,14 @@ prompts:
     source closure, and experienced/non-experienced evidence.
 12. `CognitiveEnergyReservationV1` / `SettlementV1`: pre-call capacity lease
     and post-call usage settlement through StateManager.
-13. `CognitiveConditionV1`: non-numeric fatigue/capacity projection allowed in
-    Working Self; it contains no provider, token, balance, or billing fields.
+13. `CognitiveCapacityEnvelopeV2`: engine-only limits for semantic input,
+    deliberation, tools, and expression; it is forbidden from Policy input.
+14. `CognitiveEpisodeEvidenceV2`: source-linked record of accepted reading,
+    deliberation, or expression without token counts, load scores, or fatigue
+    labels; it can serve as lived evidence.
+15. `SelfExperienceProposalV2`: optional source-linked free-form subjective
+    interpretation jointly produced by Open Policy, never an objective fact or
+    energy-account writer.
 
 Finite execution primitives such as `communicate`, `move`, `observe`,
 `interact`, `use_object`, and `wait` are runtime capabilities. They are not a
@@ -256,7 +264,7 @@ The MVP should remain a modular monolith:
 | Memory retrieval | Structured filters + SQLite FTS5 first | Source-aware and inspectable; no early vector dependency |
 | Embeddings | Optional reranker after FTS baseline | Add only when longitudinal evaluation proves value |
 | Affect | Pure deterministic TypeScript model | Versionable, replayable, testable, and removable |
-| Wake / cognitive energy | Pure TypeScript gate, recovery, reservation, usage accounting, qualitative projector | Makes cognition scarce and auditable without hiding behavior in Prompt |
+| Wake / cognitive energy | Pure TypeScript gate, recovery, reservation, usage accounting, engine-only capacity limiter | Makes cognition scarce without pre-authoring how scarcity must feel |
 | Tests | `node:test` plus property/replay fixtures | Existing toolchain with deterministic invariants |
 | Logging | Structured JSON, later OpenTelemetry export | Audit model/input/version/source decisions |
 
@@ -279,7 +287,7 @@ src/gf/
   perception/            visibility projection into observations
   memory/                subjective records, filters, FTS, counter-evidence
   commitments/           lifecycle, due events, conflicts, fulfillment
-  cognition/             Wake gate, energy accounting/projector, Working Self, open Policy
+  cognition/             Wake gate, energy accounting/limiter, Working Self, open Policy
   affect/                optional appraisal, deterministic model, derived store
   world/drivers/          schedule, obligation, NPC, environment event sources
   world/adjudication/     action compiler, hard rules, social outcome proposal
@@ -364,8 +372,8 @@ it does not silently rewrite historical documents.
 - freeze observation, memory bundle, commitment, Working Self, open action, and
   outcome contracts;
 - freeze WakeCandidate/Decision, raw usage receipt, experienced usage
-  breakdown, cognitive-energy reservation, settlement, and non-numeric
-  condition contracts;
+  breakdown, cognitive-energy reservation/settlement, engine-only capacity
+  envelope, and optional open self-experience contracts;
 - implement change aggregation, Perception, versioned Cognitive Gate with
   non-wake audit, cognitive-energy recovery/reservation/settlement, memory
   retrieval, commitment reads, Working Self, open Policy, action compilation,

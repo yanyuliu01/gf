@@ -10,9 +10,10 @@
 - [可计算世界组成](../computable-world-architecture-v1.png)（[SVG](../computable-world-architecture-v1.svg) / [Mermaid](../computable-world-architecture-v1.mmd)）：回答世界内部有哪些可编码的状态与过程。
 - [世界交互与写入权限](../world-interaction-structure-v1.png)（[SVG](../world-interaction-structure-v1.svg) / [Mermaid](../world-interaction-structure-v1.mmd)）：回答世界事件怎样进入认知和裁定、哪些路径不调用 LLM，以及谁拥有世界事实写入权。
 
-认知唤醒、模型 token 如何结算为角色精力，以及角色为何只能感知疲劳后果而看不到
-数值，由 [`17-cognitive-wake-token-energy-v1.md`](17-cognitive-wake-token-energy-v1.md)
-增量定义。
+认知唤醒、模型 token 如何结算为角色精力，以及连续精力怎样限制实际认知能力但不被
+投影成人工疲劳标签，由
+[`18-emergent-cognitive-experience-v2.md`](18-emergent-cognitive-experience-v2.md)
+增量定义。v1 账本设计保留在 docs/17 用于回退。
 
 ## 0. 方向校正
 
@@ -540,8 +541,9 @@ available_cognition
 什么行动，但同一行动的身体成本不变。
 
 `available_cognition` 是身体条件给出的能力上界，不等于本轮可以无限调用模型。被角色
-实际经历的输入、推演和表达 token 还必须通过 docs/17 的认知精力账户预留和结算；
-睡眠与身体状态影响恢复率。API 价格、缓存折扣和工程重试不属于该世界资源。
+实际经历的输入、推演和表达 token 还必须通过 docs/17/18 的认知精力账户预留和结算；
+睡眠与身体状态影响恢复率。API 价格、缓存折扣和工程重试不属于该世界资源。数值账户
+只形成引擎侧容量约束，不直接向 Open Policy 输出疲劳等级或建议行为。
 
 ---
 

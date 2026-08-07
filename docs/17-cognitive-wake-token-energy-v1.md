@@ -1,5 +1,10 @@
 # 认知唤醒与 Token 精力经济草案 v1
 
+> **历史版本**：本文的三本账、Wake、预留/结算与恢复设计仍被 v2 继承；人工
+> `CognitiveConditionProjector` 已由
+> [`18-emergent-cognitive-experience-v2.md`](18-emergent-cognitive-experience-v2.md)
+> 废弃。当前实现以 v2 为准，本文保留用于回退和对照实验。
+
 - 状态：**Owner 方向已确认，参数与机器契约待冻结**
 - 日期：2026-08-07
 - 对应方向：`OWN-008`
