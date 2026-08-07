@@ -12,6 +12,8 @@ const names = [
   "technical-architecture",
   "runtime-event-lifecycle",
   "emergence-validation-loop",
+  "memory-affect-hybrid-architecture-v1",
+  "memory-affect-runtime-loop-v1",
 ];
 
 (async () => {

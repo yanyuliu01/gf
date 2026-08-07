@@ -1,0 +1,61 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph P1["A. 事件与主体观察"]
+    direction LR
+    EVENT["① 世界事件<br/>用户 / NPC / Scheduler / 环境"]
+    SAVE["② 先持久化<br/>WorldEvent + provenance"]
+    OBSERVE["③ 主体观察<br/>只投影实际可见内容"]
+    MEMORY["④ 记忆激活<br/>经历 / 信念 / 承诺 / 反证 / open loops"]
+    EVENT --> SAVE --> OBSERVE --> MEMORY
+  end
+
+  subgraph P2["B. 可拆卸 Affect Utility"]
+    direction LR
+    MODE{"⑤ affect_mode"}
+    APPRAISE["⑥ Appraisal Proposal<br/>事件对开放关切的意义"]
+    AFFECT["⑦ Affect Utility Advance<br/>连续情绪 / 残留 / 时间衰减"]
+    SNAP[("Affect Snapshot<br/>派生、可回放、可删除")]
+    SHADOW["Shadow Audit<br/>不注入 Policy"]
+    MODE -->|"shadow / active"| APPRAISE --> AFFECT --> SNAP
+    SNAP -.->|"shadow：只记录"| SHADOW
+  end
+
+  subgraph P3["C. 开放行动与世界裁决"]
+    direction LR
+    SELF["⑧ Working Self<br/>事实 + 记忆 + 承诺 + 可选 affect"]
+    POLICY["⑨ Open Generative Policy<br/>直接生成行动，不列语义候选"]
+    ACTION["⑩ Action Proposal<br/>尚未发生"]
+    ADJ["⑪ World Adjudicator<br/>可行性、NPC 意志与实际后果"]
+    SELF --> POLICY --> ACTION --> ADJ
+  end
+
+  subgraph P4["D. 校验、提交与反馈"]
+    direction LR
+    CHECK{"⑫ 校验<br/>Schema / 来源 / 权限 / revision"}
+    COMMIT["⑬ StateManager Commit<br/>唯一事实写入"]
+    SPEECH{"需要对外通信？"}
+    OUTBOX["⑭ Outbox / Adapter<br/>幂等投递"]
+    NEXT["⑮ 结果成为下一事件<br/>重新进入记忆与情绪循环"]
+    REJECT["拒写 / 修正<br/>事实状态不变"]
+    CHECK -->|"通过"| COMMIT --> SPEECH
+    SPEECH -->|"是"| OUTBOX --> NEXT
+    SPEECH -->|"否"| NEXT
+    CHECK -->|"不通过"| REJECT
+  end
+
+  MEMORY --> MODE
+  MEMORY --> SELF
+  MODE -.->|"off：跳过 affect"| SELF
+  SNAP -->|"active：注入"| SELF
+  ADJ --> CHECK
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef memory fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef affect fill:#fff8dc,stroke:#aa8b2f,color:#564713;
+  classDef safe fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef danger fill:#fff0f0,stroke:#b65b5b,color:#6b2929;
+  class EVENT,SAVE,OBSERVE input;
+  class MEMORY,SELF,POLICY,ACTION memory;
+  class MODE,APPRAISE,AFFECT,SNAP,SHADOW affect;
+  class ADJ,CHECK,COMMIT,SPEECH,OUTBOX,NEXT safe;
+  class REJECT danger;

@@ -1,0 +1,76 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph I["A. 事件入口"]
+    direction LR
+    IN["博士消息 / Scheduler<br/>NPC / 环境 / 可信桥事件"]
+    GW["Gateway<br/>鉴权、去重、能力与来源检查"]
+  end
+
+  subgraph F["B. 客观事实与主体观察"]
+    direction LR
+    LEDGER[("WorldEvent Ledger<br/>先持久化、可重放")]
+    STATE[("Reducer State<br/>位置 / 资源 / 活动 / 承诺")]
+    PERCEPT["Perception Projector<br/>生成她实际可见的 observation"]
+  end
+
+  subgraph M["C. 主体记忆"]
+    direction LR
+    MEMORY[("Agent Memory<br/>经历 / 信念 / 关系证据 / open loops")]
+    RETRIEVE["Memory Retrieval<br/>结构过滤 + 语义重排 + 反证"]
+  end
+
+  subgraph A["D. 可拆卸 Affect Utility"]
+    direction LR
+    MODE{"affect_mode<br/>off / shadow / active"}
+    APPRAISE["Appraisal Interpreter<br/>LLM 提议事件对开放关切的意义"]
+    AFFECT["Affect Utility Engine<br/>连续状态 / 残留 / 衰减"]
+    SNAP[("Derived Affect Snapshot<br/>带 source 与版本，可重建")]
+    AUDIT["Shadow Audit<br/>记录但不影响 Policy"]
+  end
+
+  subgraph P["E. Working Self 与开放行动"]
+    direction LR
+    WORKING["Working Self Builder<br/>事实 + 记忆 + 承诺 + 可选 affect"]
+    POLICY["Open Generative Policy<br/>LLM 直接生成开放行动"]
+    ACTION["Action Proposal<br/>意图 / 世界行动 / communication plan"]
+  end
+
+  subgraph W["F. 世界裁决与提交"]
+    direction LR
+    ADJ["World Adjudicator<br/>规则 / 资源 / NPC 意志 / 后果"]
+    VALIDATE["Proposal Validators<br/>Schema / 来源闭包 / 权限 / revision"]
+    SM["StateManager<br/>唯一写者、原子提交"]
+    COMMITTED[("Committed Changes<br/>ledger / reducer / memory")]
+    OUTBOX[("Outbox<br/>幂等投递与回执")]
+  end
+
+  IN --> GW --> LEDGER
+  LEDGER --> PERCEPT
+  STATE --> PERCEPT
+  PERCEPT --> MEMORY --> RETRIEVE
+  RETRIEVE --> WORKING
+  STATE -->|"事实与承诺"| WORKING
+
+  RETRIEVE --> MODE
+  MODE -->|"shadow / active"| APPRAISE --> AFFECT --> SNAP
+  MODE -.->|"off：整段旁路"| WORKING
+  SNAP -->|"active：注入 Working Self"| WORKING
+  SNAP -.->|"shadow：只记录"| AUDIT
+
+  WORKING --> POLICY --> ACTION --> ADJ
+  LEDGER -->|"世界规则与来源"| ADJ
+  STATE -->|"当前可行性"| ADJ
+  ADJ -->|"outcome proposal"| VALIDATE --> SM
+  SM --> COMMITTED
+  SM --> OUTBOX
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef fact fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef cognition fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef affect fill:#fff8dc,stroke:#aa8b2f,color:#564713;
+  classDef commit fill:#f3f5f8,stroke:#7d8998,color:#394455;
+  class IN,GW input;
+  class LEDGER,STATE,PERCEPT fact;
+  class MEMORY,RETRIEVE,WORKING,POLICY,ACTION cognition;
+  class MODE,APPRAISE,AFFECT,SNAP,AUDIT affect;
+  class ADJ,VALIDATE,SM,COMMITTED,OUTBOX commit;
