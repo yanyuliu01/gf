@@ -79,6 +79,14 @@ drivers advance in deterministic TypeScript from versioned parameters and a
 seed. LLMs propose open actions and interpret committed outcomes; they do not
 calculate production, inventory, duration, failures, or world facts.
 
+Review this direction with the two maintained diagrams: the
+[computable world composition](computable-world-architecture-v1.png) shows the
+encodable state and process model, while the
+[world interaction and write-authority structure](world-interaction-structure-v1.png)
+shows event routing, the no-LLM world path, open action adjudication, and the
+single `StateManager` fact writer. SVG and Mermaid sources share each diagram's
+base name.
+
 This direction is not frozen until the Owner signs `OWN-001`. The retained
 `docs/15-world-runtime-interaction-rules-draft-v1.md` describes the
 open-action adjudication interface, not the world kernel itself. The next Owner

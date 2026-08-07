@@ -5,6 +5,11 @@
 - 适用实例：特里蒙重组过渡期的缪尔赛思
 - 实现目标：严格 TypeScript、离散事件模拟、可回放、可替换参数
 
+配套结构图：
+
+- [可计算世界组成](../computable-world-architecture-v1.png)（[SVG](../computable-world-architecture-v1.svg) / [Mermaid](../computable-world-architecture-v1.mmd)）：回答世界内部有哪些可编码的状态与过程。
+- [世界交互与写入权限](../world-interaction-structure-v1.png)（[SVG](../world-interaction-structure-v1.svg) / [Mermaid](../world-interaction-structure-v1.mmd)）：回答世界事件怎样进入认知和裁定、哪些路径不调用 LLM，以及谁拥有世界事实写入权。
+
 ## 0. 方向校正
 
 [`15-world-runtime-interaction-rules-draft-v1.md`](15-world-runtime-interaction-rules-draft-v1.md)

@@ -1,0 +1,74 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph I["A. 世界输入与独立驱动"]
+    direction LR
+    CLOCK["Clock / Scheduler<br/>时间、排班、承诺到期"]
+    NPC["NPC / 组织状态<br/>岗位、请求、队列、有限知识"]
+    ENV["环境过程<br/>天气、水、电、设备、植物"]
+    EXT["外部边界<br/>采购、交通、可信桥接、博士消息"]
+    QUEUE[("WorldEvent Queue<br/>统一事件账本入口")]
+    CLOCK --> QUEUE
+    NPC --> QUEUE
+    ENV --> QUEUE
+    EXT --> QUEUE
+  end
+
+  subgraph W["B. 可计算世界内核（无 LLM）"]
+    direction LR
+    STEP["WorldEngine.step<br/>离散事件 + 库存/流量转移<br/>同状态 + 命令 + seed = 同结果"]
+    LEDGER[("Resource Ledger<br/>账户、库存、货币、来源")]
+    CAP[("Capacity / Reservations<br/>人时、设备、空间、注意")]
+    PROC[("Process Graph / Queues<br/>输入、工序、进度、产出、返工")]
+    BIO[("Ecology / Physiology<br/>水量、植物、能量、睡眠、健康")]
+    MAP[("Location / Permission<br/>路网、开放时段、访问与安全")]
+    STATE[("Authoritative World State<br/>revision + committed facts")]
+    STEP --> LEDGER
+    STEP --> CAP
+    STEP --> PROC
+    STEP --> BIO
+    STEP --> MAP
+    LEDGER --> STATE
+    CAP --> STATE
+    PROC --> STATE
+    BIO --> STATE
+    MAP --> STATE
+  end
+
+  subgraph A["C. Agent 认知与开放行动"]
+    direction LR
+    OBS["Perception Projector<br/>只生成她实际可见的 observation"]
+    MEM["Memory / Beliefs / Commitments<br/>主观证据、反证、未决义务"]
+    AFFECT["Optional Affect Utility<br/>事件解释与连续残留<br/>不选择行动、不写世界"]
+    SELF["Working Self<br/>事实 + 观察 + 记忆 + 承诺<br/>+ 可选 Affect fragment"]
+    POLICY["Open Generative Policy<br/>直接生成一个开放意图/计划"]
+    COMMAND["Action Compiler<br/>OpenAction -> WorldCommand"]
+    OBS --> MEM --> SELF --> POLICY --> COMMAND
+    MEM -.-> AFFECT -.-> SELF
+  end
+
+  subgraph D["D. 裁定、提交与反馈"]
+    direction LR
+    HARD["Hard Adjudication<br/>守恒、容量、位置、权限、安全"]
+    RESULT["WorldOutcome Proposal<br/>完成 / 部分 / 失败 / 延迟 / 副作用"]
+    WRITER["StateManager<br/>唯一事实写入、revision CAS、来源校验"]
+    SURFACE["Speech / Outbox / Adapter<br/>提交后统一对外表面"]
+    HARD --> RESULT --> WRITER --> SURFACE
+  end
+
+  QUEUE --> STEP
+  STATE -->|"只读状态快照"| OBS
+  STATE -->|"世界规则与约束"| HARD
+  COMMAND --> HARD
+  WRITER -->|"新事实/状态"| STEP
+  SURFACE -->|"送达结果成为事件"| QUEUE
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef world fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef cognition fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef affect fill:#fff8dc,stroke:#aa8b2f,color:#564713;
+  classDef commit fill:#f3f5f8,stroke:#7d8998,color:#394455;
+  class CLOCK,NPC,ENV,EXT,QUEUE input;
+  class STEP,LEDGER,CAP,PROC,BIO,MAP,STATE world;
+  class OBS,MEM,SELF,POLICY,COMMAND cognition;
+  class AFFECT affect;
+  class HARD,RESULT,WRITER,SURFACE commit;

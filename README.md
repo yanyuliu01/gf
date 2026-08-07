@@ -38,7 +38,7 @@ gf/
 
 第一次了解项目先读 `PROJECT-OVERVIEW.md`；准备接手工作则读 `PROJECT-HANDOFF.md`、`TODO.md` 与 `AGENTS.md`。M1 基线看原有四张总览图，本次 M2 认知/情绪增量看 `docs/13-memory-affect-hybrid-architecture-v1.md` 和两张新版图。第一轮融合裁决仍保留在 `docs/12-supplement-integration-review-v1.md`；具体实现仍须读取任务对应的权威文档、`prompts/manifest.yaml`、`schemas/README.md` 与 `migrations/README.md`。
 
-新版图：[记忆与 Affect 混合架构](memory-affect-hybrid-architecture-v1.png)（[SVG](memory-affect-hybrid-architecture-v1.svg) / [Mermaid](memory-affect-hybrid-architecture-v1.mmd)）｜[混合运行循环](memory-affect-runtime-loop-v1.png)（[SVG](memory-affect-runtime-loop-v1.svg) / [Mermaid](memory-affect-runtime-loop-v1.mmd)）。原有图均保留为 M1 历史基线，便于对照与回退。
+新版图：[记忆与 Affect 混合架构](memory-affect-hybrid-architecture-v1.png)（[SVG](memory-affect-hybrid-architecture-v1.svg) / [Mermaid](memory-affect-hybrid-architecture-v1.mmd)）｜[混合运行循环](memory-affect-runtime-loop-v1.png)（[SVG](memory-affect-runtime-loop-v1.svg) / [Mermaid](memory-affect-runtime-loop-v1.mmd)）｜[可计算世界组成](computable-world-architecture-v1.png)（[SVG](computable-world-architecture-v1.svg) / [Mermaid](computable-world-architecture-v1.mmd)）｜[世界交互与写入权限](world-interaction-structure-v1.png)（[SVG](world-interaction-structure-v1.svg) / [Mermaid](world-interaction-structure-v1.mmd)）。原有图均保留为 M1 历史基线，便于对照与回退。
 
 当前跨世界设定以 `docs/10-crossworld-protocol-v1.md` 为语义权威，并由 `prompts/slots/S2-world-v2.md` 落到运行时。游戏内博士是彼侧博士的具身行动映射：可在有来源的任务／正史场景中交互，但没有独立意识，也不是本人肉身穿越。实现交接时，当前任务与依赖给 `TODO.md`；机制给 02、触点给 03、跨世界协议给 10、实例数据给 06。08 只作历史缺口清单，不单独驱动开工。
 

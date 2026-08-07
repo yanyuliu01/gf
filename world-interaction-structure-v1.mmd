@@ -1,0 +1,85 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph SOURCES["A. 外部输入与世界自主驱动"]
+    direction LR
+    DOCTOR["博士现实世界消息<br/>可信跨界输入"]
+    CLOCK["时钟 / 日程 / 承诺<br/>到期与时间边界"]
+    PROCESS["生产 / 生态 / 设备<br/>连续过程与阈值"]
+    NPC["NPC / 组织<br/>请求、队列与反馈"]
+    DRIVERS["World Drivers<br/>只提议事件，不写状态"]
+    QUEUE[("统一持久化队列<br/>用户消息高优先但不抢占")]
+    CLOCK --> DRIVERS
+    PROCESS --> DRIVERS
+    NPC --> DRIVERS
+    DRIVERS --> QUEUE
+    DOCTOR --> QUEUE
+  end
+
+  ORCH["Orchestrator / Dispatcher<br/>取出事件，加载只读快照与 source closure<br/>区分常规世界推进和主体决策边界"]
+  QUEUE --> ORCH
+
+  subgraph COGNITION["B. 认知与开放行动（仅在需要主体判断时运行）"]
+    direction LR
+    PERCEPTION["Perception Projector<br/>只给出她实际可见的观察"]
+    MEMORY["Memory / Beliefs / Commitments<br/>事实、信念、承诺分离"]
+    AFFECT["Optional Affect Utility<br/>解释事件与连续残留<br/>不选择行动"]
+    SELF["Working Self<br/>当下事实、关注、张力与未决义务"]
+    POLICY["Open Generative Policy<br/>LLM 直接提出开放意图 / 计划"]
+    ACTION["OpenActionProposal<br/>只能声明想做什么"]
+    COMPILER["Action Compiler<br/>开放语义 -> 有限执行原语"]
+    PERCEPTION --> MEMORY --> SELF --> POLICY --> ACTION --> COMPILER
+    MEMORY -.-> AFFECT -.-> SELF
+  end
+
+  ORCH -->|"用户消息或已提交的决策事件"| PERCEPTION
+
+  subgraph TRANSITION["C. 世界裁定与数学状态转移（无 LLM）"]
+    direction LR
+    LAWS["版本化世界参数<br/>资源禀赋、配方、容量、路网、权限"]
+    ADJ["WorldAdjudicator<br/>位置、知识、能力、权限、安全"]
+    ENGINE["WorldEngine.step<br/>守恒、预留、工序、生态、失败分布<br/>同状态 + 命令 + seed = 同结果"]
+    OUTCOME["WorldOutcomeProposal<br/>完成 / 部分 / 失败 / 延迟 / 副作用"]
+    LAWS --> ADJ
+    LAWS --> ENGINE
+    ADJ --> ENGINE --> OUTCOME
+  end
+
+  ORCH -->|"tick / 外生扰动 / 已接受的常规过程"| ENGINE
+  COMPILER -->|"WorldCommand proposal"| ADJ
+
+  subgraph COMMIT["D. 唯一事实写入边界"]
+    direction LR
+    WRITER["StateManager<br/>唯一世界事实写入者<br/>事务 + revision CAS + 来源校验"]
+    LEDGER[("WorldEvent Ledger<br/>不可变已提交事件")]
+    REDUCERS["Reducers<br/>纯函数重建状态"]
+    STATE[("Authoritative World State<br/>唯一客观当前状态")]
+    SURFACE["Speech / Surface<br/>只渲染已提交结果与可说内容"]
+    OUTBOX["Outbox / Adapter<br/>统一送达与恢复路径"]
+    WRITER --> LEDGER --> REDUCERS --> STATE
+    WRITER -->|"提交后"| SURFACE --> OUTBOX
+  end
+
+  OUTCOME -->|"proposal，不是事实"| WRITER
+  STATE -->|"只读快照"| ORCH
+  STATE -->|"下一事件边界 / 只读"| DRIVERS
+  WRITER -->|"新提交事件"| QUEUE
+  OUTBOX -->|"送达回执作为新事件"| QUEUE
+  OUTBOX --> DOCTOR
+
+  READONLY["写保护：World Drivers、Perception、Memory、Affect、Policy、Compiler、Adjudicator、WorldEngine 和 Surface 都不能直接写世界事实"]
+  READONLY -.-> WRITER
+
+  classDef input fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef cognition fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef affect fill:#fff8dc,stroke:#aa8b2f,color:#564713;
+  classDef world fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef commit fill:#f3f5f8,stroke:#7d8998,color:#394455;
+  classDef writer fill:#fceef1,stroke:#a64d63,color:#5c2635,stroke-width:3px;
+  classDef note fill:#ffffff,stroke:#a64d63,color:#5c2635,stroke-dasharray:6 4;
+  class DOCTOR,CLOCK,PROCESS,NPC,DRIVERS,QUEUE,ORCH input;
+  class PERCEPTION,MEMORY,SELF,POLICY,ACTION,COMPILER cognition;
+  class AFFECT affect;
+  class LAWS,ADJ,ENGINE,OUTCOME world;
+  class LEDGER,REDUCERS,STATE,SURFACE,OUTBOX commit;
+  class WRITER writer;
+  class READONLY note;

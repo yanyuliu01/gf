@@ -30,7 +30,7 @@
 
 `archive/` 存放已被取代的早期版本，仅供追溯设计理由。
 
-**docs 之外的产物**：`../PROJECT-HANDOFF.md`（完整交接入口）、`../TODO.md`（现役项目任务板）、`../AGENTS.md`（编码模型/贡献者约束）、`../corpus/`（A9 正史语料库与 fail-closed 构建管线；数量和构建版本以 stats/manifest 为准）、`../prompts/`（5 个现役调用点与 manifest）、`../schemas/`（唯一机器输出契约）、`../migrations/`（SQLite DDL）。
+**docs 之外的产物**：`../PROJECT-HANDOFF.md`（完整交接入口）、`../TODO.md`（现役项目任务板）、`../AGENTS.md`（编码模型/贡献者约束）、`../corpus/`（A9 正史语料库与 fail-closed 构建管线；数量和构建版本以 stats/manifest 为准）、`../prompts/`（5 个现役调用点与 manifest）、`../schemas/`（唯一机器输出契约）、`../migrations/`（SQLite DDL）。OWN-001 配套图为 `../computable-world-architecture-v1.*`（世界内部组成）和 `../world-interaction-structure-v1.*`（事件、认知、裁定、单写者提交与反馈闭环）。
 
 ## 权威关系与冲突顺序
 

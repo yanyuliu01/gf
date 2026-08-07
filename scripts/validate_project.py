@@ -111,6 +111,8 @@ def validate_diagrams() -> int:
         "emergence-validation-loop",
         "memory-affect-hybrid-architecture-v1",
         "memory-affect-runtime-loop-v1",
+        "computable-world-architecture-v1",
+        "world-interaction-structure-v1",
     )
     for name in names:
         svg = ROOT / f"{name}.svg"

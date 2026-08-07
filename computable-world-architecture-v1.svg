@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1420" viewBox="0 0 1900 1420" role="img" aria-labelledby="title desc">
+  <title id="title">GF 可计算世界与 Agent 交互结构</title>
+  <desc id="desc">独立世界驱动进入确定性的库存流量与生产过程内核，Agent 通过观察、记忆、可选情绪和开放行动提出世界命令，最终由 StateManager 提交事实。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#718096"/></marker>
+    <marker id="arrow-dashed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#aa8b2f"/></marker>
+    <style>
+      .bg{fill:#f7f9fc}.title{font:700 34px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.subtitle{font:18px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#5d6b7e}.section{font:700 21px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.node-title{font:700 18px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.node-text{font:15px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#405064}.small{font:14px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#5d6b7e}.box{stroke-width:2}.input{fill:#eef5ff;stroke:#4f79a8}.world{fill:#eef8f3;stroke:#4d8c72}.cognition{fill:#fff4e8;stroke:#c47a2c}.affect{fill:#fff8dc;stroke:#aa8b2f}.commit{fill:#f3f5f8;stroke:#7d8998}.state{fill:#e7f4ee;stroke:#2f7358;stroke-width:2.5}.flow{stroke:#718096;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.flow-soft{stroke:#aa8b2f;stroke-width:2.5;stroke-dasharray:9 7;fill:none;marker-end:url(#arrow-dashed)}.boundary{fill:none;stroke:#cbd5e1;stroke-width:2;rx:18}.legend{font:14px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#405064}
+    </style>
+  </defs>
+  <rect class="bg" width="1900" height="1420"/>
+  <text x="70" y="72" class="title">GF 可计算世界与 Agent 交互结构</text>
+  <text x="70" y="108" class="subtitle">世界先按资源、容量、工序和环境规律运行；主体只在需要判断时提出开放行动</text>
+
+  <rect x="55" y="145" width="1790" height="185" class="boundary"/>
+  <text x="80" y="178" class="section">A. 世界输入与独立驱动</text>
+  <g transform="translate(80 205)">
+    <rect width="270" height="80" rx="10" class="box input"/><text x="135" y="32" text-anchor="middle" class="node-title">Clock / Scheduler</text><text x="135" y="58" text-anchor="middle" class="node-text">时间、排班、承诺到期</text>
+  </g>
+  <g transform="translate(390 205)">
+    <rect width="270" height="80" rx="10" class="box input"/><text x="135" y="32" text-anchor="middle" class="node-title">NPC / 组织状态</text><text x="135" y="58" text-anchor="middle" class="node-text">岗位、请求、队列、有限知识</text>
+  </g>
+  <g transform="translate(700 205)">
+    <rect width="270" height="80" rx="10" class="box input"/><text x="135" y="32" text-anchor="middle" class="node-title">环境过程</text><text x="135" y="58" text-anchor="middle" class="node-text">天气、水、电、设备、植物</text>
+  </g>
+  <g transform="translate(1010 205)">
+    <rect width="270" height="80" rx="10" class="box input"/><text x="135" y="32" text-anchor="middle" class="node-title">外部边界</text><text x="135" y="58" text-anchor="middle" class="node-text">采购、交通、可信桥、博士消息</text>
+  </g>
+  <g transform="translate(1410 205)">
+    <rect width="350" height="80" rx="10" class="box input"/><text x="175" y="32" text-anchor="middle" class="node-title">WorldEvent Queue</text><text x="175" y="58" text-anchor="middle" class="node-text">统一入口，先持久化再处理</text>
+  </g>
+  <path d="M350 245 H1400" class="flow"/><path d="M660 245 H1400" class="flow"/><path d="M970 245 H1400" class="flow"/><path d="M1280 245 H1400" class="flow"/>
+
+  <rect x="55" y="365" width="1120" height="520" class="boundary"/>
+  <text x="80" y="398" class="section">B. 可计算世界内核（无 LLM）</text>
+  <g transform="translate(90 435)"><rect width="1050" height="90" rx="12" class="box world"/><text x="525" y="36" text-anchor="middle" class="node-title">WorldEngine.step</text><text x="525" y="65" text-anchor="middle" class="node-text">离散事件 + 库存/流量转移；同一状态 + 命令 + seed 得到同一结果</text></g>
+  <g transform="translate(90 575)"><rect width="320" height="105" rx="12" class="box world"/><text x="160" y="36" text-anchor="middle" class="node-title">Resource Ledger</text><text x="160" y="65" text-anchor="middle" class="node-text">账户、库存、货币、来源</text><text x="160" y="87" text-anchor="middle" class="small">守恒与非负约束</text></g>
+  <g transform="translate(455 575)"><rect width="320" height="105" rx="12" class="box world"/><text x="160" y="36" text-anchor="middle" class="node-title">Capacity / Reservations</text><text x="160" y="65" text-anchor="middle" class="node-text">人时、设备、空间、注意</text><text x="160" y="87" text-anchor="middle" class="small">时间区间不能重复占用</text></g>
+  <g transform="translate(820 575)"><rect width="320" height="105" rx="12" class="box world"/><text x="160" y="36" text-anchor="middle" class="node-title">Process Graph / Queues</text><text x="160" y="65" text-anchor="middle" class="node-text">输入、工序、产出、返工</text><text x="160" y="87" text-anchor="middle" class="small">排队自然产生延期</text></g>
+  <g transform="translate(90 725)"><rect width="320" height="105" rx="12" class="box world"/><text x="160" y="36" text-anchor="middle" class="node-title">Ecology / Physiology</text><text x="160" y="65" text-anchor="middle" class="node-text">水量、植物、能量、睡眠</text><text x="160" y="87" text-anchor="middle" class="small">慢变量与状态方程</text></g>
+  <g transform="translate(455 725)"><rect width="320" height="105" rx="12" class="box world"/><text x="160" y="36" text-anchor="middle" class="node-title">Location / Permission</text><text x="160" y="65" text-anchor="middle" class="node-text">路网、开放时段、访问与安全</text><text x="160" y="87" text-anchor="middle" class="small">可达性不是瞬移</text></g>
+  <g transform="translate(820 725)"><rect width="320" height="105" rx="12" class="box state"/><text x="160" y="36" text-anchor="middle" class="node-title">Authoritative World State</text><text x="160" y="65" text-anchor="middle" class="node-text">revision + committed facts</text><text x="160" y="87" text-anchor="middle" class="small">唯一事实来源</text></g>
+  <path d="M1585 285 V435 H615" class="flow"/><path d="M615 525 V560" class="flow"/><path d="M615 680 V710" class="flow"/><path d="M410 627 H445" class="flow"/><path d="M775 627 H810" class="flow"/><path d="M410 777 H445" class="flow"/><path d="M775 777 H810" class="flow"/>
+
+  <rect x="1225" y="365" width="620" height="520" class="boundary"/>
+  <text x="1250" y="398" class="section">C. Agent 认知与开放行动</text>
+  <g transform="translate(1270 440)"><rect width="530" height="78" rx="12" class="box cognition"/><text x="265" y="32" text-anchor="middle" class="node-title">Perception Projector</text><text x="265" y="58" text-anchor="middle" class="node-text">从权威状态投影她实际可见的 observation</text></g>
+  <g transform="translate(1270 550)"><rect width="530" height="78" rx="12" class="box cognition"/><text x="265" y="32" text-anchor="middle" class="node-title">Memory / Beliefs / Commitments</text><text x="265" y="58" text-anchor="middle" class="node-text">主观证据、反证、未决义务</text></g>
+  <g transform="translate(1270 660)"><rect width="250" height="86" rx="12" class="box affect"/><text x="125" y="31" text-anchor="middle" class="node-title">Optional Affect Utility</text><text x="125" y="58" text-anchor="middle" class="node-text">解释与残留</text><text x="125" y="77" text-anchor="middle" class="small">不写世界</text></g>
+  <g transform="translate(1550 660)"><rect width="250" height="86" rx="12" class="box cognition"/><text x="125" y="31" text-anchor="middle" class="node-title">Working Self</text><text x="125" y="58" text-anchor="middle" class="node-text">可选 Affect fragment</text><text x="125" y="77" text-anchor="middle" class="small">只读调用上下文</text></g>
+  <g transform="translate(1270 780)"><rect width="250" height="78" rx="12" class="box cognition"/><text x="125" y="32" text-anchor="middle" class="node-title">Open Policy</text><text x="125" y="58" text-anchor="middle" class="node-text">不列语义候选</text></g>
+  <g transform="translate(1550 780)"><rect width="250" height="78" rx="12" class="box cognition"/><text x="125" y="32" text-anchor="middle" class="node-title">Action Compiler</text><text x="125" y="58" text-anchor="middle" class="node-text">OpenAction -> WorldCommand</text></g>
+  <path d="M1535 479 H1535 V550" class="flow"/><path d="M1535 628 V700 H1625" class="flow"/><path d="M1395 628 V660" class="flow-soft"/><path d="M1395 746 V780" class="flow-soft"/><path d="M1675 746 V780" class="flow"/><path d="M1140 777 H1260" class="flow"/>
+
+  <rect x="55" y="945" width="1790" height="270" class="boundary"/>
+  <text x="80" y="978" class="section">D. 硬裁定、事实提交与反馈</text>
+  <g transform="translate(90 1015)"><rect width="350" height="110" rx="12" class="box commit"/><text x="175" y="38" text-anchor="middle" class="node-title">Hard Adjudication</text><text x="175" y="67" text-anchor="middle" class="node-text">守恒、容量、位置、权限、安全</text><text x="175" y="91" text-anchor="middle" class="small">命令不是结果</text></g>
+  <g transform="translate(510 1015)"><rect width="350" height="110" rx="12" class="box commit"/><text x="175" y="38" text-anchor="middle" class="node-title">WorldOutcome Proposal</text><text x="175" y="67" text-anchor="middle" class="node-text">完成、部分、失败、延迟、副作用</text><text x="175" y="91" text-anchor="middle" class="small">带来源与 base revision</text></g>
+  <g transform="translate(930 1015)"><rect width="350" height="110" rx="12" class="box state"/><text x="175" y="38" text-anchor="middle" class="node-title">StateManager</text><text x="175" y="67" text-anchor="middle" class="node-text">唯一事实写入、CAS、来源校验</text><text x="175" y="91" text-anchor="middle" class="small">提交后 revision + 1</text></g>
+  <g transform="translate(1350 1015)"><rect width="410" height="110" rx="12" class="box commit"/><text x="205" y="38" text-anchor="middle" class="node-title">Speech / Outbox / Adapter</text><text x="205" y="67" text-anchor="middle" class="node-text">提交后统一对外表面</text><text x="205" y="91" text-anchor="middle" class="small">送达结果重新成为 WorldEvent</text></g>
+  <path d="M1675 858 V920 H265 V1005" class="flow"/><path d="M440 1070 H500" class="flow"/><path d="M860 1070 H920" class="flow"/><path d="M1280 1070 H1340" class="flow"/><path d="M1110 1015 V830 H1580 V725" class="flow"/><path d="M1550 1070 H1550 V295 H1585" class="flow"/>
+
+  <rect x="55" y="1270" width="1790" height="90" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="80" y="1305" class="legend">图例：</text><line x1="145" y1="1300" x2="220" y2="1300" class="flow"/><text x="235" y="1305" class="legend">权威/执行数据流</text><line x1="430" y1="1300" x2="505" y2="1300" class="flow-soft"/><text x="520" y="1305" class="legend">派生或可选影响</text><text x="800" y="1305" class="legend">世界内核不调用 LLM；LLM 不能直接写资源、生产、NPC 决定或客观事实</text>
+</svg>
