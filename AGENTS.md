@@ -28,6 +28,12 @@ documents still describe the historical finite-candidate M1/M2 design; task
   or temporary finite semantic action candidate set.
 - Affect Utility models event impact on concerns and continuous affect. It does
   not rank or select actions and never sends messages directly.
+- Accepted semantic model input, deliberation, and expression consume the
+  actor's versioned cognitive-energy resource. Raw token counts, balances,
+  percentages, provider prices, and billing limits never enter character
+  prompts or surfaces; operator billing cannot masquerade as fatigue.
+- Cognitive wake decisions are versioned and audited, including non-wake
+  outcomes. Audit rows are derived records, not objective WorldEvents.
 - `WorldAdjudicator` determines what actually happens. An action proposal may
   not declare its own success.
 - Cross-world facts obey `docs/10-crossworld-protocol-v1.md`. The Doctor's

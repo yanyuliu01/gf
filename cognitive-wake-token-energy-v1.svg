@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1500" viewBox="0 0 1900 1500" role="img" aria-labelledby="title desc">
+  <title id="title">GF 认知唤醒与 Token 精力闭环</title>
+  <desc id="desc">已提交变化先经过聚合、感知和认知门。只有 wake 分支预留精力并调用模型。供应商 usage 被拆为角色实际经历的语义负荷与隔离的运营账单，最终仅由 StateManager 结算数值精力；角色只获得非数值疲劳体感。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#718096"/></marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f79a8"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d8c72"/></marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a64d63"/></marker>
+    <style>
+      .bg{fill:#f7f9fc}.title{font:700 34px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.subtitle{font:18px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#5d6b7e}.section{font:700 21px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.node-title{font:700 17px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#243247}.node-text{font:14px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#405064}.small{font:13px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#5d6b7e}.label{font:13px 'Microsoft YaHei','Segoe UI',sans-serif;fill:#4b596c}.box{stroke-width:2}.source{fill:#eef5ff;stroke:#4f79a8}.gate{fill:#fff4e8;stroke:#c47a2c}.energy{fill:#eef8f3;stroke:#4d8c72}.derived{fill:#f3f5f8;stroke:#7d8998}.writer{fill:#fceef1;stroke:#a64d63;stroke-width:3}.isolated{fill:#fff;stroke:#7d8998;stroke-width:2;stroke-dasharray:7 5}.boundary{fill:none;stroke:#cbd5e1;stroke-width:2;rx:16}.flow{stroke:#718096;stroke-width:2.4;fill:none;marker-end:url(#arrow)}.blue{stroke:#4f79a8;stroke-width:2.4;fill:none;marker-end:url(#arrow-blue)}.green{stroke:#4d8c72;stroke-width:2.4;fill:none;marker-end:url(#arrow-green)}.red{stroke:#a64d63;stroke-width:2.6;fill:none;marker-end:url(#arrow-red)}.dash{stroke:#718096;stroke-width:2;stroke-dasharray:8 6;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect class="bg" width="1900" height="1500"/>
+  <text x="65" y="62" class="title">GF 认知唤醒与 Token 精力闭环</text>
+  <text x="65" y="98" class="subtitle">Token 是角色实际阅读、思考与表达的认知劳动计量；她感到后果，但永远看不到计数器和账单</text>
+
+  <rect x="45" y="125" width="1810" height="430" class="boundary"/>
+  <text x="70" y="160" class="section">A. 已提交变化进入主体认知前</text>
+
+  <g transform="translate(70 205)"><rect width="250" height="92" rx="8" class="box source"/><text x="125" y="31" text-anchor="middle" class="node-title">Committed changes</text><text x="125" y="58" text-anchor="middle" class="node-text">WorldEvents + state revision</text><text x="125" y="79" text-anchor="middle" class="small">只有已提交事实可进入</text></g>
+  <g transform="translate(365 205)"><rect width="235" height="92" rx="8" class="box source"/><text x="117.5" y="31" text-anchor="middle" class="node-title">ChangeAggregator</text><text x="117.5" y="58" text-anchor="middle" class="node-text">合并细粒度变化</text><text x="117.5" y="79" text-anchor="middle" class="small">形成有意义的时间窗</text></g>
+  <g transform="translate(645 205)"><rect width="250" height="92" rx="8" class="box source"/><text x="125" y="31" text-anchor="middle" class="node-title">PerceptionProjector</text><text x="125" y="58" text-anchor="middle" class="node-text">只保留她可感知的变化</text><text x="125" y="79" text-anchor="middle" class="small">先感知，后判断是否思考</text></g>
+  <g transform="translate(940 205)"><rect width="230" height="92" rx="8" class="box source"/><text x="115" y="31" text-anchor="middle" class="node-title">WakeCandidate</text><text x="115" y="58" text-anchor="middle" class="node-text">来源 + 差量摘要</text><text x="115" y="79" text-anchor="middle" class="small">不构建完整 Working Self</text></g>
+  <g transform="translate(1215 190)"><rect width="270" height="122" rx="8" class="box gate"/><text x="135" y="33" text-anchor="middle" class="node-title">CognitiveGate</text><text x="135" y="61" text-anchor="middle" class="node-text">纯 TypeScript · 版本化判据</text><text x="135" y="84" text-anchor="middle" class="small">硬规则不受 Affect 影响</text><text x="135" y="105" text-anchor="middle" class="small">不调用 LLM</text></g>
+  <g transform="translate(1530 190)"><rect width="265" height="122" rx="8" class="box source"/><text x="132.5" y="31" text-anchor="middle" class="node-title">WakeDecision</text><text x="132.5" y="59" text-anchor="middle" class="node-text">ignore / accumulate / wake</text><text x="132.5" y="84" text-anchor="middle" class="small">priority + reason + version</text><text x="132.5" y="105" text-anchor="middle" class="small">每次均可重放</text></g>
+  <path d="M320 251 H365" class="blue"/><path d="M600 251 H645" class="blue"/><path d="M895 251 H940" class="blue"/><path d="M1170 251 H1215" class="blue"/><path d="M1485 251 H1530" class="blue"/>
+
+  <g transform="translate(980 355)"><rect width="250" height="72" rx="8" class="box derived"/><text x="125" y="29" text-anchor="middle" class="node-title">AttentionContext</text><text x="125" y="54" text-anchor="middle" class="node-text">活动 / 承诺 / 累积显著性</text></g>
+  <g transform="translate(1260 355)"><rect width="285" height="72" rx="8" class="box energy"/><text x="142.5" y="28" text-anchor="middle" class="node-title">Numeric energy account</text><text x="142.5" y="53" text-anchor="middle" class="node-text">仅引擎可读，不进入 Prompt</text></g>
+  <path d="M1105 355 C1115 330 1240 330 1300 312" class="flow"/><path d="M1402 355 C1402 335 1385 325 1370 312" class="green"/>
+
+  <g transform="translate(70 460)"><rect width="220" height="68" rx="8" class="box derived"/><text x="110" y="27" text-anchor="middle" class="node-title">ignore</text><text x="110" y="51" text-anchor="middle" class="node-text">本轮不进入认知</text></g>
+  <g transform="translate(340 460)"><rect width="250" height="68" rx="8" class="box derived"/><text x="125" y="27" text-anchor="middle" class="node-title">accumulate</text><text x="125" y="51" text-anchor="middle" class="node-text">写入显著性缓冲，等待合并</text></g>
+  <g transform="translate(640 460)"><rect width="220" height="68" rx="8" class="box gate"/><text x="110" y="27" text-anchor="middle" class="node-title">wake</text><text x="110" y="51" text-anchor="middle" class="node-text">进入认知预算规划</text></g>
+  <g transform="translate(930 455)"><rect width="350" height="78" rx="8" class="box isolated"/><text x="175" y="29" text-anchor="middle" class="node-title">Wake Audit · derived record</text><text x="175" y="55" text-anchor="middle" class="node-text">含 wake=false；不是 WorldEvent</text></g>
+  <path d="M1662 312 V438 H180 V460" class="flow"/><path d="M1662 312 V445 H465 V460" class="flow"/><path d="M1662 312 V452 H750 V460" class="red"/><path d="M1662 312 V425 H1105 V455" class="dash"/>
+  <path d="M465 460 V440 H482 V297" class="dash"/>
+
+  <rect x="45" y="585" width="1810" height="375" class="boundary"/>
+  <text x="70" y="620" class="section">B. Wake 后预留、思考与表达</text>
+  <g transform="translate(70 680)"><rect width="245" height="96" rx="8" class="box gate"/><text x="122.5" y="30" text-anchor="middle" class="node-title">CognitiveBudgetPlanner</text><text x="122.5" y="58" text-anchor="middle" class="node-text">本次可投入的认知深度</text><text x="122.5" y="79" text-anchor="middle" class="small">自主思考不得占用回复储备</text></g>
+  <g transform="translate(360 680)"><rect width="230" height="96" rx="8" class="box energy"/><text x="115" y="31" text-anchor="middle" class="node-title">Reservation proposal</text><text x="115" y="59" text-anchor="middle" class="node-text">预估上限 + 租约 + 幂等键</text><text x="115" y="80" text-anchor="middle" class="small">尚未扣除事实账户</text></g>
+  <g transform="translate(635 665)"><rect width="245" height="126" rx="8" class="writer"/><text x="122.5" y="31" text-anchor="middle" class="node-title">StateManager</text><text x="122.5" y="60" text-anchor="middle" class="node-text">唯一账户 / 世界事实写入者</text><text x="122.5" y="85" text-anchor="middle" class="small">短事务创建预留</text><text x="122.5" y="107" text-anchor="middle" class="small">模型调用时不持有 DB 事务</text></g>
+  <g transform="translate(925 680)"><rect width="225" height="96" rx="8" class="box energy"/><text x="112.5" y="31" text-anchor="middle" class="node-title">Committed reservation</text><text x="112.5" y="59" text-anchor="middle" class="node-text">调用前容量租约</text><text x="112.5" y="80" text-anchor="middle" class="small">失败可释放 / 到期</text></g>
+  <g transform="translate(1200 660)"><rect width="330" height="136" rx="8" class="box gate"/><text x="165" y="31" text-anchor="middle" class="node-title">Working Self → Open Policy → Surface</text><text x="165" y="59" text-anchor="middle" class="node-text">读取记忆、承诺与 CognitiveCondition</text><text x="165" y="84" text-anchor="middle" class="node-text">直接生成开放行动和完整表达</text><text x="165" y="109" text-anchor="middle" class="small">无 token / 余额 / 百分比 / 价格字段</text><text x="165" y="129" text-anchor="middle" class="small">模型调用在事务外</text></g>
+  <g transform="translate(1580 680)"><rect width="220" height="96" rx="8" class="box derived"/><text x="110" y="31" text-anchor="middle" class="node-title">Validated result</text><text x="110" y="59" text-anchor="middle" class="node-text">proposal / speech</text><text x="110" y="80" text-anchor="middle" class="small">提交后才成为结果</text></g>
+  <path d="M750 528 V640 H192 V680" class="red"/><path d="M315 728 H360" class="green"/><path d="M590 728 H635" class="red"/><path d="M880 728 H925" class="red"/><path d="M1150 728 H1200" class="green"/><path d="M1530 728 H1580" class="flow"/><path d="M1690 776 V835 H758 V791" class="red"/>
+
+  <g transform="translate(940 845)"><rect width="255" height="82" rx="8" class="box energy"/><text x="127.5" y="27" text-anchor="middle" class="node-title">Qualitative projector</text><text x="127.5" y="52" text-anchor="middle" class="node-text">账户 + 身体 + 活动</text><text x="127.5" y="73" text-anchor="middle" class="small">只输出无数值 CognitiveCondition</text></g>
+  <g transform="translate(560 845)"><rect width="300" height="82" rx="8" class="box derived"/><text x="150" y="29" text-anchor="middle" class="node-title">Memory / commitments</text><text x="150" y="55" text-anchor="middle" class="node-text">来源完整的主体上下文</text><text x="150" y="75" text-anchor="middle" class="small">与当前精力账户分离</text></g>
+  <path d="M710 845 C790 805 1245 820 1320 796" class="flow"/><path d="M1402 427 V820 H1068 V845" class="green"/><path d="M1195 886 H1365 V796" class="green"/>
+
+  <rect x="45" y="990" width="1810" height="320" class="boundary"/>
+  <text x="70" y="1025" class="section">C. 真实 Usage 结算与确定性恢复</text>
+  <g transform="translate(70 1090)"><rect width="250" height="96" rx="8" class="box derived"/><text x="125" y="30" text-anchor="middle" class="node-title">InferenceUsageReceipt</text><text x="125" y="58" text-anchor="middle" class="node-text">provider / local tokenizer</text><text x="125" y="79" text-anchor="middle" class="small">不可变原始回执</text></g>
+  <g transform="translate(365 1075)"><rect width="290" height="126" rx="8" class="box energy"/><text x="145" y="30" text-anchor="middle" class="node-title">Experienced token accounting</text><text x="145" y="58" text-anchor="middle" class="node-text">语义输入 + 内部推演 + 表达</text><text x="145" y="83" text-anchor="middle" class="small">缓存语义仍算她实际读过</text><text x="145" y="105" text-anchor="middle" class="small">工具 / 协议 / 重试不计入</text></g>
+  <g transform="translate(700 1090)"><rect width="250" height="96" rx="8" class="box energy"/><text x="125" y="30" text-anchor="middle" class="node-title">Settlement proposal</text><text x="125" y="58" text-anchor="middle" class="node-text">版本化归一 + 幂等键</text><text x="125" y="79" text-anchor="middle" class="small">实际用量替换预留</text></g>
+  <g transform="translate(1000 1075)"><rect width="255" height="126" rx="8" class="writer"/><text x="127.5" y="31" text-anchor="middle" class="node-title">StateManager</text><text x="127.5" y="60" text-anchor="middle" class="node-text">校验 usage + source closure</text><text x="127.5" y="85" text-anchor="middle" class="node-text">结算 / 释放 / 幂等提交</text><text x="127.5" y="108" text-anchor="middle" class="small">唯一数值账户写入者</text></g>
+  <g transform="translate(1320 1075)"><rect width="300" height="126" rx="8" class="box energy"/><text x="150" y="31" text-anchor="middle" class="node-title">Numeric energy account</text><text x="150" y="59" text-anchor="middle" class="node-text">实际消耗、恢复与预留</text><text x="150" y="84" text-anchor="middle" class="small">版本化 world-side condition</text><text x="150" y="106" text-anchor="middle" class="small">角色与 NPC 均不可读取数值</text></g>
+  <path d="M320 1138 H365" class="green"/><path d="M655 1138 H700" class="green"/><path d="M950 1138 H1000" class="red"/><path d="M1255 1138 H1320" class="red"/>
+
+  <g transform="translate(365 1225)"><rect width="290" height="62" rx="8" class="box source"/><text x="145" y="25" text-anchor="middle" class="node-title">时间 + 睡眠 + 身体 + 活动</text><text x="145" y="48" text-anchor="middle" class="node-text">已提交世界状态</text></g>
+  <g transform="translate(700 1225)"><rect width="250" height="62" rx="8" class="box energy"/><text x="125" y="25" text-anchor="middle" class="node-title">Recovery engine</text><text x="125" y="48" text-anchor="middle" class="node-text">纯 TypeScript 时间积分</text></g>
+  <path d="M655 1256 H700" class="green"/><path d="M950 1256 H1128 V1201" class="green"/>
+  <path d="M1470 1075 V960 H1402 V427" class="green"/>
+
+  <rect x="45" y="1340" width="1810" height="115" class="boundary"/>
+  <text x="70" y="1375" class="section">D. 运营账单与角色体验隔离</text>
+  <g transform="translate(160 1392)"><rect width="440" height="45" rx="8" class="box isolated"/><text x="220" y="28" text-anchor="middle" class="node-title">Operator Billing Audit · token / 价格 / 缓存折扣 / 重试 / SDK 开销</text></g>
+  <g transform="translate(735 1392)"><rect width="1000" height="45" rx="8" class="box isolated"/><text x="500" y="28" text-anchor="middle" class="node-title">没有通往角色精力、Memory、Affect、Policy、NPC 感知或 Surface 的路径</text></g>
+  <path d="M195 1186 V1325 H380 V1392" class="dash"/><path d="M600 1414 H735" class="dash"/>
+</svg>

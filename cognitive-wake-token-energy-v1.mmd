@@ -1,0 +1,73 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#f7f9fc","primaryColor":"#ffffff","primaryTextColor":"#243247","primaryBorderColor":"#cbd5e1","lineColor":"#718096","fontFamily":"Microsoft YaHei, Segoe UI, sans-serif"}}}%%
+flowchart TB
+  subgraph ADMISSION["A. 已提交变化进入主体认知前"]
+    direction LR
+    EVENTS["Committed WorldEvents<br/>+ authoritative state"]
+    AGG["ChangeAggregator<br/>合并细粒度变化"]
+    PERCEPTION["PerceptionProjector<br/>只保留她可感知的变化"]
+    CANDIDATE["WakeCandidate<br/>来源 + 时间窗 + 差量摘要"]
+    GATE["CognitiveGate · 纯 TypeScript<br/>版本化判据，不调用 LLM"]
+    ATTENTION["AttentionContext<br/>活动 / 承诺 / 累积显著性"]
+    ENERGY[("Numeric cognitive-energy account<br/>仅引擎可读")]
+    DECISION["WakeDecision<br/>ignore / accumulate / wake"]
+    EVENTS --> AGG --> PERCEPTION --> CANDIDATE --> GATE --> DECISION
+    ATTENTION --> GATE
+    ENERGY --> GATE
+  end
+
+  subgraph OUTCOMES["B. 每次判定都留下证据"]
+    direction LR
+    IGNORE["ignore<br/>本轮不进入认知"]
+    BUFFER["accumulate<br/>写入显著性缓冲，等待合并"]
+    WAKE["wake<br/>进入认知预算规划"]
+    AUDIT[("Wake Audit · derived<br/>含 wake=false；不是 WorldEvent")]
+    DECISION --> IGNORE
+    DECISION --> BUFFER
+    DECISION --> WAKE
+    DECISION -.-> AUDIT
+    BUFFER -.-> AGG
+  end
+
+  subgraph COGNITION["C. 预留后思考与表达"]
+    direction LR
+    PLANNER["CognitiveBudgetPlanner<br/>保护回复储备"]
+    RESERVE["EnergyReservation proposal"]
+    STATE_MANAGER["StateManager<br/>唯一账户 / 事实写入者"]
+    LEASE[("Committed reservation")]
+    QUAL["Qualitative projector<br/>只输出 CognitiveCondition"]
+    WORKING["Working Self + Memory + Commitments<br/>无 token / 余额 / 价格字段"]
+    CALLS["Open Policy / Surface<br/>模型调用在 DB 事务外"]
+    RESULT["Validated proposal<br/>完整表达 / 可延后承诺"]
+    WAKE --> PLANNER --> RESERVE --> STATE_MANAGER --> LEASE --> CALLS --> RESULT --> STATE_MANAGER
+    ENERGY --> QUAL --> WORKING --> CALLS
+  end
+
+  subgraph SETTLEMENT["D. 真实 usage 结算与恢复"]
+    direction LR
+    RECEIPT["InferenceUsageReceipt<br/>provider / local tokenizer"]
+    ACCOUNTING["Experienced token accounting<br/>语义输入 + 推演 + 表达"]
+    SETTLEMENT_PROPOSAL["Settlement proposal<br/>版本化归一 + 幂等键"]
+    RECOVERY["Recovery engine · 纯 TypeScript<br/>时间 + 睡眠 + 身体 + 活动"]
+    RECEIPT --> ACCOUNTING --> SETTLEMENT_PROPOSAL --> STATE_MANAGER
+    RECOVERY --> STATE_MANAGER
+    STATE_MANAGER --> ENERGY
+  end
+
+  BILLING[("Operator billing audit<br/>价格 / 缓存折扣 / 重试 / SDK 开销")]
+  RECEIPT -.-> BILLING
+
+  ISOLATION["隔离规则：Billing Audit 没有通向角色精力或 Prompt 的路径；缓存语义仍算她读过，基础设施开销不算她生活过"]
+  BILLING -.-> ISOLATION
+
+  classDef source fill:#eef5ff,stroke:#4f79a8,color:#243247;
+  classDef gate fill:#fff4e8,stroke:#c47a2c,color:#5e3615;
+  classDef energy fill:#eef8f3,stroke:#4d8c72,color:#234c3e;
+  classDef state fill:#fceef1,stroke:#a64d63,color:#5c2635,stroke-width:3px;
+  classDef derived fill:#f3f5f8,stroke:#7d8998,color:#394455;
+  classDef isolated fill:#ffffff,stroke:#7d8998,color:#394455,stroke-dasharray:6 4;
+  class EVENTS,AGG,PERCEPTION,CANDIDATE,ATTENTION,DECISION source;
+  class GATE,IGNORE,BUFFER,WAKE,PLANNER,QUAL,WORKING,CALLS,RESULT gate;
+  class ENERGY,LEASE,ACCOUNTING,SETTLEMENT_PROPOSAL,RECOVERY energy;
+  class STATE_MANAGER state;
+  class AUDIT,RECEIPT derived;
+  class BILLING,ISOLATION isolated;

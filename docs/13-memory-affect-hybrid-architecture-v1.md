@@ -6,6 +6,10 @@
 
 > **版本保留**：`docs/02-framework-v3.5.md` 与 `docs/12-supplement-integration-review-v1.md` 原样保留，分别代表 M1 机制基线和第一轮补充融合裁决。本文是第二轮架构演进，不删除历史论证，回退时可直接关闭模块或回到旧文档/契约。
 
+> **认知精力增量**：Wake Gate、token usage 预留/结算、恢复和非数值体感由
+> [`17-cognitive-wake-token-energy-v1.md`](17-cognitive-wake-token-energy-v1.md) 持有。
+> 它属于最终 `off` 基线，不依赖 Affect；Affect 无权直接写精力账户。
+
 ---
 
 ## 1. 决策摘要
@@ -395,6 +399,7 @@ Policy 只接受可选 `affect` fragment。缺失时必须正常运行，禁止�
 - `WorldEvent` 信封与现有来源模型；
 - StateManager 唯一写者与 revision CAS；
 - speech/outbox/adapter 唯一出向路径；
+- 认知精力、Wake 与 token usage 审计在 Affect 关闭时仍完整运行；
 - canon 与 runtime memory 的事实权隔离；
 - `docs/10` 博士彼侧、具身行动映射和通道能力；
 - 不优化留存、响应率或付费的伦理边界。

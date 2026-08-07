@@ -16,6 +16,7 @@ const maintainedNames = [
   "memory-affect-runtime-loop-v1",
   "computable-world-architecture-v1",
   "world-interaction-structure-v1",
+  "cognitive-wake-token-energy-v1",
 ];
 
 const requestedNames = process.argv.slice(2);

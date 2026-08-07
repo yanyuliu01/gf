@@ -67,6 +67,9 @@ companion. The decisive additional mechanisms are:
    happens".
 5. **Persistent causal consequences** committed through an auditable,
    replayable state pipeline.
+6. **Cognitive scarcity** in which accepted model input, deliberation, and
+   expression consume a recoverable character resource without exposing token
+   counters or operator billing to the character.
 
 ### Pending OWN-001 Direction: Computable World Kernel
 
@@ -165,6 +168,19 @@ Initiative must have at least three independent sources:
 Association alone is not a living world. It can decide what becomes salient,
 but cannot be the only producer of events.
 
+The arrow from committed world change to cognition is a first-class,
+versioned component, not prompt prose. `ChangeAggregator -> Perception ->
+CognitiveGate` records `ignore / accumulate / wake` for every meaningful
+candidate. Non-wake decisions go to a derived audit store, never back into the
+objective WorldEvent ledger.
+
+On `wake`, the runtime reserves cognitive energy before the model call and
+settles actual experienced semantic input, deliberation, and expression tokens
+afterward. The Policy sees only a qualitative `CognitiveCondition`; exact token
+counts, balances, percentages, prices, and billing caps stay outside the
+character surface. The complete contract is in
+`docs/17-cognitive-wake-token-energy-v1.md`.
+
 ## 6. Detachable Affect Architecture
 
 The approved hybrid design is documented in
@@ -209,6 +225,16 @@ prompts:
 7. `WorldOutcomeProposalV1`: attempted, completed, failed, partial, and side
    effects with sources and state revision.
 8. `SurfaceMessageV1`: committed text communication plan and bubbles.
+9. `WakeCandidateV1` / `WakeDecisionV1`: meaningful perceptible change and its
+   versioned cognitive-admission audit, including non-wake outcomes.
+10. `InferenceUsageReceiptV1`: immutable raw provider/local-tokenizer usage and
+    attempt status; it does not decide what the character experienced.
+11. `ExperiencedUsageBreakdownV1`: versioned prompt-segment classification,
+    source closure, and experienced/non-experienced evidence.
+12. `CognitiveEnergyReservationV1` / `SettlementV1`: pre-call capacity lease
+    and post-call usage settlement through StateManager.
+13. `CognitiveConditionV1`: non-numeric fatigue/capacity projection allowed in
+    Working Self; it contains no provider, token, balance, or billing fields.
 
 Finite execution primitives such as `communicate`, `move`, `observe`,
 `interact`, `use_object`, and `wait` are runtime capabilities. They are not a
@@ -230,6 +256,7 @@ The MVP should remain a modular monolith:
 | Memory retrieval | Structured filters + SQLite FTS5 first | Source-aware and inspectable; no early vector dependency |
 | Embeddings | Optional reranker after FTS baseline | Add only when longitudinal evaluation proves value |
 | Affect | Pure deterministic TypeScript model | Versionable, replayable, testable, and removable |
+| Wake / cognitive energy | Pure TypeScript gate, recovery, reservation, usage accounting, qualitative projector | Makes cognition scarce and auditable without hiding behavior in Prompt |
 | Tests | `node:test` plus property/replay fixtures | Existing toolchain with deterministic invariants |
 | Logging | Structured JSON, later OpenTelemetry export | Audit model/input/version/source decisions |
 
@@ -252,11 +279,11 @@ src/gf/
   perception/            visibility projection into observations
   memory/                subjective records, filters, FTS, counter-evidence
   commitments/           lifecycle, due events, conflicts, fulfillment
-  cognition/             Working Self builder and open Policy port
+  cognition/             Wake gate, energy accounting/projector, Working Self, open Policy
   affect/                optional appraisal, deterministic model, derived store
   world/drivers/          schedule, obligation, NPC, environment event sources
   world/adjudication/     action compiler, hard rules, social outcome proposal
-  inference/             provider-neutral async ports and provider adapters
+  inference/             provider-neutral async ports, usage receipts, provider adapters
   validation/            schema, source closure, policy, semantic guards
   state/                 StateManager, reducers, migrations, repositories
   delivery/              surface renderer, outbox, receipts
@@ -336,8 +363,15 @@ it does not silently rewrite historical documents.
 
 - freeze observation, memory bundle, commitment, Working Self, open action, and
   outcome contracts;
-- implement Perception, memory retrieval, commitment reads, Working Self, open
-  Policy, action compilation, and world adjudication;
+- freeze WakeCandidate/Decision, raw usage receipt, experienced usage
+  breakdown, cognitive-energy reservation, settlement, and non-numeric
+  condition contracts;
+- implement change aggregation, Perception, versioned Cognitive Gate with
+  non-wake audit, cognitive-energy recovery/reservation/settlement, memory
+  retrieval, commitment reads, Working Self, open Policy, action compilation,
+  and world adjudication;
+- prove provider pricing, caching discounts, transport retries, and runtime
+  repair do not create character fatigue or leak counters into character input;
 - route both user and world events through the same cognitive Policy while
   preserving fast surface rendering where latency matters;
 - run with `affect_mode=off` only.

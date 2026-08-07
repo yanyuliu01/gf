@@ -10,6 +10,10 @@
 - [可计算世界组成](../computable-world-architecture-v1.png)（[SVG](../computable-world-architecture-v1.svg) / [Mermaid](../computable-world-architecture-v1.mmd)）：回答世界内部有哪些可编码的状态与过程。
 - [世界交互与写入权限](../world-interaction-structure-v1.png)（[SVG](../world-interaction-structure-v1.svg) / [Mermaid](../world-interaction-structure-v1.mmd)）：回答世界事件怎样进入认知和裁定、哪些路径不调用 LLM，以及谁拥有世界事实写入权。
 
+认知唤醒、模型 token 如何结算为角色精力，以及角色为何只能感知疲劳后果而看不到
+数值，由 [`17-cognitive-wake-token-energy-v1.md`](17-cognitive-wake-token-energy-v1.md)
+增量定义。
+
 ## 0. 方向校正
 
 [`15-world-runtime-interaction-rules-draft-v1.md`](15-world-runtime-interaction-rules-draft-v1.md)
@@ -51,7 +55,7 @@ S(t) = {
   accounts,          // 各主体/地点持有的资源库存
   capacities,        // 人员、设备、注意、交通等区间容量
   processes,         // 正在等待、执行、暂停或返工的生产过程
-  agents,            // 身体、位置、权限、承诺和可用容量
+  agents,            // 身体、认知精力、位置、权限、承诺和可用容量
   organizations,     // 预算、岗位、项目、审批和资产
   locations,         // 路网、容纳、开放时段和环境条件
   environment,       // 天气、温湿度、能源、水与污染
@@ -112,7 +116,7 @@ NPC，以及它们与莱茵和特里蒙外部系统的输入输出。城市和�
 | `stock` | 可累计数量 `x >= 0` | 转移守恒，可消耗、产出、衰减 | 水、营养液、样本、食物、实验耗材 |
 | `currency` | 账户余额 | 组织边界内复式转移；外部收支有来源 | 个人余额、科室预算 |
 | `capacity` | 每时间区间可用量 | 不可跨期囤积，同一区间不能重复占用 | 人员工时、仪器小时、交通运力 |
-| `condition` | 有上下界的状态 | 可恢复、恶化，但不能直接转移 | 身体能量、设备健康、植株健康 |
+| `condition` | 有上下界的状态 | 可恢复、恶化，但不能直接转移 | 身体能量、认知精力、设备健康、植株健康 |
 | `information` | 带来源的可复制对象 | 复制不消耗原件，读取受权限和感知限制 | 原始读数、报告、知识、终端文字 |
 | `permission` | 对主体-对象-操作的授权 | 不可当普通数量交易，有签发和失效事件 | 实验室访问、审批权、数据读取权 |
 
@@ -534,6 +538,10 @@ available_cognition
 吃饭、睡眠、锻炼、疾病和源石/污染防护是生产能力的再生产过程。它们可以被推迟，
 但推迟会改变后续容量与风险。情绪不能直接修改身体能量；情绪可能影响 Policy 提出
 什么行动，但同一行动的身体成本不变。
+
+`available_cognition` 是身体条件给出的能力上界，不等于本轮可以无限调用模型。被角色
+实际经历的输入、推演和表达 token 还必须通过 docs/17 的认知精力账户预留和结算；
+睡眠与身体状态影响恢复率。API 价格、缓存折扣和工程重试不属于该世界资源。
 
 ---
 

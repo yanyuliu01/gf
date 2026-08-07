@@ -33,9 +33,11 @@ M11-001..006 portable M1.1 baseline
 OWN-001 world runtime decisions
         +
 OWN-002 concern/tension seed
+        +
+OWN-008 qualitative cognitive-energy calibration
         |
         v
-M20 contracts -> M20 final off pipeline -> M21 world autonomy
+M20 contracts -> Wake/energy baseline -> M20 final off pipeline -> M21 world autonomy
         |
         v
 M22 shadow Affect -> M23 active Affect -> M30 longitudinal proof
@@ -58,7 +60,7 @@ without it.
 | 7 | `PM-001` | Engineering + Owner review | Removes finite-candidate ambiguity from active M2 instructions |
 | 8 | `OWN-002` | Owner | Supplies open concern meanings without numeric weights |
 | 9 | `OWN-003` | Owner | Freezes Doctor/Muelsyse chat voice examples |
-| 10 | `M20-001` | Engineering | Freezes the final off-mode contracts before behavior work |
+| 10 | `OWN-008` | Owner | Calibrates fatigue, recovery, and minimum honest response in qualitative terms |
 
 ---
 
@@ -92,6 +94,7 @@ unchanged.
 | `OWN-005` | `WAITING_OWNER` | OWNER | `OWN-001`, `OWN-002`, `OWN-003` | Approve 8-10 longitudinal golden scenarios with initial state, event sequence, expected continuity after hours/days, and prohibited outcomes. |
 | `OWN-006` | `READY` | OWNER | none | Confirm or replace the PRD north-star metric. It must remain an audit measure and must never feed character strategy or contact frequency. |
 | `OWN-007` | `LATER` | OWNER | M30 results | Review 7-day logs and decide whether active Affect creates meaningful continuity, only more dramatic language, or harmful behavioral pressure. |
+| `OWN-008` | `WAITING_OWNER` | OWNER | none | Approve qualitative cognitive-energy semantics in [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md): what light/meaningful/deep fatigue feels like, what sleep/rest restores, and the minimum complete response she should still be able to give. Do not provide token counts, balances, percentages, prices, or conversion coefficients. |
 
 Owner responses belong in `docs/14-owner-input-workbook-v1.md`. Engineering
 must not block M1.1 fixes on these items.
@@ -130,6 +133,9 @@ required for correct operation.
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `BLOCKED` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
+| `M20-006` | `BLOCKED` | ENG | `M11-005`, `OWN-008` | Freeze versioned JSON Schemas for WakeCandidate, WakeDecision, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, and non-numeric CognitiveCondition. Raw provider/token/billing fields are forbidden from character-facing contracts; TS types are generated. |
+| `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, accumulated salience, and derived Wake audit including `wake=false`. Wake audit rows are not WorldEvents; do not modify deployed migrations. |
+| `M20-008` | `BLOCKED` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, CognitiveBudgetPlanner, CognitiveEnergyEngine, CognitiveConditionProjector, UsageClassifier, and UsageSettlement. Pure decision functions perform no writes or model calls. |
 
 ### Perception, Memory, And Working Self
 
@@ -139,18 +145,23 @@ required for correct operation.
 | `M20-011` | `BLOCKED` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
 | `M20-012` | `BLOCKED` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, and epistemic status; then SQLite FTS5 reranking. No vector database. |
 | `M20-013` | `BLOCKED` | ENG | `M20-012` | Retrieve supporting and counter-evidence under a fixed context budget. Tests prevent mood/current hypothesis from suppressing relevant contradiction. |
-| `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013` | Build read-only `WorkingSelfV1` from current facts, activity, commitments, memories, beliefs, open loops, persona, and optional contributors. It is not persisted as a new fact store. |
+| `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only `WorkingSelfV1` from current facts, activity, commitments, memories, beliefs, open loops, persona, non-numeric CognitiveCondition, and optional contributors. It is not persisted as a new fact store and contains no token, balance, percentage, provider, or price fields. |
+| `M20-015` | `BLOCKED` | ENG | `M20-007`, `M20-008`, `M20-010` | Implement `ChangeAggregator -> PerceptionProjector -> CognitiveGate` before full Working Self construction. Every meaningful candidate deterministically produces `ignore / accumulate / wake`, priority, reason codes, input hash, and versioned audit, including non-wake outcomes. |
+| `M20-016` | `BLOCKED` | ENG + OWNER | `M20-007`, `M20-008`, `OWN-008` | Implement pure TypeScript recovery, pre-reservation, settlement, protected reply reserve, and qualitative CognitiveCondition projection. Recovery depends on elapsed time, sleep, physiology, and activity; energy constrains capacity but never selects semantic action. |
+| `M20-017` | `BLOCKED` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
+| `M20-018` | `BLOCKED` | ENG | `M20-015..017` | Implement the call lifecycle: StateManager reserves before inference, model execution runs outside database transactions, then StateManager validates source closure and settles actual usage or expires/releases the lease on failure. Autonomous cognition cannot consume the protected reply reserve. |
+| `M20-019` | `BLOCKED` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter non-leakage, complete non-wake audit, and identical Wake/energy results in Affect `off` versus `shadow`. |
 
 ### Open Policy And World Adjudication
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-020` | `BLOCKED` | ENG | `M20-001`, `M20-014`, `OWN-003` | Implement open generative Policy. It produces one open semantic intent/plan directly and never generates a finite list for ranking. |
+| `M20-020` | `BLOCKED` | ENG | `M20-001`, `M20-014`, `M20-018`, `OWN-003` | Implement open generative Policy. It produces one open semantic intent/plan directly and never generates a finite list for ranking. It receives only qualitative cognitive condition, not engine counters. |
 | `M20-021` | `BLOCKED` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
 | `M20-022` | `BLOCKED` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
 | `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
 | `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
-| `M20-025` | `BLOCKED` | ENG | `M20-020`, `M20-024` | Route user and non-user events through the same Working Self/Open Policy. Preserve a low-latency surface-rendering path, but not a second personality or decision system. |
+| `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Wake/Working Self/Open Policy pipeline. Preserve a low-latency surface-rendering path, but not a second personality or decision system. |
 | `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
 
 ---
@@ -190,7 +201,7 @@ and has zero influence on Policy input/output outside audit logging.
 | `M22-003` | `BLOCKED` | ENG | `M22-001`, `M11-006` | Implement appraisal provider with multiple interpretations, confidence, concern effects, agency, controllability, certainty, and unexpectedness. Persist accepted proposal before affect replay. |
 | `M22-004` | `BLOCKED` | ENG | `M22-002`, `M22-003` | Implement deterministic AffectModel v1 using valence/arousal/dominance and source-linked residues. Same state/appraisal/time/version replays exactly. |
 | `M22-005` | `BLOCKED` | ENG | `M22-004` | Implement reappraisal: new evidence can weaken, strengthen, transform, or supersede residue without rewriting historical appraisal. |
-| `M22-006` | `BLOCKED` | ENG | `M22-004`, `M20-025` | Implement `shadow` mode. Off and shadow Policy inputs and resulting action distributions are equal under deterministic fixtures; only audit artifacts differ. |
+| `M22-006` | `BLOCKED` | ENG | `M22-004`, `M20-025` | Implement `shadow` mode. Off and shadow Wake decisions, energy recovery/reservation/settlement, Policy inputs, and resulting action distributions are equal under deterministic fixtures; only Affect audit artifacts differ. |
 | `M22-007` | `BLOCKED` | ENG | `M22-006` | Run Owner calibration set, report systematic appraisal/decay errors, and version parameter changes. Do not tune on desired dialogue wording alone. |
 
 ---
