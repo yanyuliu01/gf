@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-08-06**
+Snapshot: **2026-08-07**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md)
 
@@ -85,7 +85,7 @@ unchanged.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `OWN-001` | `WAITING_OWNER` | OWNER | none | Complete the world-runtime decisions in docs/14: action duration, reachability, resource cost, NPC agency, partial failure, independent event sources, ordinary-day behavior, and prohibited event scale. Examples are sufficient; no code or formulas required. |
+| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review, accept, or edit [`docs/15-world-runtime-interaction-rules-draft-v1.md`](docs/15-world-runtime-interaction-rules-draft-v1.md), then record sign-off in docs/14. The draft covers action duration, reachability, continuous manifestation/resource load, NPC agency, partial failure, independent event sources, ordinary days, and prohibited event scale. Draft existence is not Owner approval. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
 | `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
