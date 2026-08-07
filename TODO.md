@@ -85,7 +85,7 @@ unchanged.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review, accept, or edit [`docs/15-world-runtime-interaction-rules-draft-v1.md`](docs/15-world-runtime-interaction-rules-draft-v1.md), then record sign-off in docs/14. The draft covers action duration, reachability, continuous manifestation/resource load, NPC agency, partial failure, independent event sources, ordinary days, and prohibited event scale. Draft existence is not Owner approval. |
+| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/16-computable-world-model-draft-v1.md`](docs/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, and deterministic stepping. [`docs/15-world-runtime-interaction-rules-draft-v1.md`](docs/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. Sign-off belongs in docs/14; draft existence is not approval. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
 | `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
@@ -157,17 +157,24 @@ required for correct operation.
 
 ## M2.1: Independent World Life
 
-Exit gate: ordinary world obligations and consequences arise without a user
-message and without using protagonist association as the only event source.
+Exit gate: a deterministic resource/process kernel advances an ordinary closed
+life loop without a user message or LLM-authored world event. Obligations,
+ecology, production, NPC capacity, and external boundaries produce sourced
+consequences; protagonist association only changes attention.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M21-001` | `BLOCKED` | ENG | `OWN-001`, `M20-002` | Commitment/schedule driver emits due, conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
-| `M21-002` | `BLOCKED` | ENG | `OWN-001`, `M20-010` | NPC driver represents current activity, limited knowledge, commitments, and independent goals. NPCs may refuse or act offscreen; not every NPC receives a continuous LLM loop. |
-| `M21-003` | `BLOCKED` | ENG | `OWN-001`, `M20-010` | Environment driver emits small sourced opportunities/constraints such as work changes, weather, equipment, or location events without manufacturing drama. |
-| `M21-004` | `BLOCKED` | ENG | `M21-001..003` | Offline aggregation advances to meaningful event boundaries rather than simulating each minute. Same state/clock/seed produces replayable event proposals. |
+| `M21-007` | `BLOCKED` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, WorldCommand, and WorldStep schemas from docs/16. Resource laws are machine semantics, not semantic action candidates; TS types are generated. |
+| `M21-008` | `BLOCKED` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
+| `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
+| `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. Offline and stepwise execution match. |
+| `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
+| `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
+| `M21-002` | `BLOCKED` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
+| `M21-003` | `BLOCKED` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
+| `M21-004` | `BLOCKED` | ENG | `M21-001..003`, `M21-009` | Offline aggregation advances to meaningful event boundaries rather than simulating each minute. Same state/clock/seed produces replayable event proposals and matches stepwise execution. |
 | `M21-005` | `BLOCKED` | ENG | `M20-013`, `M21-004` | Association sampler biases attention toward one concrete object but has no authority to assert that an external event occurred. |
-| `M21-006` | `BLOCKED` | ENG | `M21-001..005` | Simulation fixture proves: NPC request + prior commitment -> open action -> cost/partial outcome -> later memory/contact effect, with all facts and sources replayable. |
+| `M21-006` | `BLOCKED` | ENG | `M21-001..005`, `M21-010..011` | Simulation fixture proves: coupled resource/process pressure + NPC request + prior commitment -> open action -> cost/partial outcome -> later memory/contact effect, with all facts, conservation, commands, and sources replayable. |
 
 ---
 
@@ -225,7 +232,7 @@ These items must not add current schema fields or block M1.1/M2.
 |---|---|---|---|---|
 | `L40-001` | `LATER` | ENG | M30 release | Feishu text adapter with idempotency, receipts, retries, and capability events. |
 | `L40-002` | `LATER` | ENG | stable text surface | Versioned multimodal communication plan and text/audio/image renderers with semantic conservation. |
-| `L40-003` | `LATER` | ENG + OWNER | M30 evidence | More complex NPC/organization/resource simulation without all-NPC continuous LLM calls. |
+| `L40-003` | `LATER` | ENG + OWNER | M30 evidence | Expand the approved local resource/process kernel beyond the ecology department into more organizations, industries, and NPC roles without all-NPC continuous LLM calls. |
 | `L40-004` | `LATER` | ENG + OWNER | explicit capability event | Cross-world gifts/shared assets with consent, provenance, asset state, and synchronized adjudication. |
 | `L40-005` | `LATER` | ENG + OWNER | explicit capability event | Restricted Doctor avatar/entry with location, permission, visibility, action, and no second personality. |
 | `L40-006` | `LATER` | ENG | retrieval evidence | Optional embeddings/vector reranker if FTS baseline demonstrably misses relevant memory. |

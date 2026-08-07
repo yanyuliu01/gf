@@ -1,6 +1,6 @@
 # GF Project Handoff
 
-Status snapshot: **2026-08-06**
+Status snapshot: **2026-08-07**
 Primary implementation language: **TypeScript**
 Operational backlog: [`TODO.md`](TODO.md)
 Owner input workbook: [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md)
@@ -67,6 +67,23 @@ companion. The decisive additional mechanisms are:
    happens".
 5. **Persistent causal consequences** committed through an auditable,
    replayable state pipeline.
+
+### Pending OWN-001 Direction: Computable World Kernel
+
+The current Owner-review proposal is
+`docs/16-computable-world-model-draft-v1.md`. It corrects the earlier
+interaction-only draft by defining the world as a hybrid discrete-event,
+stock-flow, and production-process system. Resources, capacity reservations,
+process queues, ecology, physiology, organization work, and bounded external
+drivers advance in deterministic TypeScript from versioned parameters and a
+seed. LLMs propose open actions and interpret committed outcomes; they do not
+calculate production, inventory, duration, failures, or world facts.
+
+This direction is not frozen until the Owner signs `OWN-001`. The retained
+`docs/15-world-runtime-interaction-rules-draft-v1.md` describes the
+open-action adjudication interface, not the world kernel itself. The next Owner
+input is a resource/endowment table and 3-5 production recipes, not Prompt or
+Affect Utility tuning.
 
 ## 4. Frozen Architectural Decisions
 
