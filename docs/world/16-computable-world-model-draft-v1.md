@@ -7,12 +7,12 @@
 
 配套结构图：
 
-- [可计算世界组成](../computable-world-architecture-v1.png)（[SVG](../computable-world-architecture-v1.svg) / [Mermaid](../computable-world-architecture-v1.mmd)）：回答世界内部有哪些可编码的状态与过程。
-- [世界交互与写入权限](../world-interaction-structure-v1.png)（[SVG](../world-interaction-structure-v1.svg) / [Mermaid](../world-interaction-structure-v1.mmd)）：回答世界事件怎样进入认知和裁定、哪些路径不调用 LLM，以及谁拥有世界事实写入权。
+- [可计算世界组成](../../computable-world-architecture-v1.png)（[SVG](../../computable-world-architecture-v1.svg) / [Mermaid](../../computable-world-architecture-v1.mmd)）：回答世界内部有哪些可编码的状态与过程。
+- [世界交互与写入权限](../../world-interaction-structure-v1.png)（[SVG](../../world-interaction-structure-v1.svg) / [Mermaid](../../world-interaction-structure-v1.mmd)）：回答世界事件怎样进入认知和裁定、哪些路径不调用 LLM，以及谁拥有世界事实写入权。
 
 认知唤醒、模型 token 如何结算为角色精力，以及连续精力怎样限制实际认知能力但不被
 投影成人工疲劳标签，由
-[`18-emergent-cognitive-experience-v2.md`](18-emergent-cognitive-experience-v2.md)
+[`18-emergent-cognitive-experience-v2.md`](../cognition/18-emergent-cognitive-experience-v2.md)
 增量定义。v1 账本设计保留在 docs/17 用于回退。
 
 ## 0. 方向校正
@@ -97,7 +97,7 @@ NPC，以及它们与莱茵和特里蒙外部系统的输入输出。城市和�
 | `Account` | 某主体在某地点持有多少资源 | 生态园水箱、生态科耗材库、缪尔赛思个人余额 |
 | `ProcessDefinition` | 输入、容量、时间经过怎样变成输出 | 样本培养、检测、报告复核、设备维护 |
 | `ProcessInstance` | 某次具体生产活动的在制品 | S-4 第三次培养批次 |
-| `Actor` | 能持有资源、提供容量、拥有权限和提交命令 | 缪尔赛思、塞雷娅、当班研究员、生态科 |
+| `Actor` | 能持有资源、提供容量、拥有权限和提交命令；同时是**社会主体**——可以被请求、可以拒绝或谈判、持有自己的未决事项与有限知识 | 缪尔赛思、塞雷娅、当班研究员、生态科 |
 | `LocationNode` | 资源与行动发生的空间节点 | 生态园、主控区、会议室、街区、外部供应商 |
 
 关系全部显式化：资源属于账户，账户属于主体并位于地点；工序从账户扣输入、占用

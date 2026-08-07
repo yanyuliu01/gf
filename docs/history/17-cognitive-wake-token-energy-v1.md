@@ -2,7 +2,7 @@
 
 > **历史版本**：本文的三本账、Wake、预留/结算与恢复设计仍被 v2 继承；人工
 > `CognitiveConditionProjector` 已由
-> [`18-emergent-cognitive-experience-v2.md`](18-emergent-cognitive-experience-v2.md)
+> [`18-emergent-cognitive-experience-v2.md`](../cognition/18-emergent-cognitive-experience-v2.md)
 > 废弃。当前实现以 v2 为准，本文保留用于回退和对照实验。
 
 - 状态：**Owner 方向已确认，参数与机器契约待冻结**
@@ -11,8 +11,8 @@
 - 依赖：`docs/13` 的开放 Policy / 可拆卸 Affect、`docs/16` 的可计算世界内核
 - 性质：新增 M2 基线设计；不修改已冻结 v1 Schema 或 migration
 
-配套结构图：[认知唤醒与 Token 精力闭环](../cognitive-wake-token-energy-v1.png)
-（[SVG](../cognitive-wake-token-energy-v1.svg) / [Mermaid](../cognitive-wake-token-energy-v1.mmd)）。
+配套结构图：[认知唤醒与 Token 精力闭环](../../cognitive-wake-token-energy-v1.png)
+（[SVG](../../cognitive-wake-token-energy-v1.svg) / [Mermaid](../../cognitive-wake-token-energy-v1.mmd)）。
 
 ---
 

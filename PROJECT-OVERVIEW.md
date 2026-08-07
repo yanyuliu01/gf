@@ -2,7 +2,7 @@
 
 GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是《明日方舟》的缪尔赛思。目标不是让角色持续等待用户发问，而是让她作为泰拉世界中的居民拥有自己的时间、事件、记忆和变化；博士的消息是这个世界最重要的外部输入之一，但不是世界唯一的驱动力。
 
-新模型或新同学接手时，从 [完整交接说明](PROJECT-HANDOFF.md)、[现役任务板](TODO.md) 和 [仓库 Agent 约束](AGENTS.md) 开始；需要 Owner 补充的内容集中在 [输入工作簿](docs/14-owner-input-workbook-v1.md)。这些管理入口不替代下文列出的主题权威和机器契约。
+新模型或新同学接手时，从 [完整交接说明](PROJECT-HANDOFF.md)、[现役任务板](TODO.md) 和 [仓库 Agent 约束](AGENTS.md) 开始；需要 Owner 补充的内容集中在 [输入工作簿](docs/owner/14-owner-input-workbook-v1.md)。这些管理入口不替代下文列出的主题权威和机器契约。
 
 ## 产品关系
 
@@ -20,8 +20,8 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 6. 关系不是刻度或向量：关系本体是共同历史、相互披露、有限信念、承诺、冲突与修复；任何观测读数都可重算且不反向驱动角色。
 7. 唯一出口：所有出向内容经同一 outbox 与 adapter 投递，不允许旁路。
 8. 不优化留存：指标只用于健康审计，不反馈成诱导用户停留的角色策略。
-9. 事实、信念与承诺分离：事件账本持有事实；角色可以误解；承诺有自己的生命周期，不能从台词中静默消失。
-10. 开放行动、情绪动力与世界裁决分离：Affect Utility 只改变连续情绪、检索显著性与注意，不给动作打总分；LLM 根据 Working Self 直接生成开放行动，World Adjudicator 再按物理、权限、能力、资源和 NPC 意志裁决后果。
+9. 事实、信念与承诺分离：事件账本持有事实；角色可以误解；承诺不预建权威容器——账本中的原话是事实，commitment 记录是派生投影，对世界裁决与审计可见、对 Working Self 与 Open Policy 不可见。两个主体对同一次交互可以持有不一致的理解。
+10. 开放行动、情绪动力与世界裁决分离：Affect Utility 只改变检索显著性与注意，不给动作打分、不选择动作；情绪经她**亲历的事件**进入上下文，不经状态标签。LLM 根据 Working Self 直接生成开放行动，World Adjudicator 再按物理、权限、能力、资源和 NPC 意志裁决后果。
 11. 多模态语义守恒：文字、语音、图像从同一 communication plan 渲染，共享 intent、state revision 与 source closure；媒体失败只能安全降级。
 
 ## 架构图
@@ -80,16 +80,17 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 
 ## 权威文档
 
-- 机制：[docs/02-framework-v3.5.md](docs/02-framework-v3.5.md)
-- 交互：[docs/03-interaction-v1.md](docs/03-interaction-v1.md)
-- 边界：[docs/04-boundary-v2.md](docs/04-boundary-v2.md)
-- 实例种子：[docs/06-muelsyse-seed-draft-v1.md](docs/06-muelsyse-seed-draft-v1.md)
-- 实施缺口：[docs/08-implementation-gap-checklist.md](docs/08-implementation-gap-checklist.md)
-- A7 骨架：[docs/09-a7-dialogue-samples-scaffold.md](docs/09-a7-dialogue-samples-scaffold.md)
-- 跨世界协议：[docs/10-crossworld-protocol-v1.md](docs/10-crossworld-protocol-v1.md)
-- 修复计划：[docs/11-repair-plan-v1.md](docs/11-repair-plan-v1.md)
-- 补充融合决策记录：[docs/12-supplement-integration-review-v1.md](docs/12-supplement-integration-review-v1.md)
-- M2 记忆与 Affect 混合架构：[docs/13-memory-affect-hybrid-architecture-v1.md](docs/13-memory-affect-hybrid-architecture-v1.md)
+- **架构约束（冻结，高于以下全部）**：[docs/invariants/19-architecture-invariants-v1.md](docs/invariants/19-architecture-invariants-v1.md)
+- 机制：[docs/cognition/02-framework-v3.5.md](docs/cognition/02-framework-v3.5.md)
+- 交互：[docs/product/03-interaction-v1.md](docs/product/03-interaction-v1.md)
+- 边界：[docs/product/04-boundary-v2.md](docs/product/04-boundary-v2.md)
+- 实例种子：[docs/character/06-muelsyse-seed-draft-v1.md](docs/character/06-muelsyse-seed-draft-v1.md)
+- 实施缺口：[docs/history/08-implementation-gap-checklist.md](docs/history/08-implementation-gap-checklist.md)
+- A7 骨架：[docs/character/09-a7-dialogue-samples-scaffold.md](docs/character/09-a7-dialogue-samples-scaffold.md)
+- 跨世界协议：[docs/product/10-crossworld-protocol-v1.md](docs/product/10-crossworld-protocol-v1.md)
+- 修复计划：[docs/history/11-repair-plan-v1.md](docs/history/11-repair-plan-v1.md)
+- 补充融合决策记录：[docs/history/12-supplement-integration-review-v1.md](docs/history/12-supplement-integration-review-v1.md)
+- M2 记忆与 Affect 混合架构：[docs/cognition/13-memory-affect-hybrid-architecture-v1.md](docs/cognition/13-memory-affect-hybrid-architecture-v1.md)
 - Prompt 调用清单：[prompts/manifest.yaml](prompts/manifest.yaml)
 - 机器契约：[schemas/README.md](schemas/README.md)
 - SQLite 迁移：[migrations/README.md](migrations/README.md)
@@ -100,6 +101,6 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 - 完整交接：[PROJECT-HANDOFF.md](PROJECT-HANDOFF.md)
 - 现役任务板：[TODO.md](TODO.md)
 - 编码 Agent 约束：[AGENTS.md](AGENTS.md)
-- Owner 输入工作簿：[docs/14-owner-input-workbook-v1.md](docs/14-owner-input-workbook-v1.md)
+- Owner 输入工作簿：[docs/owner/14-owner-input-workbook-v1.md](docs/owner/14-owner-input-workbook-v1.md)
 
 本文、交接/管理入口和六张图用于快速建立共同理解，不替代上述权威文档；docs/12 是第一轮融合决策记录。docs/13 持有 M2 认知/情绪增量，但不覆盖 docs/02 的 M1 契约、docs/10 的跨世界本体或任何现役机器 Schema。

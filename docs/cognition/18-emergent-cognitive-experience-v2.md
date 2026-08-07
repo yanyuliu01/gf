@@ -3,11 +3,11 @@
 - 状态：**Owner 方向已确认，机器契约与参数待冻结**
 - 日期：2026-08-07
 - 对应方向：`OWN-008`
-- 前版：[`17-cognitive-wake-token-energy-v1.md`](17-cognitive-wake-token-energy-v1.md)
+- 前版：[`17-cognitive-wake-token-energy-v1.md`](../history/17-cognitive-wake-token-energy-v1.md)
 - 性质：新增 M2 权威增量；不修改已冻结 v1 Schema 或 migration
 
-配套结构图：[涌现式认知体验与 Token 精力闭环](../cognitive-wake-token-energy-v2.png)
-（[SVG](../cognitive-wake-token-energy-v2.svg) / [Mermaid](../cognitive-wake-token-energy-v2.mmd)）。
+配套结构图：[涌现式认知体验与 Token 精力闭环](../../cognitive-wake-token-energy-v2.png)
+（[SVG](../../cognitive-wake-token-energy-v2.svg) / [Mermaid](../../cognitive-wake-token-energy-v2.mmd)）。
 
 ---
 

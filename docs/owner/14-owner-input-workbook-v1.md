@@ -24,10 +24,10 @@ Schema 或 Utility 参数文件，也不要求你写代码。工程侧会把签�
 这里补的是“模拟器如何让这些事实动起来”，不是重写泰拉设定。
 
 当前主草案是
-[`16-computable-world-model-draft-v1.md`](16-computable-world-model-draft-v1.md)：
+[`16-computable-world-model-draft-v1.md`](../world/16-computable-world-model-draft-v1.md)：
 它把世界定义为资源禀赋、库存-流量、生产过程、容量、生态/身体规律和离散事件组成
 的可编码状态转移系统。此前的
-[`15-world-runtime-interaction-rules-draft-v1.md`](15-world-runtime-interaction-rules-draft-v1.md)
+[`15-world-runtime-interaction-rules-draft-v1.md`](../world/15-world-runtime-interaction-rules-draft-v1.md)
 只保留为开放行动的交互/裁定接口，不能单独完成 `OWN-001`。请先审 16 的 §16，
 再把确认结果记录到本工作簿；任何草案存在本身都不表示 `OWN-001` 已完成。
 

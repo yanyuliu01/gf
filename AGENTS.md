@@ -7,44 +7,40 @@ It does not replace product, world, or machine-contract authority.
 
 Read these files in order:
 
-1. `PROJECT-HANDOFF.md` for the product, architecture, current state, and handoff rules.
-2. `TODO.md` for task IDs, status, dependencies, owners, and acceptance criteria.
-3. `docs/README.md` for subject-matter authority and document precedence.
-4. The task-specific authoritative document and machine schemas.
+1. **`docs/invariants/19-architecture-invariants-v1.md`** — the frozen constraint layer. It outranks every other document, prompt, schema, and implementation. Overturning any entry requires an ADR (see its §2).
+2. `PROJECT-HANDOFF.md` for the product, architecture, current state, and handoff rules.
+3. `TODO.md` for task IDs, status, dependencies, owners, and acceptance criteria.
+4. `docs/README.md` for subject-matter authority and document precedence.
+5. The task-specific authoritative document and machine schemas.
 
-Do not start from `docs/08-implementation-gap-checklist.md` alone. Some older
+`docs/` numbers are **stable IDs, not a reading order**; directories carry the topic. A document keeps its number when it moves or retires, because prose across the repo cites `docs/02`, `docs/10` and so on.
+
+Do not start from `docs/history/08-implementation-gap-checklist.md` alone. Some older
 documents still describe the historical finite-candidate M1/M2 design; task
 `PM-001` in `TODO.md` owns that specification cleanup.
 
 ## Non-Negotiable Architecture Rules
 
-- World facts are committed `WorldEvent` and reducer state. Model output,
-  memories, appraisals, and affect snapshots are proposals or derived state.
-- `StateManager` is the only authoritative state writer. No model, adapter,
-  memory component, or Affect component may write world facts directly.
-- Every outbound message uses the same speech/surface, outbox, and adapter path.
-- Facts, subjective beliefs, and executable commitments remain separate.
-- The LLM generates an open-ended semantic action. Do not reintroduce a fixed
-  or temporary finite semantic action candidate set.
-- Affect Utility models event impact on concerns and continuous affect. It does
-  not rank or select actions and never sends messages directly.
-- Accepted semantic model input, deliberation, and expression consume the
-  actor's versioned cognitive-energy resource. Raw token counts, balances,
-  percentages, provider prices, and billing limits never enter character
-  prompts or surfaces; operator billing cannot masquerade as fatigue.
-- Cognitive energy constrains engine-side context, deliberation, tool, and
-  expression capacity. Do not map account ranges to authored fatigue labels,
-  capability prose, dialogue, or actions. Open Policy may derive an optional,
-  source-linked free-form self-experience from lived evidence; it may be absent,
-  uncertain, or mistaken and never writes the energy account.
-- Cognitive wake decisions are versioned and audited, including non-wake
-  outcomes. Audit rows are derived records, not objective WorldEvents.
-- `WorldAdjudicator` determines what actually happens. An action proposal may
-  not declare its own success.
-- Cross-world facts obey `docs/10-crossworld-protocol-v1.md`. The Doctor's
-  ordinary real-world life does not automatically change Terra.
-- Do not optimize character behavior for retention, response rate, payment, or
-  emotional pressure.
+**The authoritative list lives in `docs/invariants/19-architecture-invariants-v1.md` §3.**
+It is frozen; this file no longer restates it, so the two cannot drift. Read §3
+before any change that touches module boundaries, visibility, or who may write
+what. The groups are:
+
+| Group | Covers |
+|---|---|
+| A | Facts and write authority — `StateManager` is the only authoritative writer |
+| B | Facts / beliefs / commitments separated; commitments are derived projections |
+| C | Perception projection, Working Self, capacity limits, mandatory content |
+| D | Affect does not select actions; emotion enters via lived evidence, not labels |
+| E | Open semantic action; no finite candidate set; single outbound path |
+| F | Detachability — `off` / `shadow` / `active`, side-inputs only, deletion criteria |
+| G | Disposition changes through retrieval, not distilled rules |
+| H | No retention/response-rate optimization; operating cost is never fatigue |
+| I | Cross-world facts and the membrane boundary |
+
+If a task description, an older document, a prompt, or existing code conflicts
+with §3, §3 wins and the other artifact is the thing to fix. If you believe an
+entry is wrong, write an ADR per §2 — do not work around it.
 
 ## Detachability Rules
 
@@ -53,10 +49,17 @@ The target cognitive pipeline must run in all three modes:
 - `off`: memory/state -> Working Self -> open Policy, with no Affect calls.
 - `shadow`: Affect derives and records state, but Policy input is identical to
   `off` except for audit metadata outside the prompt.
-- `active`: Affect contributes an optional, source-linked Working Self fragment.
+- `active`: Affect biases retrieval salience and attention. It does **not**
+  contribute an affect state label to Working Self — the events that moved her
+  state enter as ordinary lived evidence and she interprets them herself
+  (`docs/invariants/19` D2-D3).
 
 Deleting Affect-derived tables or switching to `off` must not damage the event
 ledger, reducer state, commitments, memory sources, speech, or outbox.
+
+A detachable module may only be a **side input** to the main chain, never a stage
+in it. Test: after removing it, is the chain still connected? Every detachable
+module also needs a deletion criterion (`19` F3-F4).
 
 Build the final `off` pipeline before implementing `shadow`, and activate Affect
 only after controlled ablation tests. Do not follow the older
@@ -90,7 +93,7 @@ only after controlled ablation tests. Do not follow the older
 8. Commit only files belonging to the selected task ID.
 
 If a task requires an Owner decision, do not invent one. Mark it
-`WAITING_OWNER` and point to `docs/14-owner-input-workbook-v1.md`.
+`WAITING_OWNER` and point to `docs/owner/14-owner-input-workbook-v1.md`.
 
 ## Known Baseline At 2026-08-06
 

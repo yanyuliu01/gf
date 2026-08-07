@@ -3,7 +3,7 @@
 Status snapshot: **2026-08-07**
 Primary implementation language: **TypeScript**
 Operational backlog: [`TODO.md`](TODO.md)
-Owner input workbook: [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md)
+Owner input workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
 This is the stable handoff entrypoint for a new model, developer, or product
 collaborator. It explains the whole project and its current state, but does not
@@ -50,7 +50,7 @@ the Doctor, but cannot automatically change Terra. Terra facts require an
 explicit Doctor report or a verified bridge event with valid provenance.
 
 The complete semantic authority is
-`docs/10-crossworld-protocol-v1.md`. Prompts and examples cannot weaken it.
+`docs/product/10-crossworld-protocol-v1.md`. Prompts and examples cannot weaken it.
 
 ## 3. The Core Product Thesis
 
@@ -74,7 +74,7 @@ companion. The decisive additional mechanisms are:
 ### Pending OWN-001 Direction: Computable World Kernel
 
 The current Owner-review proposal is
-`docs/16-computable-world-model-draft-v1.md`. It corrects the earlier
+`docs/world/16-computable-world-model-draft-v1.md`. It corrects the earlier
 interaction-only draft by defining the world as a hybrid discrete-event,
 stock-flow, and production-process system. Resources, capacity reservations,
 process queues, ecology, physiology, organization work, and bounded external
@@ -91,7 +91,7 @@ single `StateManager` fact writer. SVG and Mermaid sources share each diagram's
 base name.
 
 This direction is not frozen until the Owner signs `OWN-001`. The retained
-`docs/15-world-runtime-interaction-rules-draft-v1.md` describes the
+`docs/world/15-world-runtime-interaction-rules-draft-v1.md` describes the
 open-action adjudication interface, not the world kernel itself. The next Owner
 input is a resource/endowment table and 3-5 production recipes, not Prompt or
 Affect Utility tuning.
@@ -180,13 +180,13 @@ afterward. The hidden account produces an engine-only capacity envelope that
 limits optional context, deliberation, tools, and expression. Policy sees lived
 evidence, not counters, envelope fields, or authored fatigue tiers; it may
 jointly propose an optional free-form self-experience with the open action. The
-current contract is in `docs/18-emergent-cognitive-experience-v2.md`; docs/17 is
+current contract is in `docs/cognition/18-emergent-cognitive-experience-v2.md`; docs/17 is
 retained as the superseded qualitative-projector design.
 
 ## 6. Detachable Affect Architecture
 
 The approved hybrid design is documented in
-`docs/13-memory-affect-hybrid-architecture-v1.md`.
+`docs/cognition/13-memory-affect-hybrid-architecture-v1.md`.
 
 ```text
 Observation + relevant memories + open natural-language concerns
@@ -433,7 +433,7 @@ Engineering should decide implementation mechanics:
 - test harnesses and ablation reports.
 
 The Owner should not need to invent numeric Utility weights or author database
-schemas. Use `docs/14-owner-input-workbook-v1.md` for the required inputs.
+schemas. Use `docs/owner/14-owner-input-workbook-v1.md` for the required inputs.
 
 ## 13. How To Start A Work Session
 
@@ -477,12 +477,12 @@ on chat history as the only project record.
 - Five-minute overview: `PROJECT-OVERVIEW.md`
 - Active project backlog: `TODO.md`
 - Document authority: `docs/README.md`
-- Product requirements: `docs/01-prd-v0.1.md`
-- M1 mechanism baseline: `docs/02-framework-v3.5.md`
-- Cross-world authority: `docs/10-crossworld-protocol-v1.md`
-- M1 repair plan: `docs/11-repair-plan-v1.md`
-- M2 hybrid architecture: `docs/13-memory-affect-hybrid-architecture-v1.md`
-- Owner input workbook: `docs/14-owner-input-workbook-v1.md`
+- Product requirements: `docs/product/01-prd-v0.1.md`
+- M1 mechanism baseline: `docs/cognition/02-framework-v3.5.md`
+- Cross-world authority: `docs/product/10-crossworld-protocol-v1.md`
+- M1 repair plan: `docs/history/11-repair-plan-v1.md`
+- M2 hybrid architecture: `docs/cognition/13-memory-affect-hybrid-architecture-v1.md`
+- Owner input workbook: `docs/owner/14-owner-input-workbook-v1.md`
 - Machine schemas: `schemas/README.md`
 - Persistence rules: `migrations/README.md`
 - Prompt assembly: `prompts/manifest.yaml`

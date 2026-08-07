@@ -4,9 +4,9 @@
 
 > **权威边界**：本文持有 M2 的记忆驱动行动、appraisal 与情绪动力学设计。它不覆盖 `docs/02` 已冻结的 M1 事件、StateManager、来源闭包、事务、Prompt 与 outbox 契约，也不修改 `docs/10` 的跨世界本体。本文进入实现时必须新增版本化 Schema 和 migration，不得向 v1 payload 偷加必填字段。
 
-> **版本保留**：`docs/02-framework-v3.5.md` 与 `docs/12-supplement-integration-review-v1.md` 原样保留，分别代表 M1 机制基线和第一轮补充融合裁决。本文是第二轮架构演进，不删除历史论证，回退时可直接关闭模块或回到旧文档/契约。
+> **版本保留**：`docs/cognition/02-framework-v3.5.md` 与 `docs/history/12-supplement-integration-review-v1.md` 原样保留，分别代表 M1 机制基线和第一轮补充融合裁决。本文是第二轮架构演进，不删除历史论证，回退时可直接关闭模块或回到旧文档/契约。
 
-> **认知精力增量**：[`17-cognitive-wake-token-energy-v1.md`](17-cognitive-wake-token-energy-v1.md)
+> **认知精力增量**：[`17-cognitive-wake-token-energy-v1.md`](../history/17-cognitive-wake-token-energy-v1.md)
 > 保留三本账、Wake、预留/结算和恢复的 v1 历史设计；当前“主观体验怎样形成”以
 > [`18-emergent-cognitive-experience-v2.md`](18-emergent-cognitive-experience-v2.md)
 > 为准。v2 删除人工疲劳投影器，属于最终 `off` 基线且不依赖 Affect。
@@ -82,9 +82,9 @@ Utility 在本文中专指**事件对当前关切的局部影响**，以及该�
 
 ## 3. 模块边界
 
-![记忆与情绪混合架构](../memory-affect-hybrid-architecture-v1.png)
+![记忆与情绪混合架构](../../memory-affect-hybrid-architecture-v1.png)
 
-可缩放版本：[SVG](../memory-affect-hybrid-architecture-v1.svg) ｜ 语义源：[Mermaid](../memory-affect-hybrid-architecture-v1.mmd)
+可缩放版本：[SVG](../../memory-affect-hybrid-architecture-v1.svg) ｜ 语义源：[Mermaid](../../memory-affect-hybrid-architecture-v1.mmd)
 
 ### 3.1 World Ledger：客观历史
 
@@ -164,18 +164,24 @@ Working Self 是一次调用的只读派生视图，不是新的事实库：
 
 ```yaml
 current_activity: 整理实验记录
-attention_constraints: ...
 active_commitments: ...
 relevant_beliefs: ...
 relationship_evidence_supporting: ...
 relationship_evidence_counter: ...
 open_loops: ...
-current_affect: ...
+lived_evidence: ...        # 近期让她状态发生变化的亲历事件
 activated_concerns: ...
 self_statements: ...
 ```
 
-检索先按实体、可见性、时间、承诺与关系做结构化过滤，再做语义重排。情绪和 concern 可以改变显著性，但必须同时检索相关反证，防止坏心情只唤起坏记忆。
+**这份字段清单不属于冻结范围**（`invariants/19` §1），可随实现调整。不可调整的是它的两条形态约束（`invariants/19` C2、D3）：
+
+- **不放状态标签。** 早前版本中的 `attention_constraints` 与 `current_affect` 已删除。前者的底层是隐藏的精力账户，把它投影成描述等于替她编造一种她无法感知的自省；后者会让"她不知道自己被偏色"不再成立。二者与 `18` 删除 `CognitiveConditionProjector` 是同一条理由。
+- **情绪经证据进入，不经标签进入。** 取而代之的是 `lived_evidence`——让她 charge 发生变化的那几件事本身（泵故障、S-4 又萎了、材料还没动），作为普通事实与其他内容并列。她此刻是什么感受，由 Open Policy 从这些证据里现场形成，与 `18` 的 `SelfExperienceProposal` 走同一条路：可以缺省、可以迟滞、可以误判。
+
+检索先按实体、可见性、时间、承诺、关系与**行动—裁决结果**做结构化过滤，再做语义重排。情绪和 concern 可以改变显著性，但必须同时检索相关反证，防止坏心情只唤起坏记忆。
+
+行动—裁决结果这一维是倾向改变的载体（`invariants/19` G1）：同类经验在内容上可能毫无共同点（泵维修、排期、交期），连接它们的是结果的形状——提议被以某类理由驳回。没有这一维，"她会不会变谨慎"就只能靠蒸馏出一条规则，而那条规则会退化成常驻的行为指令。
 
 ### 3.6 Open Generative Policy：直接生成行动
 
@@ -214,9 +220,9 @@ source_refs: [...]
 
 ## 4. 运行时循环
 
-![记忆与情绪运行循环](../memory-affect-runtime-loop-v1.png)
+![记忆与情绪运行循环](../../memory-affect-runtime-loop-v1.png)
 
-可缩放版本：[SVG](../memory-affect-runtime-loop-v1.svg) ｜ 语义源：[Mermaid](../memory-affect-runtime-loop-v1.mmd)
+可缩放版本：[SVG](../../memory-affect-runtime-loop-v1.svg) ｜ 语义源：[Mermaid](../../memory-affect-runtime-loop-v1.mmd)
 
 ### 4.1 用户消息
 

@@ -93,15 +93,15 @@ B 类跨世界礼物/共同事件与 C 类博士受限进入只保留版本化 e
 ## 5. 本轮文档修复范围
 
 - `docs/README.md`：改为 M0 Contract Freeze 导航，A7 不再被描述为唯一阻塞。
-- `docs/01-prd-v0.1.md`：统一版本、连续投入度/欠账术语、SLO 和反馈伦理。
-- `docs/02-framework-v3.5.md`：补齐 persona/world_state、漂移、探针与反馈的自包含机制。
-- `docs/03-interaction-v1.md`：清理旧档位术语与版本号。
-- `docs/04-boundary-v2.md`、`docs/10-crossworld-protocol-v1.md`：明确现役关系，并把第七条不变量纳入当前边界。
-- `docs/05-seed-config-v1.md`：把模型辅助与 Owner 定稿分开，修正 A2 常驻/检索分层及 canon 门控。
-- `docs/06-muelsyse-seed-draft-v1.md`、`docs/09-a7-dialogue-samples-scaffold.md`：与现役 S1、动态能力和跨世界本体对齐。
-- `docs/07-muelsyse-scenario-patch-v2.md`：移除 engagement 正反馈解释，保持 canon 独立门控。
-- `docs/08-implementation-gap-checklist.md`：回退错误的“可直接实现”判定，并去除易漂移的固定统计数字。
-- `docs/12-supplement-integration-review-v1.md`：记录新增补充的采纳矩阵、冲突裁决、路线合并、风险与最小验证闭环；它解释本轮取舍，不反向成为字段权威。
+- `docs/product/01-prd-v0.1.md`：统一版本、连续投入度/欠账术语、SLO 和反馈伦理。
+- `docs/cognition/02-framework-v3.5.md`：补齐 persona/world_state、漂移、探针与反馈的自包含机制。
+- `docs/product/03-interaction-v1.md`：清理旧档位术语与版本号。
+- `docs/product/04-boundary-v2.md`、`docs/product/10-crossworld-protocol-v1.md`：明确现役关系，并把第七条不变量纳入当前边界。
+- `docs/character/05-seed-config-v1.md`：把模型辅助与 Owner 定稿分开，修正 A2 常驻/检索分层及 canon 门控。
+- `docs/character/06-muelsyse-seed-draft-v1.md`、`docs/character/09-a7-dialogue-samples-scaffold.md`：与现役 S1、动态能力和跨世界本体对齐。
+- `docs/character/07-muelsyse-scenario-patch-v2.md`：移除 engagement 正反馈解释，保持 canon 独立门控。
+- `docs/history/08-implementation-gap-checklist.md`：回退错误的“可直接实现”判定，并去除易漂移的固定统计数字。
+- `docs/history/12-supplement-integration-review-v1.md`：记录新增补充的采纳矩阵、冲突裁决、路线合并、风险与最小验证闭环；它解释本轮取舍，不反向成为字段权威。
 
 ## 6. 变更纪律
 

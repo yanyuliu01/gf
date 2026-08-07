@@ -2,7 +2,7 @@
 
 Snapshot: **2026-08-07**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
-Owner workbook: [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md)
+Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
 This is the operational project board. It tracks work but does not override the
 subject authority in `docs/README.md`, JSON Schema, or migrations.
@@ -70,7 +70,8 @@ evaluation, not the v2 account, envelope, or Policy contracts.
 | `PM-001` | `READY` | ENG + OWNER review | none | Mark finite semantic action candidate/local arbitration sections in PRD, docs/02, docs/08, and active tick Prompt as M1 history or replace them with open Policy wording. Search shows no active instruction to generate/rank semantic candidates. Association sampling terminology remains clearly distinct. |
 | `PM-002` | `DONE` | ENG | none | Add `PROJECT-HANDOFF.md`, this board, `AGENTS.md`, Owner workbook, and repository navigation. Evidence: project-management documentation commit. |
 | `PM-003` | `RECURRING` | current assignee | every task | Update task status, dependencies, acceptance evidence, and dated project snapshot in the same commit as material work. |
-| `PM-004` | `READY` | ENG | `PM-002` | Add a lightweight decision-log/ADR convention for architecture changes that replace an existing decision. Historical docs remain intact. |
+| `PM-004` | `READY` | ENG | `PM-002` | Add a lightweight decision-log/ADR convention for architecture changes that replace an existing decision. Historical docs remain intact. The convention must satisfy `docs/invariants/19` §2: an ADR names the entry it overturns, the runtime evidence, and the cost; the superseded entry is retained and marked, never deleted. |
+| `PM-006` | `READY` | ENG + OWNER review | none | Triage the unprocessed findings listed in `docs/history/README.md` — four from `12-...-v2` §6 (thread status enum regression, seed never loaded, `contact_reason` missing, observability vacuous), fourteen spec/contract divergences, and three blocking runtime defects (debounce never fires on a single line, validation failure silently consumes the user message and kills the REPL, outbox rows stuck in `sending` are never retried). Each becomes a task, is folded into an existing task, or is closed with a written reason. **The three runtime defects pass all 19 current tests**, so `M11-007` green is not evidence against them. |
 | `PM-005` | `LATER` | ENG | first multi-person sprint | Add GitHub issue templates mapping issue title/body to Task ID, authority, acceptance, rollback, and test evidence. |
 
 ### PM-001 Notes
@@ -86,16 +87,16 @@ unchanged.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/16-computable-world-model-draft-v1.md`](docs/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, and deterministic stepping. [`docs/15-world-runtime-interaction-rules-draft-v1.md`](docs/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. Sign-off belongs in docs/14; draft existence is not approval. |
+| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, and deterministic stepping. [`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. Sign-off belongs in docs/14; draft existence is not approval. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
 | `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
 | `OWN-005` | `WAITING_OWNER` | OWNER | `OWN-001`, `OWN-002`, `OWN-003` | Approve 8-10 longitudinal golden scenarios with initial state, event sequence, expected continuity after hours/days, and prohibited outcomes. |
 | `OWN-006` | `READY` | OWNER | none | Confirm or replace the PRD north-star metric. It must remain an audit measure and must never feed character strategy or contact frequency. |
 | `OWN-007` | `LATER` | OWNER | M30 results | Review 7-day logs and decide whether active Affect creates meaningful continuity, only more dramatic language, or harmful behavioral pressure. |
-| `OWN-008` | `WAITING_OWNER` | OWNER | none | Provide 6-10 lived cognitive sequences and blind evaluation notes in [`docs/14-owner-input-workbook-v1.md`](docs/14-owner-input-workbook-v1.md). Do not define fatigue levels, account-to-feeling mappings, capability prose, token counts, or conversion coefficients. Judge whether the open self-experience/action is source-grounded, character-consistent, and free of system-cost excuses. |
+| `OWN-008` | `WAITING_OWNER` | OWNER | none | Provide 6-10 lived cognitive sequences and blind evaluation notes in [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md). Do not define fatigue levels, account-to-feeling mappings, capability prose, token counts, or conversion coefficients. Judge whether the open self-experience/action is source-grounded, character-consistent, and free of system-cost excuses. |
 
-Owner responses belong in `docs/14-owner-input-workbook-v1.md`. Engineering
+Owner responses belong in `docs/owner/14-owner-input-workbook-v1.md`. Engineering
 must not block M1.1 fixes on these items. `OWN-008` also does not block the M2
 engine-side capacity implementation; it supplies later blind-evaluation fixtures.
 
@@ -129,7 +130,7 @@ required for correct operation.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M20-001` | `BLOCKED` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
-| `M20-002` | `BLOCKED` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. |
+| `M20-002` | `BLOCKED` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `BLOCKED` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
@@ -143,9 +144,9 @@ required for correct operation.
 |---|---|---|---|---|
 | `M20-010` | `BLOCKED` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. |
 | `M20-011` | `BLOCKED` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
-| `M20-012` | `BLOCKED` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, and epistemic status; then SQLite FTS5 reranking. No vector database. |
+| `M20-012` | `BLOCKED` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, epistemic status, and **action-to-adjudication-outcome**; then SQLite FTS5 reranking. No vector database. The outcome dimension persists `what was proposed -> what the adjudicator returned -> which hard-constraint class caused a rejection`, reusing the `M20-022` classes (location / time / resource / capability / knowledge / permission / world rule). Tests prove that episodes sharing an outcome shape but no lexical overlap are retrievable together. |
 | `M20-013` | `BLOCKED` | ENG | `M20-012` | Retrieve supporting and counter-evidence under a fixed context budget. Tests prevent mood/current hypothesis from suppressing relevant contradiction. |
-| `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only Working Self from current facts, recent cognitive episodes, activity, sleep/physiology, commitments, memories, beliefs, open loops, persona, and optional contributors. It contains lived evidence but no energy counters, capacity envelope, fatigue labels, suggested behavior, provider, or price fields. |
+| `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only Working Self from current facts, recent cognitive episodes, activity, sleep/physiology, commitments, memories, beliefs, open loops, persona, and optional contributors. It contains lived evidence but no energy counters, capacity envelope, fatigue labels, suggested behavior, provider, or price fields, **and no affect state label**. Affect reaches the model only by biasing which lived evidence is retrieved (`docs/invariants/19` D2–D3); the events that moved her state enter as ordinary facts and she interprets them herself. |
 | `M20-015` | `BLOCKED` | ENG | `M20-007`, `M20-008`, `M20-010` | Implement `ChangeAggregator -> PerceptionProjector -> CognitiveGate` before full Working Self construction. Every meaningful candidate deterministically produces `ignore / accumulate / wake`, priority, reason codes, input hash, and versioned audit, including non-wake outcomes. |
 | `M20-016` | `BLOCKED` | ENG | `M20-007`, `M20-008` | Implement pure TypeScript recovery, pre-reservation, protected reply reserve, and engine-only CognitiveCapacityEnvelope. Capacity reduction removes optional breadth before current message, safety, commitments, or counter-evidence. No projection from account ranges to subjective prose or behavior. |
 | `M20-017` | `BLOCKED` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
