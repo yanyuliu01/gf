@@ -59,16 +59,25 @@ export type S4PolicyDecision =
       reason: string;
     };
 
-export type S4OpenAction = {
-  kind: "inspect";
-  target: "S-4";
-  focus: "irrigation" | "root-zone";
+/**
+ * The semantic action remains open text. `execution` is only a low-level
+ * capability request, not a finite semantic candidate supplied to Policy.
+ */
+export interface S4OpenAction {
   intent: string;
-};
+  execution: S4ExecutionRequest;
+}
+
+export interface S4ExecutionRequest {
+  primitive: "observe";
+  target: string;
+  aspect: string;
+}
 
 export interface S4WorldState {
   currentActivity: string;
   pumpPressure: "normal" | "low";
+  rootZoneMoisture: "normal" | "low";
   s4Wilted: boolean;
 }
 
@@ -154,7 +163,10 @@ export class S4AttentionLoop {
         attention: { ...this.attention },
         observations: observations.map((item) => ({ ...item })),
         episodeHistory: episodeHistory.map((item) => ({
-          action: { ...item.action },
+          action: {
+            intent: item.action.intent,
+            execution: { ...item.action.execution },
+          },
           outcome: {
             ...item.outcome,
             newObservations: item.outcome.newObservations.map((obs) => ({ ...obs })),
@@ -188,6 +200,9 @@ export class S4AttentionLoop {
     switch (event.kind) {
       case "pump_pressure_low":
         this.world.pumpPressure = "low";
+        // Minimal deterministic world consequence for this tracer bullet. This
+        // remains hidden until the subject explicitly observes the root zone.
+        this.world.rootZoneMoisture = "low";
         return;
       case "s4_wilted":
         this.world.s4Wilted = true;
@@ -212,8 +227,21 @@ export class S4AttentionLoop {
     step: number,
   ): S4Outcome {
     const outcomeEventId = `outcome_${occurredAt.replace(/[^0-9]/g, "")}_${step}`;
+    const request = action.execution;
 
-    if (action.target === "S-4" && action.focus === "irrigation") {
+    if (request.primitive !== "observe") {
+      return this.unsupportedOutcome(outcomeEventId, action.intent, "unsupported primitive");
+    }
+
+    if (request.target !== "S-4") {
+      return this.unsupportedOutcome(
+        outcomeEventId,
+        action.intent,
+        `unknown target ${request.target}`,
+      );
+    }
+
+    if (request.aspect === "irrigation-pressure") {
       const text =
         this.world.pumpPressure === "low"
           ? "检查后发现 S-4 所在区域的灌溉压力偏低。"
@@ -231,9 +259,39 @@ export class S4AttentionLoop {
       };
     }
 
+    if (request.aspect === "root-zone-moisture") {
+      const text =
+        this.world.rootZoneMoisture === "low"
+          ? "检查后发现 S-4 根区含水明显偏低。"
+          : "检查后没有发现 S-4 根区含水异常。";
+      return {
+        outcomeEventId,
+        happened: action.intent,
+        newObservations: [
+          {
+            sourceEventId: outcomeEventId,
+            observedAt: occurredAt,
+            text,
+          },
+        ],
+      };
+    }
+
+    return this.unsupportedOutcome(
+      outcomeEventId,
+      action.intent,
+      `unsupported observation aspect ${request.aspect}`,
+    );
+  }
+
+  private unsupportedOutcome(
+    outcomeEventId: string,
+    intent: string,
+    reason: string,
+  ): S4Outcome {
     return {
       outcomeEventId,
-      happened: "当前最小世界还不能执行这个检查。",
+      happened: `${intent}（执行未完成：${reason}）`,
       newObservations: [],
     };
   }
