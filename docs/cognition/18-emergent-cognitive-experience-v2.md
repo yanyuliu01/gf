@@ -26,7 +26,7 @@ Owner 进一步明确：
 | v1 部件 | v2 裁决 |
 |---|---|
 | 三本账、usage 分类、预留、结算、恢复 | 完整保留 |
-| ChangeAggregator、Perception、Cognitive Gate 与全量非唤醒审计 | 完整保留 |
+| ChangeAggregator、Perception、CognitiveGate 与全量非唤醒审计 | 完整保留 |
 | 数值精力账户直接进入 Prompt | 继续禁止 |
 | `CognitiveConditionProjector` | 删除 |
 | 人工疲劳层次与能力后果映射 | 删除 |
@@ -157,12 +157,13 @@ SelfExperienceProposal
 
 ## 3. 完整运行闭环
 
+Cognitive Admission 与 Self-Authored Attention 的语义边界见 `docs/20`；本文只持有 admission 之后的精力与容量机制。
 ```text
 Committed ChangeSet
 → ChangeAggregator
 → PerceptionProjector
-→ Cognitive Gate + non-wake audit
-→ CognitiveBudgetPlanner
+→ CognitiveGate + AttentionContext + non-wake audit
+→ on wake: CognitiveBudgetPlanner
 → StateManager commits EnergyReservation
 → engine-only CognitiveCapacityEnvelope
 → source-linked Working Self assembly under the envelope
@@ -273,8 +274,7 @@ Memory 承接生活史和已经形成的主观体验，不负责计算数值精�
 - `off`：只凭事实、记忆、身体与活动证据形成 self-experience；精力机制完整运行。
 - `shadow`：Affect 可派生并记录，但 Wake、Envelope、Policy 输入和精力结算与 `off`
   完全一致。
-- `active`：Affect 可以作为来源明确的 Working Self contributor，但仍不能输出疲劳标签、
-  修改 Envelope 或写精力账户。
+- `active`：Affect 只通过 retrieval salience 与 soft attention 影响哪些 lived evidence 更容易进入 Working Self；它仍不能输出 affect/fatigue 状态标签、修改 Envelope 或写精力账户。
 
 ### World fact
 
@@ -310,8 +310,7 @@ v1 的 usage、守恒、缓存、重试、幂等、Affect 隔离和非递归 Wak
 
 1. 她连续处理泵故障、S-4 观察和报告承诺。每次 accepted input、推演与表达都按 v1
    结算，数值精力连续下降。
-2. 新消息到来时 Gate 使用隐藏账户判断能否 wake；BudgetPlanner 保留回复储备并生成
-   engine-only Envelope。
+2. 新消息到来时 Gate 先依据可感知变化、当前 Activity 与 AttentionContext 判断是否值得进入 cognition；若 `wake`，BudgetPlanner 再依据隐藏账户保留回复储备并生成 engine-only Envelope。
 3. Context assembler 必须保留当前消息、泵故障、S-4 和报告承诺，先缩减远端联想与额外
    反事实。Prompt 中没有“你现在中度疲劳”。
 4. Open Policy 读取她实际经历的连续工作、身体状态和未决义务。她可能觉得思路发涩，

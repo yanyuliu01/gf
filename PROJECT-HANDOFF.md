@@ -168,20 +168,9 @@ Initiative must have at least three independent sources:
 Association alone is not a living world. It can decide what becomes salient,
 but cannot be the only producer of events.
 
-The arrow from committed world change to cognition is a first-class,
-versioned component, not prompt prose. `ChangeAggregator -> Perception ->
-CognitiveGate` records `ignore / accumulate / wake` for every meaningful
-candidate. Non-wake decisions go to a derived audit store, never back into the
-objective WorldEvent ledger.
+The arrow from committed world change to cognition is a first-class, versioned component, not prompt prose. `ChangeAggregator -> Perception -> CognitiveGate` records `ignore / accumulate / wake` for every meaningful candidate. `wake` means **Cognitive Admission**, not physiological waking. The Gate is runtime-owned and may read compiled, source-linked `AttentionIntent` subscriptions; those subscriptions can change what future perceptible changes matter, but cannot reveal hidden world facts or select actions. Non-wake decisions go to a derived audit store, never back into the objective WorldEvent ledger. See `docs/cognition/20-cognitive-admission-attention-v1.md`.
 
-On `wake`, the runtime reserves cognitive energy before the model call and
-settles actual experienced semantic input, deliberation, and expression tokens
-afterward. The hidden account produces an engine-only capacity envelope that
-limits optional context, deliberation, tools, and expression. Policy sees lived
-evidence, not counters, envelope fields, or authored fatigue tiers; it may
-jointly propose an optional free-form self-experience with the open action. The
-current contract is in `docs/cognition/18-emergent-cognitive-experience-v2.md`; docs/17 is
-retained as the superseded qualitative-projector design.
+After `wake`, the runtime plans and reserves cognitive capacity before the model call and settles actual experienced semantic input, deliberation, and expression tokens afterward. The hidden account produces an engine-only capacity envelope that limits optional context, deliberation, tools, and expression. Policy sees lived evidence, not counters, envelope fields, or authored fatigue tiers; it may jointly propose an optional free-form self-experience and optional `AttentionIntent` alongside the open action. Cognitive energy is documented in `docs/cognition/18-emergent-cognitive-experience-v2.md`; docs/17 remains historical.
 
 ## 6. Detachable Affect Architecture
 
@@ -193,7 +182,8 @@ Observation + relevant memories + open natural-language concerns
   -> LLM Appraisal Proposal
   -> deterministic/versioned Affect Model
   -> source-linked derived Affect Snapshot
-  -> optional Working Self contribution
+  -> retrieval salience / soft-attention bias
+  -> lived evidence selected for Working Self
 ```
 
 Modes:
@@ -221,8 +211,8 @@ prompts:
 1. `WorldEventV1`: immutable sourced external or world input.
 2. `ObservationV1`: what this agent could actually perceive.
 3. `MemoryBundleV1`: retrieved subjective evidence plus counter-evidence.
-4. `CommitmentV1`: executable obligation lifecycle.
-5. `WorkingSelfV1`: read-only call context with an optional Affect fragment.
+4. `CommitmentV1`: derived operational projection for adjudication/audit; subjective understanding comes from sourced belief/memory, not this projection.
+5. `WorkingSelfV1`: read-only call context assembled from lived evidence; it contains no Affect state label.
 6. `OpenActionProposalV1`: intent and open plan, not an outcome.
 7. `WorldOutcomeProposalV1`: attempted, completed, failed, partial, and side
    effects with sources and state revision.
@@ -244,6 +234,7 @@ prompts:
     interpretation jointly produced by Open Policy, never an objective fact or
     energy-account writer.
 
+16. `AttentionIntentV1`: optional source-linked, scoped, revocable future-attention proposal from Open Policy; compiled subscriptions affect Cognitive Admission only over legal Perception.
 Finite execution primitives such as `communicate`, `move`, `observe`,
 `interact`, `use_object`, and `wait` are runtime capabilities. They are not a
 finite set of semantic behavior choices. An action compiler may decompose an
@@ -264,7 +255,8 @@ The MVP should remain a modular monolith:
 | Memory retrieval | Structured filters + SQLite FTS5 first | Source-aware and inspectable; no early vector dependency |
 | Embeddings | Optional reranker after FTS baseline | Add only when longitudinal evaluation proves value |
 | Affect | Pure deterministic TypeScript model | Versionable, replayable, testable, and removable |
-| Wake / cognitive energy | Pure TypeScript gate, recovery, reservation, usage accounting, engine-only capacity limiter | Makes cognition scarce without pre-authoring how scarcity must feel |
+| Cognitive Admission / attention | Runtime-owned TypeScript gate plus compiled `AttentionIntent` subscriptions | Makes cognition sparse while letting the subject decide what to keep an eye on |
+| Cognitive energy | Recovery, reservation, usage accounting, engine-only capacity limiter | Constrains cognitive depth/capacity without pre-authoring how scarcity must feel |
 | Tests | `node:test` plus property/replay fixtures | Existing toolchain with deterministic invariants |
 | Logging | Structured JSON, later OpenTelemetry export | Audit model/input/version/source decisions |
 
@@ -287,7 +279,7 @@ src/gf/
   perception/            visibility projection into observations
   memory/                subjective records, filters, FTS, counter-evidence
   commitments/           lifecycle, due events, conflicts, fulfillment
-  cognition/             Wake gate, energy accounting/limiter, Working Self, open Policy
+  cognition/             CognitiveGate, energy accounting/limiter, Working Self, open Policy
   affect/                optional appraisal, deterministic model, derived store
   world/drivers/          schedule, obligation, NPC, environment event sources
   world/adjudication/     action compiler, hard rules, social outcome proposal
@@ -298,9 +290,10 @@ src/gf/
   observability/         structured logs, replay, probes, ablation reports
 ```
 
-Dependencies point inward toward domain contracts. `affect/` may contribute a
-`WorkingSelfFragment` but `cognition/` must not import a concrete Affect model.
-World drivers propose events; they do not directly mutate world state.
+Dependencies point inward toward domain contracts. `affect/` may expose a
+retrieval-salience / soft-attention port, but `cognition/` must not import a
+concrete Affect model or accept an Affect state fragment. World drivers propose
+events; they do not directly mutate world state.
 
 ## 10. Current Repository State
 
@@ -371,11 +364,11 @@ it does not silently rewrite historical documents.
 
 - freeze observation, memory bundle, commitment, Working Self, open action, and
   outcome contracts;
-- freeze WakeCandidate/Decision, raw usage receipt, experienced usage
+- freeze WakeCandidate/Decision, AttentionIntent/subscription, raw usage receipt, experienced usage
   breakdown, cognitive-energy reservation/settlement, engine-only capacity
   envelope, and optional open self-experience contracts;
-- implement change aggregation, Perception, versioned Cognitive Gate with
-  non-wake audit, cognitive-energy recovery/reservation/settlement, memory
+- implement change aggregation, Perception, versioned CognitiveGate with
+  non-wake audit and compiled self-authored attention, cognitive-energy recovery/reservation/settlement, memory
   retrieval, commitment reads, Working Self, open Policy, action compilation,
   and world adjudication;
 - prove provider pricing, caching discounts, transport retries, and runtime
@@ -399,8 +392,8 @@ it does not silently rewrite historical documents.
 
 ### Phase M2.3: Active Affect
 
-- add the optional Working Self contribution;
-- affect retrieval salience without suppressing counter-evidence;
+- enable bounded retrieval-salience / soft-attention influence;
+- preserve mandatory counter-evidence and keep Affect state out of Working Self;
 - compare `off / shadow / active` under equal model, context, and token budgets.
 
 ### Phase M3: Longitudinal Proof

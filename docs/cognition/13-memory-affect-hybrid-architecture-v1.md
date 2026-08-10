@@ -230,9 +230,8 @@ source_refs: [...]
 消息作为 WorldEvent 先持久化
 → 生成她实际收到的 observation
 → 检索相关记忆、承诺、反证和当前处境
-→ appraisal proposal
-→ Affect Engine 更新当前情绪与残留
-→ Working Self
+→ 可选 appraisal / Affect 旁路（仅 shadow / active）
+→ Working Self（只装 lived evidence，不装 affect state）
 → LLM 直接生成开放行动/通信
 → 提交 speech、commitment、belief/outbox
 → 实际投递结果重新成为事件
@@ -242,7 +241,7 @@ source_refs: [...]
 
 ```text
 Scheduler / NPC / 环境事件
-→ 同一 observation / memory / appraisal / affect 路径
+→ 同一 observation / memory 路径；shadow / active 可并行运行 appraisal / Affect 旁路
 → LLM 可行动、观察、等待、计划或联系用户
 → World Adjudicator 产生世界后果
 → StateManager 提交
@@ -323,8 +322,8 @@ affect_t = clamp(
 Affect Engine 不直接输出台词或动作。它通过三条路径产生因果影响：
 
 1. 改变相关记忆与 open loop 的检索显著性；
-2. 进入 Working Self，影响 LLM 对风险、靠近、表达完整度和注意力的理解；
-3. 影响新事件的 appraisal 敏感度，但不能绕过事实、权限、安全与重大价值硬约束。
+2. 通过 retrieval salience 让相关 lived evidence 更可能进入 Working Self；
+3. 在 `active` 模式下影响 soft attention allocation，但不能绕过 Perception、事实、权限、安全或重大价值硬约束。
 
 ---
 
@@ -357,7 +356,7 @@ affect_mode: off | shadow | active
 
 - `off`：不调用 appraisal，不读写 affect 派生状态；Policy 直接使用记忆、承诺、persona 和世界状态。它就是长期保留的基线。
 - `shadow`：appraisal 与 Affect Engine 正常运行并记录结果，但 Working Self 不向 Policy 注入 affect；用于比较它是否真的改变长期行为。
-- `active`：Affect 状态参与检索和 Working Self，影响开放行动生成。
+- `active`：Affect 只通过 retrieval salience 与 soft attention 影响哪些 lived evidence 更容易进入 Working Self；Working Self 不接收 affect state 标签。
 
 模式切换必须形成 admin/config 事件并记录版本，不能静默变化。
 
@@ -372,12 +371,12 @@ interface AffectModel {
   advance(previous: AffectState, appraisal: Appraisal, elapsedMs: number): AffectState;
 }
 
-interface WorkingSelfContributor {
-  contribute(context: CognitiveContext): WorkingSelfFragment | null;
+interface RetrievalSalienceProvider {
+  bias(context: RetrievalContext): RetrievalSalienceBias[];
 }
 ```
 
-Policy 只接受可选 `affect` fragment。缺失时必须正常运行，禁止把 Affect 字段加入现有 v1 请求的必填集合。
+Cognition 只消费检索后的、带来源的 lived evidence；它不接收 Affect state fragment。缺失该 provider 时检索与 Policy 必须正常运行，并与 `off` 基线保持同一主链。
 
 ### 7.3 派生状态可重建
 
@@ -394,7 +393,7 @@ Policy 只接受可选 `affect` fragment。缺失时必须正常运行，禁止�
 | Appraisal LLM 超时 | 本轮不更新 affect，Policy 直接读取事件和旧状态 |
 | Appraisal Schema 非法 | 拒绝 appraisal，记录审计，不影响世界事件 |
 | Affect Engine 异常 | 使用上一有效快照并标记 stale |
-| Working Self 超预算 | 优先保留当前事实、承诺和来源；affect 只保留短摘要 |
+| Working Self 超预算 | 优先保留当前事实、承诺和来源；Affect 只能影响可选 lived evidence 的检索顺序，不注入摘要或状态标签 |
 | Policy 不可用 | 沿用现有 M1 明确失败/重试语义，不由 Affect 模块代发 |
 
 ---
@@ -432,7 +431,7 @@ src/gf/world/adjudication/
 
 1. **M1.1 可移植性修复**：先修 Prompt CRLF、canon EOL/hash、实际输入 source closure 和 world timezone，使现有测试全绿。
 2. **M2A shadow**：appraisal + affect 只记录，不影响 Policy；冻结一组纵向回放样本。
-3. **M2B active-memory**：affect 影响记忆显著性和 Working Self，不改变 World Adjudicator。
+3. **M2B active-memory**：affect 影响 retrieval salience，间接改变哪些可选 lived evidence 更容易进入 Working Self；不改变 World Adjudicator。
 4. **M2C open-policy**：开放行动 proposal 与世界结果拆开，主动/被动通信共享同一 Policy/renderer/outbox。
 5. **M3 消融证明**：比较 `off / shadow / active` 与相同模型、资产、上下文/token 预算的 Prompt+记忆基线。
 

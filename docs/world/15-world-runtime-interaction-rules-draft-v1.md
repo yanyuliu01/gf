@@ -75,7 +75,7 @@ Owner 未签字前：
 | `WR-I01` | 客观事实只来自已提交 `WorldEvent`、合法 claim 和 reducer state。行动文本、记忆、信念、联想、appraisal 与 Affect 都不是事实。 | `P`，继承架构硬约束 |
 | `WR-I02` | Policy 直接提出一个开放语义行动；运行时不得先生成有限语义候选再打分。 | `P`，继承架构硬约束 |
 | `WR-I03` | 行动 proposal 只能声明“想做什么”，不能声明成功。实际结果由世界裁定并经 `StateManager` 提交。 | `P`，继承架构硬约束 |
-| `WR-I04` | Affect Utility 只影响主观状态片段，不选择行动，不放宽物理、权限、知识或伦理约束。 | `P`，继承架构硬约束 |
+| `WR-I04` | Affect Utility 只通过 retrieval salience / soft attention 影响哪些已合法感知的 lived evidence 更显著；它不选择行动，也不放宽物理、权限、知识或伦理约束。 | `P`，继承架构硬约束 |
 | `WR-I05` | NPC 只知道其可感知或被告知的内容，不能读取世界全状态、缪尔赛思记忆或博士隐私。 | `D/P` |
 | `WR-I06` | 博士的普通现实生活可以改变她对博士的认识，但不能直接改变泰拉事实。 | `C/P` |
 | `WR-I07` | 用户沉默、晚回或离线不是负面世界事件，不产生惩罚、危机或额外联系压力。 | `P`，伦理硬约束 |
@@ -578,7 +578,7 @@ StateManager
 
 Affect 模块关闭、删除其派生表或切到 `shadow` 时，最终 `off` 管线仍必须完整运行。
 对同一个 ActionProposal、权威状态与规则版本，硬裁定结果不得因 Affect 模式变化；
-只有 `active` 模式进入 Policy 的主观 Working Self 内容可以使角色提出不同的开放行动。
+只有 `active` 模式通过 retrieval salience / soft attention 改变进入 Working Self 的 lived evidence 时，才可能间接使角色提出不同的开放行动；Affect state 本身不进入 Working Self。
 
 ---
 
