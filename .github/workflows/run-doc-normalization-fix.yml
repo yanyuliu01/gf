@@ -1,0 +1,57 @@
+name: Finish doc normalization
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-doc-normalization-fix.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply reviewed replacements
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast, base64, gzip
+
+          wf = Path('.github/workflows/apply-doc-normalization.yml').read_text(encoding='utf-8')
+          block = wf.split("cat >/tmp/repls.b64 <<'EOF'\n", 1)[1].split('\n          EOF', 1)[0]
+          packed = ''.join(line.strip() for line in block.splitlines())
+          src = gzip.decompress(base64.b64decode(packed)).decode('utf-8')
+          tree = ast.parse(src)
+          repls = ast.literal_eval(tree.body[1].value)
+
+          insert_markers = {
+              'PROJECT-HANDOFF.md': '\nFinite execution primitives such as `communicate`, `move`, `observe`,',
+              'docs/README.md': ['\n## 目录约定', '\n### 角色实例'],
+              'docs/cognition/18-emergent-cognitive-experience-v2.md': '\n```text\nCommitted ChangeSet',
+          }
+          seen = {}
+          for f, old, new in repls:
+              p = Path(f)
+              s = p.read_text(encoding='utf-8')
+              if old:
+                  if s.count(old) != 1:
+                      raise SystemExit(f'anchor count {s.count(old)}: {f}: {old[:80]!r}')
+                  s = s.replace(old, new, 1)
+              else:
+                  marker = insert_markers[f]
+                  if isinstance(marker, list):
+                      idx = seen.get(f, 0)
+                      marker = marker[idx]
+                      seen[f] = idx + 1
+                  if s.count(marker) != 1:
+                      raise SystemExit(f'insert marker count {s.count(marker)}: {f}: {marker!r}')
+                  s = s.replace(marker, '\n' + new.rstrip('\n') + marker, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add TODO.md PROJECT-HANDOFF.md docs/README.md docs/world/15-world-runtime-interaction-rules-draft-v1.md docs/product/01-prd-v0.1.md docs/cognition/13-memory-affect-hybrid-architecture-v1.md docs/cognition/18-emergent-cognitive-experience-v2.md
+          git diff --cached --check
+          git commit -m 'docs: normalize remaining agent-facing docs'
+          git push
