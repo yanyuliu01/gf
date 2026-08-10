@@ -2,7 +2,7 @@
 
 GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是《明日方舟》的缪尔赛思。目标不是让角色持续等待用户发问，而是让她作为泰拉世界中的居民拥有自己的时间、事件、记忆和变化；博士的消息是这个世界最重要的外部输入之一，但不是世界唯一的驱动力。
 
-新模型或新同学接手时，从 [完整交接说明](PROJECT-HANDOFF.md)、[现役任务板](TODO.md) 和 [仓库 Agent 约束](AGENTS.md) 开始；需要 Owner 补充的内容集中在 [输入工作簿](docs/owner/14-owner-input-workbook-v1.md)。这些管理入口不替代下文列出的主题权威和机器契约。
+新模型或新同学接手时先读 [AGENTS.md](AGENTS.md) 的 context pointers；跨文档术语以 [CONTEXT.md](CONTEXT.md) 为准。实时任务在 [TODO.md](TODO.md)，主题权威由 [docs/README.md](docs/README.md) 索引。
 
 ## 产品关系
 
@@ -22,7 +22,8 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 8. 不优化留存：指标只用于健康审计，不反馈成诱导用户停留的角色策略。
 9. 事实、信念与承诺分离：事件账本持有事实；角色可以误解；承诺不预建权威容器——账本中的原话是事实，commitment 记录是派生投影，对世界裁决与审计可见、对 Working Self 与 Open Policy 不可见。两个主体对同一次交互可以持有不一致的理解。
 10. 开放行动、情绪动力与世界裁决分离：Affect Utility 只改变检索显著性与注意，不给动作打分、不选择动作；情绪经她**亲历的事件**进入上下文，不经状态标签。LLM 根据 Working Self 直接生成开放行动，World Adjudicator 再按物理、权限、能力、资源和 NPC 意志裁决后果。
-11. 多模态语义守恒：文字、语音、图像从同一 communication plan 渲染，共享 intent、state revision 与 source closure；媒体失败只能安全降级。
+11. 生活连续、认知稀疏：World / Activity / Process 持续推进；`CognitiveGate` 只在新的可感知决策边界出现时启动认知。Open Policy 可提出 `AttentionIntent`，决定未来要留意什么，但不能修改 Gate、扩大 Perception 或直接选择动作。
+12. 多模态语义守恒：文字、语音、图像从同一 communication plan 渲染，共享 intent、state revision 与 source closure；媒体失败只能安全降级。
 
 ## 架构图
 
@@ -66,35 +67,23 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 
 ## 当前阶段
 
-截至 2026-08-06，项目处于 M1.1 可移植性收口与 M2 输入准备并行阶段：
-
-- 机制、交互边界、跨世界协议和大部分角色种子已经形成文档。
-- canon 语料处理管线和三类 canon 表已经就绪。
-- 五个 Prompt 调用点、原生 role、跨世界信任边界、活动场景历史和 prompt manifest 已收束；结构化调用已有 JSON Schema，A7 对话语料仍待 Owner 逐句定稿。
-- 初始 SQLite DDL、事件／claim／patch／debt／surface 契约、契约回归和 canon 安全构建已经落地。
-- TypeScript M1 骨架已有 CLI、gateway、SQLite migration runner、事件队列、StateManager、Prompt assembler、stub 模型、v1 文本 surface、outbox worker、scheduler 和恢复测试。
-- 机器契约测试通过；运行时测试当前 15/19，四个失败来自 Prompt CRLF 解析；完整审计另有 Windows canon EOL/hash 阻塞。
-- Perception、真实 memory retrieval、通用 commitment、Working Self、开放 Policy、World Adjudicator、独立 NPC/环境驱动、真实异步模型客户端与 Affect 模块尚未实现。
-
-当前并行完成两件事：Owner 按 docs/14 签字世界运行规则、Concern/张力、A7 与纵向样例；工程侧按 `TODO.md` 修复 M1.1 的 EOL/hash、实际 source closure、timezone 和异步推理接口。随后先在 `affect_mode=off` 下完成 Perception、Memory/Commitment、Working Self、开放 Policy 与 World Adjudicator 的最终基线，再接独立世界驱动、shadow Affect 和 active 消融。主动消息在同一文本 renderer/outbox 主动路径与非操纵测试通过前保持关闭；语音/图像仍后置。
+实时里程碑、失败项和依赖只维护在 [`TODO.md`](TODO.md)，本文不缓存测试通过数或阻塞状态。当前设计前沿是：先完成 `affect_mode=off` 的 Perception → Cognitive Admission → Memory/Working Self → Open Policy → World Adjudicator 纵向闭环，再验证 Self-Authored Attention、独立世界驱动与 Affect 消融。
 
 ## 权威文档
 
-- **架构约束（冻结，高于以下全部）**：[docs/invariants/19-architecture-invariants-v1.md](docs/invariants/19-architecture-invariants-v1.md)
-- 机制：[docs/cognition/02-framework-v3.5.md](docs/cognition/02-framework-v3.5.md)
-- 交互：[docs/product/03-interaction-v1.md](docs/product/03-interaction-v1.md)
-- 边界：[docs/product/04-boundary-v2.md](docs/product/04-boundary-v2.md)
-- 实例种子：[docs/character/06-muelsyse-seed-draft-v1.md](docs/character/06-muelsyse-seed-draft-v1.md)
-- 实施缺口：[docs/history/08-implementation-gap-checklist.md](docs/history/08-implementation-gap-checklist.md)
-- A7 骨架：[docs/character/09-a7-dialogue-samples-scaffold.md](docs/character/09-a7-dialogue-samples-scaffold.md)
-- 跨世界协议：[docs/product/10-crossworld-protocol-v1.md](docs/product/10-crossworld-protocol-v1.md)
-- 修复计划：[docs/history/11-repair-plan-v1.md](docs/history/11-repair-plan-v1.md)
-- 补充融合决策记录：[docs/history/12-supplement-integration-review-v1.md](docs/history/12-supplement-integration-review-v1.md)
-- M2 记忆与 Affect 混合架构：[docs/cognition/13-memory-affect-hybrid-architecture-v1.md](docs/cognition/13-memory-affect-hybrid-architecture-v1.md)
-- Prompt 调用清单：[prompts/manifest.yaml](prompts/manifest.yaml)
-- 机器契约：[schemas/README.md](schemas/README.md)
-- SQLite 迁移：[migrations/README.md](migrations/README.md)
-- canon 构建清单：[corpus/canon/manifest.json](corpus/canon/manifest.json)
+主题所有权与冲突顺序以 [`docs/README.md`](docs/README.md) 为准。常用入口：
+
+- **架构约束（冻结）**：[`docs/invariants/19-architecture-invariants-v1.md`](docs/invariants/19-architecture-invariants-v1.md)
+- **术语**：[`CONTEXT.md`](CONTEXT.md)
+- **M1 机制**：[`docs/cognition/02-framework-v3.5.md`](docs/cognition/02-framework-v3.5.md)
+- **Memory / Affect**：[`docs/cognition/13-memory-affect-hybrid-architecture-v1.md`](docs/cognition/13-memory-affect-hybrid-architecture-v1.md)
+- **Cognitive Energy**：[`docs/cognition/18-emergent-cognitive-experience-v2.md`](docs/cognition/18-emergent-cognitive-experience-v2.md)
+- **Cognitive Admission / Attention**：[`docs/cognition/20-cognitive-admission-attention-v1.md`](docs/cognition/20-cognitive-admission-attention-v1.md)
+- **World Adjudication / Computable World**：[`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) + [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md)
+- **Interaction / Cross-world**：[`docs/product/03-interaction-v1.md`](docs/product/03-interaction-v1.md) + [`docs/product/10-crossworld-protocol-v1.md`](docs/product/10-crossworld-protocol-v1.md)
+- **Machine contracts**：[`schemas/README.md`](schemas/README.md)
+
+`docs/history/` 只用于追溯，不是现役实现权威。
 
 ## 项目管理与交接
 
@@ -103,4 +92,4 @@ GF 是一个单用户、世界为核心的长期陪伴 Agent。首个实例是�
 - 编码 Agent 约束：[AGENTS.md](AGENTS.md)
 - Owner 输入工作簿：[docs/owner/14-owner-input-workbook-v1.md](docs/owner/14-owner-input-workbook-v1.md)
 
-本文、交接/管理入口和六张图用于快速建立共同理解，不替代上述权威文档；docs/12 是第一轮融合决策记录。docs/13 持有 M2 认知/情绪增量，但不覆盖 docs/02 的 M1 契约、docs/10 的跨世界本体或任何现役机器 Schema。
+本文只用于快速建立共同理解，不持有主题权威。发生冲突时按 `docs/README.md` 的主题所有权裁决。
