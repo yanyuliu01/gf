@@ -8,12 +8,32 @@ It does not replace product, world, or machine-contract authority.
 Use the smallest authority set that matches the task:
 
 - **Architecture** — before changing module boundaries, visibility, write authority, or detachable-mode behavior, read `docs/invariants/19-architecture-invariants-v1.md`. It outranks every other document, prompt, schema, and implementation.
-- **Terminology** — before naming or redefining a domain concept, or editing agent-facing design docs, read `CONTEXT.md`.
+- **Terminology and identifiers** — before naming/redefining a domain concept, introducing an ID/prefix, or editing agent-facing design docs, read `CONTEXT.md`.
 - **Task execution** — use `TODO.md` for task IDs, status, dependencies, owners, and acceptance criteria.
 - **Subject authority** — use `docs/README.md` to find the document that owns the topic, then read that document and any machine schema named by the task.
 - **Onboarding / cross-module handoff** — read `PROJECT-HANDOFF.md` when entering the repo cold or when a task spans several domains; it is not a second source of truth.
 
 `docs/` numbers are stable IDs, not reading order; directories carry the topic. Historical documents remain under `docs/history/` and are never implementation authority.
+
+## Naming And Identifier Discipline
+
+Use three separate layers consistently:
+
+1. **Directory = classification.** Put material under the owning domain (`product`, `world`, `cognition`, `character`, `owner`, `invariants`, `history`). Do not encode topic or authority in a new number prefix.
+2. **Semantic name = meaning.** Types, modules, documents, and concepts should be understandable from names such as `AttentionIntent`, `Belief`, or `WorldAdjudicator` without decoding an internal number.
+3. **Stable ID = reference only.** Existing task, document, prompt-slot, seed-asset, and invariant IDs exist so references survive moves and revisions. They do not define priority, reading order, or meaning.
+
+The canonical namespace table is `CONTEXT.md#repository-identifier-namespaces`. Apply these rules whenever writing docs, TODO entries, comments, issues, prompts, or handoff notes:
+
+- Qualify ambiguous short IDs outside their owning document: write `Invariant C1`, `Seed A7`, and `Prompt S3` rather than bare `C1`, `A7`, or `S3`.
+- On first mention of a milestone task, pair the human milestone with the stable task ID, e.g. `M2.0 / M20-015`; later references may use `M20-015`.
+- Treat in-world labels such as `S-4` as object names, never as Prompt-slot identifiers.
+- Preserve existing IDs even when a file moves, a task completes, or numbering has gaps. Never recycle or renumber them for visual neatness.
+- Prefer semantic names over creating another compact code. A new one-letter or opaque numeric namespace requires an actual cross-file stable-reference need, not convenience.
+- If a new stable-ID namespace is genuinely necessary, define its purpose and collision boundary in `CONTEXT.md` in the same change before using it elsewhere.
+- Do not infer authority from a larger document number or task number. Resolve authority through `docs/README.md` and architecture through `docs/invariants/19`.
+
+Completion criterion for any naming/organization change: a new contributor can identify the owning domain and meaning without decoding the ID, while every pre-existing stable reference still resolves.
 
 ## Non-Negotiable Architecture Rules
 
