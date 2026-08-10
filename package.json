@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/gf/cli.js",
-    "test": "npm run build && node --test \"dist/gf/tests/*.test.js\""
+    "test": "npm run build && node --test \"dist/gf/tests/*.test.js\"",
+    "vs01:deepseek": "npm run build && node dist/gf/vertical-slices/runS4DeepSeek.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
