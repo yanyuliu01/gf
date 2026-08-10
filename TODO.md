@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-08-07**
+Snapshot: **2026-08-10**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -20,6 +20,29 @@ subject authority in `docs/README.md`, JSON Schema, or migrations.
 | `CANCELLED` | Retained for history with a reason |
 | `RECURRING` | Repeated project-health task |
 
+## Identifier Legend
+
+Short IDs in this repository belong to different namespaces. The canonical
+cross-repository explanation is in [`CONTEXT.md`](CONTEXT.md#repository-identifier-namespaces).
+
+| Form | Meaning | Read it as |
+|---|---|---|
+| `PM-001` | project/specification-management task | PM task 001 |
+| `OWN-001` | Owner decision/input task | Owner task 001 |
+| `M11-003` | engineering task in M1.1 | M1.1 task 003 |
+| `M20-015` | engineering task in M2.0 | M2.0 task 015 |
+| `M21-*` / `M22-*` / `M23-*` | M2.1 / M2.2 / M2.3 engineering tasks | milestone + stable task ID |
+| `M30-*` | M3 evaluation/release tasks | M3 task |
+| `L40-*` | later-work backlog outside the current critical path | later task |
+| `Seed A1`–`Seed A9` | Day-0 character/world seed assets | **not** architecture invariants |
+| `Prompt S1`–`Prompt S9` | prompt assembly slots | **not** milestones or world objects |
+| `Invariant A1`–`Invariant I3` | frozen architecture clauses in `docs/invariants/19` | architecture rule |
+| `docs/01`–`docs/20` | stable document IDs | directory carries the topic; number is not reading order |
+
+Preferred prose style: qualify ambiguous short IDs. Write `Seed A7`, `Prompt S3`,
+`Invariant C1`, and on first mention `M2.0 / M20-015`. Existing IDs are stable;
+do not renumber them just to make them prettier.
+
 Task IDs are stable. Do not delete completed or cancelled rows. Update status,
 acceptance evidence, and the snapshot date when project state changes.
 
@@ -28,23 +51,23 @@ acceptance evidence, and the snapshot date when project state changes.
 ```text
 PM-001 specification sync
         +
-M11-001..006 portable M1.1 baseline
+M1.1 / M11-001..006 portable baseline
         +
 OWN-001 world runtime decisions
         +
 OWN-002 concern/tension seed
         |
         v
-M20 contracts -> Wake/energy baseline -> M20 final off pipeline -> M21 world autonomy
+M2.0 / M20 contracts -> Wake/energy baseline -> final off pipeline -> M2.1 / M21 world autonomy
         |
         v
-M22 shadow Affect -> M23 active Affect -> M30 longitudinal proof
+M2.2 / M22 shadow Affect -> M2.3 / M23 active Affect -> M3 / M30 longitudinal proof
 ```
 
-Owner work and M1.1 engineering can proceed in parallel. `OWN-003` A7 can also
-proceed in parallel, but active character-facing evaluation cannot finish
-without it. `OWN-008` lived sequences proceed in parallel and gate M30 blind
-evaluation, not the v2 account, envelope, or Policy contracts.
+Owner work and M1.1 engineering can proceed in parallel. `OWN-003` Seed A7 can
+also proceed in parallel, but active character-facing evaluation cannot finish
+without it. `OWN-008` lived sequences proceed in parallel and gate M3 / M30
+blind evaluation, not the v2 account, envelope, or Policy contracts.
 
 ## Recommended Next Ten Tasks
 
@@ -89,7 +112,7 @@ unchanged.
 |---|---|---|---|---|
 | `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, and deterministic stepping. [`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. Sign-off belongs in docs/14; draft existence is not approval. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
-| `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime S3 text. |
+| `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize Seed A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime Prompt S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
 | `OWN-005` | `WAITING_OWNER` | OWNER | `OWN-001`, `OWN-002`, `OWN-003` | Approve 8-10 longitudinal golden scenarios with initial state, event sequence, expected continuity after hours/days, and prohibited outcomes. |
 | `OWN-006` | `READY` | OWNER | none | Confirm or replace the PRD north-star metric. It must remain an audit measure and must never feed character strategy or contact frequency. |
@@ -102,7 +125,7 @@ engine-side capacity implementation; it supplies later blind-evaluation fixtures
 
 ---
 
-## M1.1: Portable Green Baseline
+## M1.1 (M11): Portable Green Baseline
 
 Exit gate: all existing tests and the full project audit pass on Windows without
 weakening schemas, hashes, provenance, or recovery assertions.
@@ -119,7 +142,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 
 ---
 
-## M2.0: Final Affect-Off Cognitive Baseline
+## M2.0 (M20): Final Affect-Off Cognitive Baseline
 
 Exit gate: user and world events can use the final cognitive/action pipeline
 with `affect_mode=off`; no Affect tables, appraisals, or prompt fields are
@@ -167,7 +190,7 @@ required for correct operation.
 
 ---
 
-## M2.1: Independent World Life
+## M2.1 (M21): Independent World Life
 
 Exit gate: a deterministic resource/process kernel advances an ordinary closed
 life loop without a user message or LLM-authored world event. Obligations,
@@ -190,7 +213,7 @@ consequences; protagonist association only changes attention.
 
 ---
 
-## M2.2: Shadow Affect
+## M2.2 (M22): Shadow Affect
 
 Exit gate: Affect is source-linked, deterministic after appraisal, rebuildable,
 and has zero influence on Policy input/output outside audit logging.
@@ -207,7 +230,7 @@ and has zero influence on Policy input/output outside audit logging.
 
 ---
 
-## M2.3: Active Affect
+## M2.3 (M23): Active Affect
 
 Exit gate: active mode shows longitudinal causal benefit without becoming an
 action selector, contact-frequency driver, or dramatic-language amplifier.
@@ -223,7 +246,7 @@ action selector, contact-frequency driver, or dramatic-language amplifier.
 
 ---
 
-## M3: Evaluation, Operations, And Release
+## M3 (M30): Evaluation, Operations, And Release
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
@@ -236,7 +259,7 @@ action selector, contact-frequency driver, or dramatic-language amplifier.
 
 ---
 
-## Later Work
+## Later Work (L40)
 
 These items must not add current schema fields or block M1.1/M2.
 
