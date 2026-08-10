@@ -30,6 +30,36 @@ This file is the canonical vocabulary for agent-facing design and engineering do
 | `Affect Utility` | The local impact of an event on a current concern inside appraisal/Affect dynamics | A global action score or action-ranking function |
 | `Cognitive Energy` | Experimental engine-side capacity accounting | Attention, wake relevance, API budget, or subjective fatigue |
 
+## Repository identifier namespaces
+
+Several short IDs coexist in this repository. They are **different namespaces**, not one global numbering system.
+
+| Written form | Meaning | Preferred reference in prose |
+|---|---|---|
+| `PM-001` | Project/specification-management task | `PM-001` |
+| `OWN-001` | Owner decision or input task | `OWN-001` |
+| `M11-003`, `M20-015` | Engineering task inside a milestone; `M11 = M1.1`, `M20 = M2.0`, `M21 = M2.1`, etc. | first mention: `M2.0 / M20-015`; later: `M20-015` |
+| `L40-001` | Later-work backlog item, outside the current committed critical path | `L40-001` |
+| `01`–`20` in doc filenames | Stable document IDs; directory names carry the topic and the number does not imply priority or reading order | `docs/cognition/20` or the full path |
+| `A1`–`I3` in `invariants/19` | Frozen architecture clauses | **`Invariant C1`**, never bare `C1` when context is ambiguous |
+| `A1`–`A9` in character seed docs | Day-0 seed asset classes | **`Seed A7`**, never bare `A7` outside the seed document |
+| `S1`–`S9` in `prompts/` | Prompt assembly slots | **`Prompt S7`**, never bare `S7` outside prompt docs |
+| `Q*` / `QE*` | Open product or evaluation questions | keep the full question ID |
+| names such as `S-4` | In-world object/sample labels | quote or qualify the object name; they are not Prompt slots |
+
+### Milestone task prefixes
+
+| Prefix | Human milestone | Scope |
+|---|---|---|
+| `M11-*` | M1.1 | Portable green baseline |
+| `M20-*` | M2.0 | Final Affect-off cognitive baseline |
+| `M21-*` | M2.1 | Independent world life |
+| `M22-*` | M2.2 | Shadow Affect |
+| `M23-*` | M2.3 | Active Affect |
+| `M30-*` | M3 | Evaluation, operations, and release |
+
+Existing IDs are stable and should not be renumbered merely for readability. Improve readability by qualifying the namespace (`Invariant`, `Seed`, `Prompt`) and by writing the human milestone next to an `Mxx-*` ID on first mention.
+
 ## Ambiguous words to qualify
 
 - **wake / awake**: use `Cognitive Admission` for cognition. Use `sleeping`, `physically awake`, or `sleep state` for world physiology.
