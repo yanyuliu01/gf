@@ -18,7 +18,8 @@
     "vs01:blind": "npm run build && node dist/gf/vertical-slices/runCharacterBlindEval.js",
     "vs01:policy-diagnostic": "npm run build && node dist/gf/vertical-slices/runCharacterPolicyDiagnostic.js",
     "vs04:affect:v1": "npm run build && node dist/gf/vertical-slices/runAffectEvalSuiteV1.js",
-    "vs04:affect": "npm run build && node dist/gf/vertical-slices/runAffectEvalSuiteV2.js"
+    "vs04:affect": "npm run build && node dist/gf/vertical-slices/runAffectEvalSuiteV2.js",
+    "vs05:affect-batch": "npm run build && node dist/gf/vertical-slices/runAffectBatchEvalV1.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
