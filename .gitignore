@@ -14,6 +14,9 @@ runtime/
 node_modules/
 dist/
 
+# Local eval outputs
+artifacts/
+
 # Local IDE / OS noise
 .idea/
 .vscode/
