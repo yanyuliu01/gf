@@ -19,6 +19,7 @@ const loop = new S4AttentionLoop({
   initialWorld: {
     currentActivity: "ecology-garden routine work",
     pumpPressure: "normal",
+    rootZoneMoisture: "normal",
     s4Wilted: false,
   },
   attention: {
