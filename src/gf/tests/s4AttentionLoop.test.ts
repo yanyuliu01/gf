@@ -45,6 +45,9 @@ test("S-4 hidden world change stays outside cognition until a visible attended a
   });
 
   assert.equal(hidden.kind, "ignored");
+  if (hidden.kind !== "ignored") {
+    assert.fail("hidden pump state must not trigger cognition");
+  }
   assert.equal(hidden.reason, "not_perceived");
   assert.equal(policy.inputs.length, 0);
 
@@ -56,6 +59,9 @@ test("S-4 hidden world change stays outside cognition until a visible attended a
   });
 
   assert.equal(visible.kind, "cognitive");
+  if (visible.kind !== "cognitive") {
+    assert.fail("visible attended S-4 anomaly must trigger cognition");
+  }
   assert.equal(policy.inputs.length, 1);
 
   const policyInput = policy.inputs[0];
