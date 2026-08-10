@@ -3,21 +3,17 @@
 This file is the operational entrypoint for coding agents and new contributors.
 It does not replace product, world, or machine-contract authority.
 
-## Read Before Working
+## Context Pointers
 
-Read these files in order:
+Use the smallest authority set that matches the task:
 
-1. **`docs/invariants/19-architecture-invariants-v1.md`** — the frozen constraint layer. It outranks every other document, prompt, schema, and implementation. Overturning any entry requires an ADR (see its §2).
-2. `PROJECT-HANDOFF.md` for the product, architecture, current state, and handoff rules.
-3. `TODO.md` for task IDs, status, dependencies, owners, and acceptance criteria.
-4. `docs/README.md` for subject-matter authority and document precedence.
-5. The task-specific authoritative document and machine schemas.
+- **Architecture** — before changing module boundaries, visibility, write authority, or detachable-mode behavior, read `docs/invariants/19-architecture-invariants-v1.md`. It outranks every other document, prompt, schema, and implementation.
+- **Terminology** — before naming or redefining a domain concept, or editing agent-facing design docs, read `CONTEXT.md`.
+- **Task execution** — use `TODO.md` for task IDs, status, dependencies, owners, and acceptance criteria.
+- **Subject authority** — use `docs/README.md` to find the document that owns the topic, then read that document and any machine schema named by the task.
+- **Onboarding / cross-module handoff** — read `PROJECT-HANDOFF.md` when entering the repo cold or when a task spans several domains; it is not a second source of truth.
 
-`docs/` numbers are **stable IDs, not a reading order**; directories carry the topic. A document keeps its number when it moves or retires, because prose across the repo cites `docs/02`, `docs/10` and so on.
-
-Do not start from `docs/history/08-implementation-gap-checklist.md` alone. Some older
-documents still describe the historical finite-candidate M1/M2 design; task
-`PM-001` in `TODO.md` owns that specification cleanup.
+`docs/` numbers are stable IDs, not reading order; directories carry the topic. Historical documents remain under `docs/history/` and are never implementation authority.
 
 ## Non-Negotiable Architecture Rules
 
@@ -65,6 +61,10 @@ Build the final `off` pipeline before implementing `shadow`, and activate Affect
 only after controlled ablation tests. Do not follow the older
 `shadow -> active-memory -> open-policy` implementation order.
 
+## Agent Skills
+
+- **Writing for agents** — when creating or editing `AGENTS.md`, `CONTEXT.md`, or any design document reached from this file, apply `.agents/skills/writing-for-agents/SKILL.md`: keep one source of truth, use explicit context pointers, co-locate each concept with its caveats, and prune stale caches.
+
 ## Engineering Conventions
 
 - Prefer strict TypeScript for runtime and tooling. Keep NodeNext/ESM imports.
@@ -95,14 +95,6 @@ only after controlled ablation tests. Do not follow the older
 If a task requires an Owner decision, do not invent one. Mark it
 `WAITING_OWNER` and point to `docs/owner/14-owner-input-workbook-v1.md`.
 
-## Known Baseline At 2026-08-06
+## Current Engineering State
 
-- Contract validation passes.
-- M1 runtime tests pass 15/19; four fast-reply tests fail because the assembler
-  assumes LF while `prompts/10-fast-reply.md` is CRLF.
-- Full project audit stops at a Windows EOL/canon manifest hash mismatch.
-- Actual source closure is broader than the documented per-call input closure.
-- Scheduler phases currently use UTC rather than configured world time.
-- The inference interface is synchronous and `Engine` depends on `StubClient`.
-
-These are tracked as M1.1 tasks. Do not hide them by weakening tests.
+`TODO.md` is the only current task/status ledger. Do not cache pass counts, known failures, or milestone status here; update the owning TODO task instead.
