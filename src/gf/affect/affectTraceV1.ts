@@ -52,8 +52,13 @@ export interface ShapedMemoryCandidateV1 extends MemoryCandidateV1 {
   matchedTraceIds: string[];
 }
 
+// Diagnostic v1 constants. These are intentionally bounded and version-local.
+// They exist to test the mechanism, not to freeze a psychological scale.
 const MAX_ATTENTION_BOOST = 0.28;
 const MAX_RETRIEVAL_BOOST = 0.25;
+const ATTENTION_GAIN = 0.65;
+const RETRIEVAL_SUPPORT_GAIN = 0.55;
+const RETRIEVAL_COUNTER_GAIN = 0.34;
 
 export function createAffectTraceV1(input: {
   id: string;
@@ -86,7 +91,14 @@ export function createAffectTraceV1(input: {
     ...appraisal.attentionPulls,
     ...appraisal.retrievalPulls,
   ]);
-  const activation = clamp01(cueCompatibility * (0.35 + 0.65 * strength));
+
+  // Activation is not an emotion label. It is the current availability of this
+  // source-linked residue under the present cue. Strength/unresolvedness provide
+  // a bounded prior so semantically related extreme traces can cross a ranking
+  // boundary in diagnostic cases, while weak traces remain small biases.
+  const activation = clamp01(
+    0.58 * cueCompatibility + 0.24 * strength + 0.18 * unresolvedness,
+  );
 
   return {
     id: input.id,
@@ -96,10 +108,10 @@ export function createAffectTraceV1(input: {
     retrievalPulls: [...appraisal.retrievalPulls],
     counterEvidencePulls: [...appraisal.counterEvidencePulls],
     resolutionCues: [...appraisal.resolutionCues],
-    strength,
-    persistence,
-    activation,
-    unresolvedness,
+    strength: round4(strength),
+    persistence: round4(persistence),
+    activation: round4(activation),
+    unresolvedness: round4(unresolvedness),
     updatedAt: input.now,
   };
 }
@@ -133,16 +145,16 @@ export function updateAffectTraceV1(input: {
   );
   const activation = clamp01(
     0.18 * aged.activation +
-      recurrenceMatch * (0.35 + 0.5 * strength) -
+      recurrenceMatch * (0.28 + 0.56 * strength) -
       0.22 * counterMatch -
       0.58 * resolutionMatch,
   );
 
   return {
     ...aged,
-    strength,
-    unresolvedness,
-    activation,
+    strength: round4(strength),
+    unresolvedness: round4(unresolvedness),
+    activation: round4(activation),
     updatedAt: input.now,
   };
 }
@@ -155,7 +167,8 @@ export function shapeAttentionV1(
     .map((candidate) => {
       const contributions = traces.map((trace) => {
         const compatibility = semanticCompatibility(candidate.text, trace.attentionPulls);
-        const contribution = 0.34 * trace.strength * trace.activation * compatibility;
+        const contribution =
+          ATTENTION_GAIN * trace.strength * trace.activation * compatibility;
         return { traceId: trace.id, contribution };
       });
       const affectBoost = Math.min(
@@ -188,8 +201,8 @@ export function shapeRetrievalV1(
         const support = semanticCompatibility(memory.text, trace.retrievalPulls);
         const counter = semanticCompatibility(memory.text, trace.counterEvidencePulls);
         const traceWeight = trace.strength * trace.activation;
-        supportTotal += 0.25 * traceWeight * support;
-        counterTotal += 0.16 * traceWeight * counter;
+        supportTotal += RETRIEVAL_SUPPORT_GAIN * traceWeight * support;
+        counterTotal += RETRIEVAL_COUNTER_GAIN * traceWeight * counter;
         if (support >= 0.12 || counter >= 0.12) matchedTraceIds.add(trace.id);
       }
 
@@ -218,7 +231,9 @@ export function selectWorkingMemoriesV1(
 ): ShapedMemoryCandidateV1[] {
   if (limit <= 0) return [];
   const selected = ranked.slice(0, limit);
-  const bestCounter = ranked.find((item) => item.affectRole === "counter" && item.affectBoost >= 0.015);
+  const bestCounter = ranked.find(
+    (item) => item.affectRole === "counter" && item.affectBoost >= 0.015,
+  );
   if (!bestCounter || selected.some((item) => item.id === bestCounter.id)) return selected;
   if (selected.length < limit) return [...selected, bestCounter];
   return [...selected.slice(0, Math.max(0, limit - 1)), bestCounter];
@@ -250,7 +265,10 @@ function pairCompatibility(a: string, b: string): number {
   const right = normalize(b);
   if (!left || !right) return 0;
   if (left.includes(right) || right.includes(left)) {
-    return Math.min(1, 0.72 + 0.28 * Math.min(left.length, right.length) / Math.max(left.length, right.length));
+    return Math.min(
+      1,
+      0.72 + 0.28 * (Math.min(left.length, right.length) / Math.max(left.length, right.length)),
+    );
   }
 
   const leftBigrams = ngrams(left, 2);
