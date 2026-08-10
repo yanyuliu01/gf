@@ -57,8 +57,14 @@ test("extreme cases produce stronger traces than near cases on average", () => {
     traces.filter((item) => item.tier === "near").map((item) => item.trace.activation),
   );
 
-  assert.ok(extremeStrength > nearStrength + 0.15, { extremeStrength, nearStrength });
-  assert.ok(extremeActivation > nearActivation, { extremeActivation, nearActivation });
+  assert.ok(
+    extremeStrength > nearStrength + 0.15,
+    `expected extreme strength > near strength + 0.15; extreme=${extremeStrength}, near=${nearStrength}`,
+  );
+  assert.ok(
+    extremeActivation > nearActivation,
+    `expected extreme activation > near activation; extreme=${extremeActivation}, near=${nearActivation}`,
+  );
 });
 
 test("shaping is bounded and creates some ranking pressure without an action table", () => {
@@ -77,7 +83,7 @@ test("shaping is bounded and creates some ranking pressure without an action tab
       changedCases += 1;
     }
   }
-  assert.ok(changedCases >= 1, { changedCases });
+  assert.ok(changedCases >= 1, `expected at least one case ranking to change; changedCases=${changedCases}`);
 });
 
 test("resolution evidence can reduce activation and unresolvedness", () => {
@@ -89,9 +95,12 @@ test("resolution evidence can reduce activation and unresolvedness", () => {
     cue: "根区正常且卷曲稳定，后续观察确认没有继续扩大。",
     now: "2026-08-11T01:00:00+08:00",
   });
-  assert.ok(updated.activation < trace.activation, { before: trace.activation, after: updated.activation });
-  assert.ok(updated.unresolvedness < trace.unresolvedness, {
-    before: trace.unresolvedness,
-    after: updated.unresolvedness,
-  });
+  assert.ok(
+    updated.activation < trace.activation,
+    `expected activation to fall; before=${trace.activation}, after=${updated.activation}`,
+  );
+  assert.ok(
+    updated.unresolvedness < trace.unresolvedness,
+    `expected unresolvedness to fall; before=${trace.unresolvedness}, after=${updated.unresolvedness}`,
+  );
 });
