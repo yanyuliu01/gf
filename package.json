@@ -12,7 +12,8 @@
     "start": "node dist/gf/cli.js",
     "test": "npm run build && node --test \"dist/gf/tests/*.test.js\"",
     "vs01:deepseek": "npm run build && node dist/gf/vertical-slices/runS4DeepSeek.js",
-    "vs01:characters": "npm run build && node dist/gf/vertical-slices/runS4CharacterMatrix.js"
+    "vs01:characters": "npm run build && node dist/gf/vertical-slices/runS4CharacterMatrix.js",
+    "vs01:eval50": "npm run build && node dist/gf/vertical-slices/runCharacterEvalSuite.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
