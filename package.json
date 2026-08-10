@@ -15,7 +15,8 @@
     "vs01:characters": "npm run build && node dist/gf/vertical-slices/runS4CharacterMatrix.js",
     "vs01:eval50:v1": "npm run build && node dist/gf/vertical-slices/runCharacterEvalSuite.js",
     "vs01:eval50": "npm run build && node dist/gf/vertical-slices/runCharacterEvalSuiteV2.js",
-    "vs01:blind": "npm run build && node dist/gf/vertical-slices/runCharacterBlindEval.js"
+    "vs01:blind": "npm run build && node dist/gf/vertical-slices/runCharacterBlindEval.js",
+    "vs01:policy-diagnostic": "npm run build && node dist/gf/vertical-slices/runCharacterPolicyDiagnostic.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
