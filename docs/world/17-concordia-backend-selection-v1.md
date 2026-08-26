@@ -8,7 +8,12 @@
 
 首个 world backend 采用 **Google DeepMind Concordia** 做集成候选。
 
-采用的是它的 world / Game Master / time / scene 设计，不采用它的 agent cognition 作为 GF 的心智实现。
+但需要区分两个阶段：
+
+- **Sandbox / POC**：允许先使用 Concordia 的 generative Game Master、clock、location、scene，快速验证“她能否在一个外部世界里持续生活”；
+- **Production authority**：不能直接把 Concordia 原生 generative world state 当最终客观事实引擎。最终物理、资源、权限、耗时和可回放状态仍需满足 docs/world/16 的 deterministic / replayable 约束，可通过自定义 deterministic components 或 GF 自己的 computable kernel 实现。
+
+采用的是 Concordia 的 world / Game Master / time / scene 设计，不采用它的 agent cognition 作为 GF 的心智实现。
 
 GF 继续独占：
 
@@ -21,7 +26,7 @@ GF 继续独占：
 
 World backend 独占：
 
-- objective world state
+- objective world state（生产阶段必须可回放）
 - time and causality
 - location / resource / permission / process rules
 - NPC/world event evolution
@@ -45,6 +50,27 @@ Concordia 明确把环境 Engine 分成 Observe / Schedule / Resolve / Terminate
 
 这比直接采用一个“Agent framework”更合适，因为 GF 已经有自己的 cognition/runtime。
 
+### 2.1 为什么不能直接把原生 situated GM 冻结成最终世界
+
+Concordia 的 `physically_situated_and_dramaturgic` / situated world 里，GenerativeClock、Locations、WorldState 等组件本身也会调用 LLM 推断时间、位置和世界状态。
+
+这适合快速构建 generative social simulation，但与 GF 已经定义的以下目标存在差异：
+
+```text
+same state + same action + same rules + same seed
+=> replayable objective outcome
+```
+
+因此首版先借它验证交互形态，后续再逐步替换：
+
+```text
+Generative physical rules
+        ↓
+Deterministic time / location / resources / processes
+        +
+Concordia-style social / NPC adjudication
+```
+
 ## 3. 其他候选的定位
 
 ### AI Town
@@ -61,11 +87,11 @@ Concordia 明确把环境 Engine 分成 Observe / Schedule / Resolve / Terminate
 
 定位：后续做 social eval benchmark。
 
-### Agentopia / 大型 society simulator
+### AgentSociety / Agentopia / 大型 society simulator
 
-长期生活、关系、职业、周计划等很有参考价值，但会同时接管 agent memory/profile/goal/reward，和 GF 重叠过多。
+长期生活、关系、职业、城市/社会环境都很有参考价值，但这些框架通常同时提供自己的 agent reasoning、memory、goal、reward 或 workspace，和 GF 重叠较多。
 
-定位：参考长期社会节律与数据布局，不直接集成。
+定位：参考长期社会节律、城市模块与数据布局，不作为第一认知/runtime 依赖。
 
 ## 4. 集成方式：Python sidecar，不直接侵入 GF
 
@@ -138,7 +164,8 @@ World event / time boundary
 ## 7. 下一实现
 
 1. Python sidecar 最小服务；
-2. 一个 Concordia GM / Scene；
-3. 一个 GF actor；
+2. 一个 Concordia sandbox GM / Scene；
+3. GF 作为外部 cognition actor；
 4. 跑通 `observe -> cognition -> resolve -> advance -> observe`；
-5. 再接长期运行与 NPC。
+5. 验证 sandbox 有价值后，再把物理/资源层替换成 deterministic components；
+6. 再接长期运行与 NPC。
