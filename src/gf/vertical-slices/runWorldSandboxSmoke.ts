@@ -1,5 +1,20 @@
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import type { DatabaseSync } from "node:sqlite";
+
+import { PerceptionProjector } from "../perception/projector.js";
+import {
+  composePolicyPromptV3,
+  type WorkingSelfEvidenceV3,
+} from "../prompts/policyComposerV3.js";
+import { connect } from "../state/db.js";
+import { MigrationRunner } from "../state/migrator.js";
+import { EventStore, type Row } from "../state/repositories.js";
+import { StateManager, type WorldEvent } from "../state/stateManager.js";
+import { Policy } from "../validation/policy.js";
+import { SchemaRegistry } from "../validation/schemas.js";
 import { ConcordiaWorldBridge } from "../world/concordiaBridge.js";
-import { composePolicyPromptV3, type WorkingSelfEvidenceV3 } from "../prompts/policyComposerV3.js";
+import { AgentWorldIngress } from "../world/ingress.js";
 
 interface DeepSeekChatResponse {
   choices?: Array<{ message?: { content?: string | null } }>;
@@ -14,85 +29,140 @@ interface PolicyDecision {
 }
 
 const apiKey = process.env.DEEPSEEK_API_KEY;
-if (!apiKey) throw new Error('DEEPSEEK_API_KEY is missing.');
+if (!apiKey) throw new Error("DEEPSEEK_API_KEY is missing.");
 
 const actorId = process.env.GF_WORLD_ACTOR_ID ?? "muelsyse";
 const worldUrl = process.env.GF_WORLD_URL ?? "http://127.0.0.1:8765";
 const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
-const steps = Math.max(1, Math.min(6, Number(process.env.GF_WORLD_SMOKE_STEPS ?? 2)));
-const advanceMinutes = Math.max(1, Math.min(240, Number(process.env.GF_WORLD_SMOKE_ADVANCE_MINUTES ?? 15)));
+const steps = Math.max(
+  1,
+  Math.min(6, Number(process.env.GF_WORLD_SMOKE_STEPS ?? 2)),
+);
+const advanceMinutes = Math.max(
+  1,
+  Math.min(240, Number(process.env.GF_WORLD_SMOKE_ADVANCE_MINUTES ?? 15)),
+);
 
+const root = process.cwd();
+const dbPath =
+  process.env.GF_WORLD_SMOKE_DB ?? join(root, "artifacts", "world-smoke.sqlite");
+mkdirSync(dirname(dbPath), { recursive: true });
+const bootstrapDb = connect(dbPath);
+new MigrationRunner(bootstrapDb, join(root, "migrations")).apply();
+bootstrapDb.close();
+
+const schemas = new SchemaRegistry(join(root, "schemas"));
+const stateManager = new StateManager(
+  () => connect(dbPath),
+  schemas,
+  new Policy(),
+);
+const readDb = connect(dbPath);
+const events = new EventStore(readDb);
+const projector = new PerceptionProjector();
 const world = new ConcordiaWorldBridge({ baseUrl: worldUrl });
+const ingress = new AgentWorldIngress(stateManager, world, {
+  connectorId: "world:concordia",
+});
+
 let cursor: string | undefined;
-let lastOutcome = "";
 
-console.log(`GF world smoke: actor=${actorId}, world=${worldUrl}, model=${model}, steps=${steps}`);
+console.log(
+  `GF world smoke: actor=${actorId}, world=${worldUrl}, model=${model}, steps=${steps}, db=${dbPath}`,
+);
 
-for (let step = 1; step <= steps; step += 1) {
-  const observed = await world.observe(actorId, cursor);
-  cursor = observed.cursor;
-  console.log(`\n=== step ${step} / observation @ ${observed.worldTime} ===`);
-  for (const item of observed.observations) console.log(`- ${item.text}`);
+try {
+  for (let step = 1; step <= steps; step += 1) {
+    const pulled = await ingress.pull(actorId, cursor);
+    cursor = pulled.cursor;
+    const observations = pulled.ingested
+      .map((result) => events.getEvent(result.eventId))
+      .filter((row): row is Row => row !== undefined)
+      .map(rowToWorldEvent)
+      .map((event) => projector.project(event, actorId))
+      .filter((item) => item !== null);
 
-  const evidence: WorkingSelfEvidenceV3[] = observed.observations.map((item) => ({
-    source: "perception",
-    sourceRef: item.id,
-    text: item.text,
-  }));
-  if (lastOutcome) {
-    evidence.push({
-      source: "memory",
-      sourceRef: `smoke-outcome-${step - 1}`,
-      text: `刚才自己的行动产生了这个结果：${lastOutcome}`,
+    console.log(`\n=== step ${step} / perception @ ${pulled.worldTime} ===`);
+    for (const item of observations) console.log(`- ${item.text}`);
+
+    const evidence: WorkingSelfEvidenceV3[] = observations.map((item) => ({
+      source: "perception",
+      sourceRef: item.sourceEventId,
+      text: item.text,
+    }));
+
+    const prompt = composePolicyPromptV3({
+      mode: "autonomous",
+      identity: {
+        facts: [
+          "她是缪尔赛思，精灵，莱茵生命生态科主任，也是公司早期元老；熟人常叫她缪缪。",
+          "她长期生活在特里蒙；生态科、生态园、同事、研究和私人生活都真实存在，不围绕博士展开。",
+          "她对水、植物和活体有不同于普通人的感知；这种差异也长期造成她与多数人之间难以完全跨越的隔阂。",
+          "她知道博士本人生活在彼侧世界，当前终端是两人唯一持续直接的通信纽带。",
+        ],
+      },
+      workingSelf: {
+        now: pulled.worldTime,
+        evidence,
+      },
     });
+
+    const decision = await callPolicy(prompt.messages);
+    console.log("\nPolicy:");
+    console.log(JSON.stringify(decision, null, 2));
+
+    if (decision.speech.trim()) {
+      console.log(
+        `\nCommunication proposal (not sent to World; production path is Outbox): ${decision.speech.trim()}`,
+      );
+    }
+
+    const worldIntent = decision.actionIntent.trim();
+    if (worldIntent) {
+      const actionId = `smoke-${Date.now()}-${step}`;
+      const resolved = await ingress.resolve({
+        id: actionId,
+        actorId,
+        proposedAt: pulled.worldTime,
+        intent: worldIntent,
+      });
+      console.log("\nWorld resolution (objective ledger event):");
+      console.log(JSON.stringify(resolved.resolution, null, 2));
+
+      const legalOutcomeObservations = resolved.observations
+        .map((result) => events.getEvent(result.eventId))
+        .filter((row): row is Row => row !== undefined)
+        .map(rowToWorldEvent)
+        .map((event) => projector.project(event, actorId))
+        .filter((item) => item !== null);
+      if (legalOutcomeObservations.length > 0) {
+        console.log("\nLegally perceived outcome:");
+        for (const item of legalOutcomeObservations) console.log(`- ${item.text}`);
+      }
+    } else {
+      console.log("\nWorld resolution: no external action proposed.");
+    }
+
+    const to = addMinutes(pulled.worldTime, advanceMinutes);
+    const advanced = await ingress.advance({ to });
+    console.log(`\nWorld advanced: ${advanced.from} -> ${advanced.to}`);
+    console.log(
+      "Background world event ids are not cognition input until a later pull exposes legal observations.",
+    );
   }
 
-  const prompt = composePolicyPromptV3({
-    mode: "autonomous",
-    identity: {
-      facts: [
-        "她是缪尔赛思，精灵，莱茵生命生态科主任，也是公司早期元老；熟人常叫她缪缪。",
-        "她长期生活在特里蒙；生态科、生态园、同事、研究和私人生活都真实存在，不围绕博士展开。",
-        "她对水、植物和活体有不同于普通人的感知；这种差异也长期造成她与多数人之间难以完全跨越的隔阂。",
-        "她知道博士本人生活在彼侧世界，当前终端是两人唯一持续直接的通信纽带。",
-      ],
-    },
-    workingSelf: {
-      now: observed.worldTime,
-      evidence,
-    },
-  });
-
-  const decision = await callPolicy(prompt.messages);
-  console.log("\nPolicy:");
-  console.log(JSON.stringify(decision, null, 2));
-
-  const worldIntent = combineWorldIntent(decision);
-  if (worldIntent) {
-    const actionId = `smoke-${Date.now()}-${step}`;
-    const resolution = await world.resolve({
-      id: actionId,
-      actorId,
-      proposedAt: observed.worldTime,
-      intent: worldIntent,
-    });
-    lastOutcome = resolution.happened;
-    cursor = resolution.observations.length ? cursor : cursor;
-    console.log("\nWorld resolution:");
-    console.log(JSON.stringify(resolution, null, 2));
-  } else {
-    lastOutcome = "她没有提出新的外部行动，继续留在当前生活轨迹中。";
-    console.log("\nWorld resolution: no external action proposed.");
-  }
-
-  const to = addMinutes(observed.worldTime, advanceMinutes);
-  const advanced = await world.advance({ to });
-  console.log(`\nWorld advanced: ${advanced.from} -> ${advanced.to}`);
+  const finalPull = await ingress.pull(actorId, cursor);
+  const finalObservations = finalPull.ingested
+    .map((result) => events.getEvent(result.eventId))
+    .filter((row): row is Row => row !== undefined)
+    .map(rowToWorldEvent)
+    .map((event) => projector.project(event, actorId))
+    .filter((item) => item !== null);
+  console.log(`\n=== final perception @ ${finalPull.worldTime} ===`);
+  for (const item of finalObservations) console.log(`- ${item.text}`);
+} finally {
+  readDb.close();
 }
-
-const finalObservation = await world.observe(actorId, cursor);
-console.log(`\n=== final observation @ ${finalObservation.worldTime} ===`);
-for (const item of finalObservation.observations) console.log(`- ${item.text}`);
 
 async function callPolicy(
   messages: Array<{ role: "system" | "user"; content: string }>,
@@ -114,27 +184,49 @@ async function callPolicy(
   });
   const payload = (await response.json()) as DeepSeekChatResponse;
   if (!response.ok) {
-    throw new Error(`DeepSeek policy failed (${response.status}): ${payload.error?.message ?? response.statusText}`);
+    throw new Error(
+      `DeepSeek policy failed (${response.status}): ${payload.error?.message ?? response.statusText}`,
+    );
   }
   const content = payload.choices?.[0]?.message?.content?.trim();
   if (!content) throw new Error("DeepSeek policy returned empty content");
   const raw = JSON.parse(stripFence(content)) as Record<string, unknown>;
-  const control = raw.control === "continue" ? "continue" : "yield";
   return {
     speech: typeof raw.speech === "string" ? raw.speech : "",
-    actionIntent: typeof raw.actionIntent === "string" ? raw.actionIntent : "",
-    attentionIntent: typeof raw.attentionIntent === "string" ? raw.attentionIntent : "",
-    control,
+    actionIntent:
+      typeof raw.actionIntent === "string" ? raw.actionIntent : "",
+    attentionIntent:
+      typeof raw.attentionIntent === "string" ? raw.attentionIntent : "",
+    control: raw.control === "continue" ? "continue" : "yield",
   };
 }
 
-function combineWorldIntent(decision: PolicyDecision): string {
-  const action = decision.actionIntent.trim();
-  const speech = decision.speech.trim();
-  if (action && speech) return `${action} 同时如果需要对外说话，她说：“${speech}”`;
-  if (action) return action;
-  if (speech) return `她说：“${speech}”`;
-  return "";
+function rowToWorldEvent(row: Row): WorldEvent {
+  return {
+    schema_version: String(row.schema_version),
+    event_id: String(row.event_id),
+    origin: row.origin as WorldEvent["origin"],
+    kind: String(row.kind),
+    channel: row.channel == null ? null : String(row.channel),
+    occurred_at: String(row.occurred_at),
+    received_at: String(row.received_at),
+    world_day: row.world_day == null ? null : Number(row.world_day),
+    world_phase: row.world_phase == null ? null : String(row.world_phase),
+    provenance: {
+      principal_id: String(row.principal_id),
+      connector_id: row.connector_id == null ? null : String(row.connector_id),
+      external_event_id:
+        row.external_event_id == null ? null : String(row.external_event_id),
+      trust: String(row.trust),
+    },
+    privacy_scope: String(row.privacy_scope),
+    causation_event_id:
+      row.causation_event_id == null ? null : String(row.causation_event_id),
+    correlation_id:
+      row.correlation_id == null ? null : String(row.correlation_id),
+    idempotency_key: String(row.idempotency_key),
+    payload: JSON.parse(String(row.payload_json)) as Record<string, unknown>,
+  };
 }
 
 function addMinutes(value: string, minutes: number): string {
