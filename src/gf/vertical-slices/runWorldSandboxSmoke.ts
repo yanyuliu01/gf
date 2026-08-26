@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { DatabaseSync } from "node:sqlite";
 
+import { DeepSeekOpenPolicyV3 } from "../inference/openPolicyV3.js";
 import { PerceptionProjector } from "../perception/projector.js";
 import {
   composePolicyPromptV3,
@@ -15,18 +15,6 @@ import { Policy } from "../validation/policy.js";
 import { SchemaRegistry } from "../validation/schemas.js";
 import { ConcordiaWorldBridge } from "../world/concordiaBridge.js";
 import { AgentWorldIngress } from "../world/ingress.js";
-
-interface DeepSeekChatResponse {
-  choices?: Array<{ message?: { content?: string | null } }>;
-  error?: { message?: string };
-}
-
-interface PolicyDecision {
-  speech: string;
-  actionIntent: string;
-  attentionIntent: string;
-  control: "continue" | "yield";
-}
 
 const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) throw new Error("DEEPSEEK_API_KEY is missing.");
@@ -64,6 +52,7 @@ const world = new ConcordiaWorldBridge({ baseUrl: worldUrl });
 const ingress = new AgentWorldIngress(stateManager, world, {
   connectorId: "world:concordia",
 });
+const policyClient = new DeepSeekOpenPolicyV3({ apiKey, model });
 
 let cursor: string | undefined;
 
@@ -107,9 +96,20 @@ try {
       },
     });
 
-    const decision = await callPolicy(prompt.messages);
+    const decision = await policyClient.decide(prompt);
     console.log("\nPolicy:");
-    console.log(JSON.stringify(decision, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          speech: decision.speech,
+          actionIntent: decision.actionIntent,
+          attentionIntent: decision.attentionIntent,
+          control: decision.control,
+        },
+        null,
+        2,
+      ),
+    );
 
     if (decision.speech.trim()) {
       console.log(
@@ -164,43 +164,6 @@ try {
   readDb.close();
 }
 
-async function callPolicy(
-  messages: Array<{ role: "system" | "user"; content: string }>,
-): Promise<PolicyDecision> {
-  const response = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      thinking: { type: "disabled" },
-      response_format: { type: "json_object" },
-      temperature: 0.45,
-      max_tokens: 800,
-      messages,
-    }),
-  });
-  const payload = (await response.json()) as DeepSeekChatResponse;
-  if (!response.ok) {
-    throw new Error(
-      `DeepSeek policy failed (${response.status}): ${payload.error?.message ?? response.statusText}`,
-    );
-  }
-  const content = payload.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error("DeepSeek policy returned empty content");
-  const raw = JSON.parse(stripFence(content)) as Record<string, unknown>;
-  return {
-    speech: typeof raw.speech === "string" ? raw.speech : "",
-    actionIntent:
-      typeof raw.actionIntent === "string" ? raw.actionIntent : "",
-    attentionIntent:
-      typeof raw.attentionIntent === "string" ? raw.attentionIntent : "",
-    control: raw.control === "continue" ? "continue" : "yield",
-  };
-}
-
 function rowToWorldEvent(row: Row): WorldEvent {
   return {
     schema_version: String(row.schema_version),
@@ -233,12 +196,4 @@ function addMinutes(value: string, minutes: number): string {
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) throw new Error(`Invalid world time: ${value}`);
   return new Date(parsed + minutes * 60_000).toISOString();
-}
-
-function stripFence(value: string): string {
-  return value
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
 }
