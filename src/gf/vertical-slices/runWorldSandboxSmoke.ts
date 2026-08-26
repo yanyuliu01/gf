@@ -1,12 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+import { WorkingSelfBuilderV1 } from "../cognition/workingSelf.js";
 import { DeepSeekOpenPolicyV3 } from "../inference/openPolicyV3.js";
 import { PerceptionProjector } from "../perception/projector.js";
-import {
-  composePolicyPromptV3,
-  type WorkingSelfEvidenceV3,
-} from "../prompts/policyComposerV3.js";
+import { composePolicyPromptV3 } from "../prompts/policyComposerV3.js";
 import { connect } from "../state/db.js";
 import { MigrationRunner } from "../state/migrator.js";
 import { EventStore, type Row } from "../state/repositories.js";
@@ -48,6 +46,7 @@ const stateManager = new StateManager(
 const readDb = connect(dbPath);
 const events = new EventStore(readDb);
 const projector = new PerceptionProjector();
+const workingSelfBuilder = new WorkingSelfBuilderV1();
 const world = new ConcordiaWorldBridge({ baseUrl: worldUrl });
 const ingress = new AgentWorldIngress(stateManager, world, {
   connectorId: "world:concordia",
@@ -74,11 +73,18 @@ try {
     console.log(`\n=== step ${step} / perception @ ${pulled.worldTime} ===`);
     for (const item of observations) console.log(`- ${item.text}`);
 
-    const evidence: WorkingSelfEvidenceV3[] = observations.map((item) => ({
-      source: "perception",
-      sourceRef: item.sourceEventId,
-      text: item.text,
-    }));
+    // The smoke runner deliberately treats the projected observations as
+    // already-admitted evidence. Production CognitiveGate/Attention plugs in
+    // immediately before this builder; no temporary wake heuristic is hidden here.
+    const workingSelf = workingSelfBuilder.build({
+      now: pulled.worldTime,
+      location: observations.at(-1)?.location ?? undefined,
+      evidence: observations.map((item) => ({
+        source: "perception",
+        sourceRef: item.sourceEventId,
+        text: item.text,
+      })),
+    });
 
     const prompt = composePolicyPromptV3({
       mode: "autonomous",
@@ -90,10 +96,7 @@ try {
           "她知道博士本人生活在彼侧世界，当前终端是两人唯一持续直接的通信纽带。",
         ],
       },
-      workingSelf: {
-        now: pulled.worldTime,
-        evidence,
-      },
+      workingSelf,
     });
 
     const decision = await policyClient.decide(prompt);
