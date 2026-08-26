@@ -22,7 +22,8 @@
     "vs05:affect-batch": "npm run build && node dist/gf/vertical-slices/runAffectBatchEvalV1.js",
     "vs06:b0": "npm run build && node dist/gf/vertical-slices/runAffectResponseSurfaceV1.js",
     "vs06:attribution:v1": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV1.js",
-    "vs06:attribution": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV2.js"
+    "vs06:attribution": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV2.js",
+    "prompt:v3-ab": "npm run build && node dist/gf/vertical-slices/runPromptV3AB.js"
   },
   "dependencies": {
     "ajv": "^8.17.1",
