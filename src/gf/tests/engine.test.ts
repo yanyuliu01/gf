@@ -117,10 +117,10 @@ test("user message -> fast reply -> speech/outbox atomic commit -> delivery", ()
 });
 
 test("scheduled phase event produces a committed no-speech tick", () => {
-  // Deterministic: scheduler starts at night, then a morning event arrives.
-  const rt = buildEngine({ now: new Date("2026-08-05T23:00:00Z") });
+  // Asia/Shanghai: scheduler starts at 20:59 evening, then enters night.
+  const rt = buildEngine({ now: new Date("2026-08-05T12:59:00Z") });
   try {
-    const outcome = rt.engine.processOnce(new Date("2026-08-05T09:00:00Z"));
+    const outcome = rt.engine.processOnce(new Date("2026-08-05T13:00:00Z"));
     assert.equal(outcome.kind, "tick");
     assert.equal(rt.state.currentRevision(), 1);
     const outboxRows = rt.db.prepare("SELECT * FROM outbox").all();

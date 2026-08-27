@@ -135,7 +135,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | `M11-001` | `DONE` | ENG | none | Make Prompt template parsing EOL-agnostic. All 19 runtime tests pass; add LF and CRLF fixture coverage. Do not normalize user content. |
 | `M11-002` | `DONE` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
 | `M11-003` | `DONE` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
-| `M11-004` | `READY` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
+| `M11-004` | `DONE` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `READY` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
 | `M11-006` | `BLOCKED` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. |
 | `M11-007` | `BLOCKED` | ENG | `M11-001..005` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
@@ -176,6 +176,19 @@ Files changed: TODO.md; src/gf/validation/sourceClosure.ts; src/gf/state/stateMa
 Checks: pnpm test (57/57); contract validation; full project audit including 2758 canon entries; git diff --check.
 Known residual risk: StateManager trusts its in-process caller to pass the assembler-produced inputSources unchanged; M2 versioned call-input contracts and replay hashes remain future work.
 Rollback: Revert the M11-003 task commit; database-global closure behavior and its visibility leak return together.
+Owner decision still needed: None.
+```
+
+```text
+Task: M11-004
+Assignee: Codex
+Started / completed: 2026-08-27 / 2026-08-27
+Outcome: Added an injectable wall Clock and one configured IANA world-time projection for local date, world day, and six-phase time. Scheduler events now derive their UTC timestamps and world coordinates from one clock sample; CLI/env configuration selects timezone and epoch. The boundary follows WorldX's separated time/config/event-coordinate architecture while preserving GF's 1:1 wall time and UTC ledger instants.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19-architecture-invariants-v1.md section 3; docs/cognition/02-framework-v3.5.md section 3.5; docs/world/15-world-runtime-interaction-rules-draft-v1.md; WorldX WorldManager, GameTime/SceneConfig, SimulationEngine, and EventStore.
+Files changed: TODO.md; src/gf/world/clock.ts; src/gf/scheduler/scheduler.ts; src/gf/cli.ts; src/gf/tests/worldClock.test.ts; src/gf/tests/engine.test.ts.
+Checks: pnpm test (61/61); contract validation; full project audit including 2758 canon entries; git diff --check.
+Known residual risk: Timezone and epoch are startup configuration rather than versioned persisted world metadata; changing them for an existing database can reinterpret later day/phase boundaries. Persisted WorldX-compatible timeline configuration belongs in the future world-runtime milestone.
+Rollback: Revert the M11-004 task commit; Scheduler returns to fixed UTC phase/day calculation.
 Owner decision still needed: None.
 ```
 

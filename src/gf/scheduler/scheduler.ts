@@ -8,50 +8,36 @@
  */
 
 import type { DatabaseSync } from "node:sqlite";
-import { newId, utcnowIso } from "../domain/ids.js";
+import { newId } from "../domain/ids.js";
 import type { WorldEvent } from "../state/stateManager.js";
+import {
+  type Clock,
+  type WorldTimeConfig,
+  SystemClock,
+  WorldClock,
+} from "../world/clock.js";
 
-const PHASE_BOUNDARIES: [number, string][] = [
-  [5, "dawn"],
-  [8, "morning"],
-  [12, "noon"],
-  [14, "afternoon"],
-  [18, "evening"],
-  [21, "night"],
-];
-
-export function phaseForDate(date: Date): string {
-  let current = "night";
-  for (const [boundary, phase] of PHASE_BOUNDARIES) {
-    if (date.getUTCHours() >= boundary) {
-      current = phase;
-    }
-  }
-  return current;
-}
-
-export function worldDayFor(date: Date): number {
-  const epoch = Date.UTC(2026, 7, 5);
-  const current = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-  );
-  return Math.floor((current - epoch) / 86400000) + 1;
-}
+export { phaseForDate, worldDayFor } from "../world/clock.js";
 
 export class Scheduler {
   private lastPhase: string;
   private impulseIndex = 0;
+  private readonly worldClock: WorldClock;
 
   constructor(
     private readonly db: DatabaseSync,
     options: {
       now?: Date;
+      clock?: Clock;
+      worldTime?: Partial<WorldTimeConfig>;
       impulsePool?: Record<string, unknown>[];
     } = {},
   ) {
     this.impulsePool = options.impulsePool ?? [];
+    this.worldClock = new WorldClock(
+      options.clock ?? new SystemClock(),
+      options.worldTime,
+    );
     this.lastPhase = this.loadLastPhase(options.now);
   }
 
@@ -78,14 +64,15 @@ export class Scheduler {
         // fall through
       }
     }
-    return phaseForDate(now ?? new Date());
+    return (now ? this.worldClock.at(now) : this.worldClock.now()).phase;
   }
 
-  nextEvent(now = new Date()): WorldEvent | null {
-    const phase = phaseForDate(now);
+  nextEvent(now?: Date): WorldEvent | null {
+    const worldTime = now ? this.worldClock.at(now) : this.worldClock.now();
+    const phase = worldTime.phase;
     if (phase !== this.lastPhase) {
       this.lastPhase = phase;
-      const nowIso = utcnowIso();
+      const nowIso = worldTime.instant.toISOString();
       return {
         schema_version: "1.0",
         event_id: newId("evt"),
@@ -94,7 +81,7 @@ export class Scheduler {
         channel: null,
         occurred_at: nowIso,
         received_at: nowIso,
-        world_day: worldDayFor(now),
+        world_day: worldTime.worldDay,
         world_phase: phase,
         provenance: {
           principal_id: "world",
@@ -110,7 +97,7 @@ export class Scheduler {
     }
     if (this.impulseIndex < this.impulsePool.length) {
       const item = this.impulsePool[this.impulseIndex++];
-      const nowIso = utcnowIso();
+      const nowIso = worldTime.instant.toISOString();
       return {
         schema_version: "1.0",
         event_id: newId("evt"),
@@ -119,8 +106,8 @@ export class Scheduler {
         channel: null,
         occurred_at: nowIso,
         received_at: nowIso,
-        world_day: null,
-        world_phase: null,
+        world_day: worldTime.worldDay,
+        world_phase: worldTime.phase,
         provenance: {
           principal_id: "world",
           connector_id: null,

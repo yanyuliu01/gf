@@ -31,6 +31,7 @@ import {
 import { StateManager } from "./state/stateManager.js";
 import { Policy } from "./validation/policy.js";
 import { SchemaRegistry } from "./validation/schemas.js";
+import { DEFAULT_WORLD_TIME_CONFIG } from "./world/clock.js";
 
 interface CliOptions {
   db: string;
@@ -42,6 +43,8 @@ interface CliOptions {
   rolloverMessages: number;
   dryRun: number;
   advanceMinutes: number;
+  worldTimeZone: string;
+  worldEpochDate: string;
   migrateOnly: boolean;
 }
 
@@ -56,6 +59,10 @@ function parseArgs(argv: string[]): CliOptions {
     rolloverMessages: 30,
     dryRun: 0,
     advanceMinutes: 360,
+    worldTimeZone:
+      process.env.GF_WORLD_TIME_ZONE ?? DEFAULT_WORLD_TIME_CONFIG.timeZone,
+    worldEpochDate:
+      process.env.GF_WORLD_EPOCH_DATE ?? DEFAULT_WORLD_TIME_CONFIG.epochDate,
     migrateOnly: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -89,6 +96,12 @@ function parseArgs(argv: string[]): CliOptions {
       case "--advance-minutes":
         options.advanceMinutes = Number(next());
         break;
+      case "--world-time-zone":
+        options.worldTimeZone = next();
+        break;
+      case "--world-epoch-date":
+        options.worldEpochDate = next();
+        break;
       case "--migrate-only":
         options.migrateOnly = true;
         break;
@@ -119,7 +132,12 @@ function buildRuntime(options: CliOptions) {
   const muteUntil = { value: 0 };
   const adapter = new CliAdapter(undefined, () => Date.now() < muteUntil.value);
   const outbox = new OutboxWorker(() => connect(options.db), adapter, metrics);
-  const scheduler = new Scheduler(db);
+  const scheduler = new Scheduler(db, {
+    worldTime: {
+      timeZone: options.worldTimeZone,
+      epochDate: options.worldEpochDate,
+    },
+  });
   const inference = new StubClient();
   const engine = new Engine(
     db,
