@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-08-10**
+Snapshot: **2026-08-27**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -132,13 +132,26 @@ weakening schemas, hashes, provenance, or recovery assertions.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M11-001` | `READY` | ENG | none | Make Prompt template parsing EOL-agnostic. All 19 runtime tests pass; add LF and CRLF fixture coverage. Do not normalize user content. |
+| `M11-001` | `DONE` | ENG | none | Make Prompt template parsing EOL-agnostic. All 19 runtime tests pass; add LF and CRLF fixture coverage. Do not normalize user content. |
 | `M11-002` | `READY` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
 | `M11-003` | `READY` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
 | `M11-004` | `READY` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `READY` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
 | `M11-006` | `BLOCKED` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. |
 | `M11-007` | `BLOCKED` | ENG | `M11-001..005` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
+
+```text
+Task: M11-001
+Assignee: Codex
+Started / completed: 2026-08-26 / 2026-08-27
+Outcome: Fast-reply System-template extraction and optional S3 removal accept LF and CRLF; mixed-EOL user text remains unchanged in its native user role.
+Authority read: AGENTS.md; TODO.md; docs/README.md; prompts/README.md; prompts/manifest.yaml; prompts/10-fast-reply.md.
+Files changed: TODO.md; src/gf/prompts/assembler.ts; src/gf/tests/promptsAssembler.test.ts.
+Checks: npm test (50/50); git diff --check.
+Known residual risk: Bare-CR legacy files are intentionally unsupported; the repository contract covers LF and CRLF.
+Rollback: Revert the M11-001 task commit.
+Owner decision still needed: None.
+```
 
 ---
 

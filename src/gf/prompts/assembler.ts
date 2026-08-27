@@ -29,6 +29,10 @@ export interface PromptContext {
 
 const PLACEHOLDER_RE = /\{\{[^}]+\}\}/;
 const IF_BLOCK_RE = /\{\{IF_[^}]+\}\}[\s\S]*?\{\{\/IF_[^}]+\}\}/g;
+const SYSTEM_TEMPLATE_RE =
+  /^## System message 模板[^\S\r\n]*\r?\n(?:[^\S\r\n]*\r?\n)*```[^\S\r\n]*\r?\n([\s\S]*?)\r?\n```[^\S\r\n]*\r?$/m;
+const EMPTY_DIALOGUE_SAMPLES_LINE_RE =
+  /(\r?\n)\{\{S3_dialogue_samples\}\}\r?\n/;
 
 function messageText(content: unknown): string {
   if (typeof content === "string") {
@@ -74,7 +78,7 @@ export class FastReplyAssembler {
 
   private systemTemplate(): string {
     const raw = readFileSync(this.templatePath, "utf-8");
-    const match = /## System message 模板\s*\n```\n([\s\S]*?)\n```/.exec(raw);
+    const match = SYSTEM_TEMPLATE_RE.exec(raw);
     if (!match) {
       throw new AssemblyError(
         `cannot locate System message template in ${this.templatePath}`,
@@ -224,7 +228,10 @@ export class FastReplyAssembler {
       S9_role_bottom_anchor: this.manifest.readSlot("bottom_anchor") ?? "",
     };
     if (!slots.S3_dialogue_samples) {
-      template = template.replace("\n{{S3_dialogue_samples}}\n", "\n");
+      template = template.replace(
+        EMPTY_DIALOGUE_SAMPLES_LINE_RE,
+        (_match, leadingEol: string) => leadingEol,
+      );
     }
     for (const [name, content] of Object.entries(slots)) {
       if (name === "S3_dialogue_samples" && !content) {
