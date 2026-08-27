@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import sys
 from pathlib import Path
+
+from canonical_bytes import HASH_CONTRACT, sha256_text_file
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,14 +16,6 @@ CANON = ROOT / "canon"
 WORK = ROOT / "work"
 ID_RE = re.compile(r"^(?:cs|ck|cw)_[0-9a-f]{16}$")
 UNSAFE_RE = re.compile(r"【(?:博士选项|分支(?:·[^】]*)?|画面文字)】")
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -41,6 +34,8 @@ def read_jsonl(path: Path) -> list[dict]:
 def main() -> int:
     manifest_path = CANON / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("hash_contract") != HASH_CONTRACT:
+        raise AssertionError("manifest hash contract is missing or unsupported")
     chunk_ids = {
         entry["id"] for entry in read_jsonl(WORK / "chunks.jsonl")
     }
@@ -53,7 +48,7 @@ def main() -> int:
         expected = manifest["outputs"][label]
         if expected["entries"] != len(entries):
             raise AssertionError(f"manifest count mismatch for canon_{label}")
-        if expected["sha256"] != sha256(path):
+        if expected["sha256"] != sha256_text_file(path):
             raise AssertionError(f"manifest hash mismatch for canon_{label}")
 
         for entry in entries:
@@ -96,7 +91,7 @@ def main() -> int:
             path = ROOT / record["path"]
             if not path.exists():
                 raise AssertionError(f"manifest {group}.{name} missing: {path}")
-            if sha256(path) != record["sha256"]:
+            if sha256_text_file(path) != record["sha256"]:
                 raise AssertionError(f"manifest {group}.{name} hash mismatch")
 
     if safe + quarantined != total:

@@ -133,7 +133,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M11-001` | `DONE` | ENG | none | Make Prompt template parsing EOL-agnostic. All 19 runtime tests pass; add LF and CRLF fixture coverage. Do not normalize user content. |
-| `M11-002` | `READY` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
+| `M11-002` | `DONE` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
 | `M11-003` | `READY` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
 | `M11-004` | `READY` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `READY` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
@@ -150,6 +150,19 @@ Files changed: TODO.md; src/gf/prompts/assembler.ts; src/gf/tests/promptsAssembl
 Checks: npm test (50/50); git diff --check.
 Known residual risk: Bare-CR legacy files are intentionally unsupported; the repository contract covers LF and CRLF.
 Rollback: Revert the M11-001 task commit.
+Owner decision still needed: None.
+```
+
+```text
+Task: M11-002
+Assignee: Codex
+Started / completed: 2026-08-27 / 2026-08-27
+Outcome: Canon manifest hashes now use one shared CRLF/CR-to-LF byte contract in build and audit; all other bytes remain significant, and manifest build contract v3 records the rule.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/character/05-seed-config-v1.md; docs/character/06-muelsyse-seed-draft-v1.md; corpus/README.md; corpus/canon/README.md.
+Files changed: TODO.md; corpus/README.md; corpus/canon/README.md; corpus/canon/manifest.json; corpus/scripts/canonical_bytes.py; corpus/scripts/build_canon.py; corpus/scripts/audit_canon.py; corpus/tests/test_canonical_bytes.py.
+Checks: pnpm test (50/50); Python canon tests (3/3); canon audit (2758 entries); contract validation; full project audit; git diff --check.
+Known residual risk: The shared contract is for manifest-listed text files; a future binary artifact needs an explicit binary hash mode rather than this newline normalization.
+Rollback: Revert the M11-002 task commit; the tracked v2 manifest and raw-byte audit return together.
 Owner decision still needed: None.
 ```
 

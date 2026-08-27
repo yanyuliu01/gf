@@ -1,10 +1,15 @@
 {
-  "build_contract_version": "2",
+  "build_contract_version": "3",
+  "hash_contract": {
+    "algorithm": "sha256",
+    "canonicalization": "replace CRLF and lone CR bytes with LF; preserve every other byte",
+    "version": "1"
+  },
   "id_strategy": "prefix + sha256(label,kind,work,file,node,text)[0:16]",
   "inputs": {
     "canon_script": {
       "path": "scripts/build_canon.py",
-      "sha256": "5f54147059643f0534cda1d0cf019215632b91945fa37e70dc3ba53c86bb6d9f"
+      "sha256": "132d49daaa95c41fc0ed147d235413442ba1817de6ed38faf130d9ac6fafbf92"
     },
     "chunk_script": {
       "path": "scripts/chunk.py",
@@ -12,11 +17,15 @@
     },
     "chunks": {
       "path": "work/chunks.jsonl",
-      "sha256": "d95d1678daf83034994e132a2fd824ac8072ccfef9154bf34b5f14ecec6ca6fd"
+      "sha256": "ca102e1a4d09447f0ed2da6f2708613d921e198c258454e23ff09036d329e80d"
     },
     "facts": {
       "path": "work/facts.jsonl",
       "sha256": "e2e56b05a901a4016adf63b58567cea9fbd1ab79173a042d255779ad98d02b70"
+    },
+    "hash_contract_script": {
+      "path": "scripts/canonical_bytes.py",
+      "sha256": "be73eb0e4afe4a143038d8cbd4f3170c2aeb9829414d291fdf5f72bd951036ef"
     },
     "labels": {
       "path": "work/labels.json",

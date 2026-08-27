@@ -30,7 +30,7 @@
 2. ~~切片~~ ← `scripts/chunk.py` → `work/chunks.jsonl`（200–500 字为目标、行边界对齐；极短完整段落允许低于下限）
 3. ~~视角分拣~~ ← 脚本出在场信号摘要(`work/digest.md`),人工逐段判定 → `work/labels.json`;判定依据全录 `work/sorting-notes.md`(命门步骤,改口径先读它)
 4. ~~按源清洗~~ ← 语音 75→40(剔战斗台词);17 份档案原文切块入 world + 她与塞雷娅蒸馏事实(`work/facts.jsonl`);她档案内第一人称口述引文归 self
-5. 入库 ← **产物就绪**：`canon/canon_{self,known,world}.jsonl`。当前数量、runtime-safe 隔离数与文件哈希以 `canon/manifest.json` 和 `canon/stats.md` 为准，不在说明文档复制固定数字。运行时只可装配 `runtime_safe=true` 的 `role_safe_text`；研究原文 `text` 不可直接进入角色上下文。向量化待运行时确定 embedding 模型后执行（docs/08 §1.3 canon_vectors 独立表，永不压缩衰减）。复现：`python scripts/chunk.py`、`python scripts/build_canon.py`、`python scripts/audit_canon.py`。
+5. 入库 ← **产物就绪**：`canon/canon_{self,known,world}.jsonl`。当前数量、runtime-safe 隔离数与文件哈希以 `canon/manifest.json` 和 `canon/stats.md` 为准，不在说明文档复制固定数字。构建或审计这些哈希前，读取 [`canon/README.md`](canon/README.md#manifest-哈希字节契约) 的跨平台字节契约。运行时只可装配 `runtime_safe=true` 的 `role_safe_text`；研究原文 `text` 不可直接进入角色上下文。向量化待运行时确定 embedding 模型后执行（docs/08 §1.3 canon_vectors 独立表，永不压缩衰减）。复现：`python scripts/chunk.py`、`python scripts/build_canon.py`、`python scripts/audit_canon.py`。
 
 ## 已知缺口
 

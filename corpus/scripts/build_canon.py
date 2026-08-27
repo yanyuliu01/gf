@@ -4,6 +4,7 @@
 """
 import hashlib, json, os, re, glob, sys
 from collections import Counter, defaultdict
+from canonical_bytes import HASH_CONTRACT, sha256_text_file
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW, WORK, CANON = (os.path.join(ROOT, d) for d in ("raw", "work", "canon"))
@@ -26,14 +27,6 @@ def stable_id(prefix, entry):
     ]
     payload = json.dumps(identity, ensure_ascii=False, separators=(",", ":"))
     return f"{prefix}_{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:16]}"
-
-
-def sha256_file(path):
-    digest = hashlib.sha256()
-    with open(path, "rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def validate_labels(all_chunks, file_labels):
@@ -280,6 +273,7 @@ input_files = {
     "facts": facts_path,
     "chunk_script": os.path.join(ROOT, "scripts", "chunk.py"),
     "canon_script": os.path.join(ROOT, "scripts", "build_canon.py"),
+    "hash_contract_script": os.path.join(ROOT, "scripts", "canonical_bytes.py"),
     "source_manifest": os.path.join(ROOT, "source-manifest.json"),
 }
 inputs = {}
@@ -287,7 +281,7 @@ for name, path in input_files.items():
     if os.path.exists(path):
         inputs[name] = {
             "path": os.path.relpath(path, ROOT).replace("\\", "/"),
-            "sha256": sha256_file(path),
+            "sha256": sha256_text_file(path),
         }
 
 output_files = {
@@ -299,7 +293,7 @@ outputs = {}
 for name, path in output_files.items():
     item = {
         "path": os.path.relpath(path, ROOT).replace("\\", "/"),
-        "sha256": sha256_file(path),
+        "sha256": sha256_text_file(path),
     }
     if name in written_entries:
         item["entries"] = len(written_entries[name])
@@ -316,7 +310,8 @@ if os.path.exists(source_manifest_path):
 
 manifest = {
     "schema_version": "1.0",
-    "build_contract_version": "2",
+    "build_contract_version": "3",
+    "hash_contract": HASH_CONTRACT,
     "id_strategy": "prefix + sha256(label,kind,work,file,node,text)[0:16]",
     "runtime_text_contract": (
         "only entries with runtime_safe=true and non-null role_safe_text may enter role context"
