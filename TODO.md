@@ -90,7 +90,7 @@ blind evaluation, not the v2 account, envelope, or Policy contracts.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `PM-001` | `READY` | ENG + OWNER review | none | Mark finite semantic action candidate/local arbitration sections in PRD, docs/02, docs/08, and active tick Prompt as M1 history or replace them with open Policy wording. Search shows no active instruction to generate/rank semantic candidates. Association sampling terminology remains clearly distinct. |
+| `PM-001` | `DONE` | ENG + OWNER review | none | Mark finite semantic action candidate/local arbitration sections in PRD, docs/02, docs/08, and active tick Prompt as M1 history or replace them with open Policy wording. Search shows no active instruction to generate/rank semantic candidates. Association sampling terminology remains clearly distinct. Completed 2026-08-28. |
 | `PM-002` | `DONE` | ENG | none | Add `PROJECT-HANDOFF.md`, this board, `AGENTS.md`, Owner workbook, and repository navigation. Evidence: project-management documentation commit. |
 | `PM-003` | `RECURRING` | current assignee | every task | Update task status, dependencies, acceptance evidence, and dated project snapshot in the same commit as material work. |
 | `PM-004` | `READY` | ENG | `PM-002` | Add a lightweight decision-log/ADR convention for architecture changes that replace an existing decision. Historical docs remain intact. The convention must satisfy `docs/invariants/19` §2: an ADR names the entry it overturns, the runtime evidence, and the cost; the superseded entry is retained and marked, never deleted. |
@@ -103,6 +103,16 @@ This is a specification consistency task, not a behavior implementation. It
 must preserve docs/12 and old diagrams as historical records. The M1 event,
 StateManager, source, transaction, Prompt assembly, and outbox contracts remain
 unchanged.
+
+```text
+Outcome: Replaced docs/02 finite action-candidate filtering/local arbitration with Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> StateManager. Updated active tick Prompt to generate one open semantic action without a candidate menu or action Utility, and versioned the contract as tick.v0.3. Clarified PRD association sampling as object-salience input only. Preserved docs/history/08 and marked its candidate-arbitration language historical.
+Authority read: AGENTS.md; CONTEXT.md; docs/README.md; docs/invariants/19 section 3; docs/product/01; docs/cognition/02; docs/cognition/13; docs/world/15; prompts/README.md; prompts/20-tick.md; prompts/manifest.yaml; docs/history/08.
+Files changed: TODO.md; docs/product/01-prd-v0.1.md; docs/cognition/02-framework-v3.5.md; docs/history/08-implementation-gap-checklist.md; prompts/20-tick.md; prompts/manifest.yaml.
+Checks: pnpm test (62/62); full project audit including contract validation, 2758 canon entries, and 10 diagrams; active-doc search finds candidate language only in an explicit retired-history sentence or a prohibition; association sampling is explicitly non-action and non-factual; git diff --check.
+Known residual risk: prompts/20-tick remains the M1 proposal contract until M20-025 replaces its orchestration role; tick.v0.3 changes semantics without changing the frozen tick-proposal v1 output shape.
+Rollback: Revert the PM-001 specification-sync commit; no schema, migration, or runtime code changes.
+Owner decision still needed: None for this sync. The user directed continuation through M20-026 on 2026-08-28; OWN-001 world-parameter sign-off remains separate.
+```
 
 ---
 

@@ -1,5 +1,10 @@
 # 实施缺口清单 · 从 spec 到可运行代码
 
+> **历史标记**：本文已整体移入 `docs/history/`。其中“候选仲裁日志”“局部仲裁”等
+> 表述只保留为 M1 设计演进证据，不是现役实现指令。现役行动边界见
+> `docs/invariants/19` E1–E3、`docs/cognition/13` 与 `docs/world/15`：Open Policy 直接
+> 提出开放语义行动，Compiler / Adjudicator 只处理执行原语、约束与实际后果。
+
 现状：设计方向已经形成，但项目仍处于 **M0 Contract Freeze**。本清单列出落到代码还缺什么；执行顺序以 `11-repair-plan-v1.md` 为准，不能把本文件当作已经闭合的实现规范。
 
 ---

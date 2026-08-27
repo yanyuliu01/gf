@@ -176,7 +176,7 @@ calls:
       stream_to_user_before_commit: false
 
   tick:
-    contract_id: "tick.v0.2"
+    contract_id: "tick.v0.3"
     template: "prompts/20-tick.md"
     trigger_kinds:
       - "impulse"
