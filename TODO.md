@@ -242,11 +242,23 @@ required for correct operation.
 | `M20-001` | `BLOCKED` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
 | `M20-002` | `BLOCKED` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
-| `M20-004` | `READY` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. |
+| `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
 | `M20-006` | `READY` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
 | `M20-008` | `BLOCKED` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. |
+
+### M20-004 Evidence (2026-08-28)
+
+```text
+Outcome: Added generic TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Pure snapshot projection, Working Self assembly, and action compilation are synchronous; memory/commitment I/O, model Policy, and complete adjudication are explicit Promise boundaries. CommitmentReader is documented as adjudication/audit-only, Compiler returns capability gaps without canned substitution, and Adjudicator returns proposals without write authority.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/README.md; docs/invariants/19 section 3; docs/cognition/13 sections 3.1-3.7; docs/world/15 section 16; src/gf/inference/base.ts.
+Files changed: TODO.md; src/gf/cognition/ports.ts; src/gf/world/actionPorts.ts; src/gf/tests/pipelinePorts.test.ts.
+Checks: pnpm test (64/64); contract validation; full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: Port payloads intentionally remain generic until M20-001 freezes JSON Schemas and M20-005 generates authoritative TypeScript types. The async WorldAdjudicator is the outer orchestration boundary; M20-022 deterministic hard checks must remain pure synchronous internals.
+Rollback: Revert the M20-004 commit; no schema, migration, database, or runtime wiring changes.
+Owner decision still needed: None.
+```
 
 ### Perception, Memory, And Working Self
 
