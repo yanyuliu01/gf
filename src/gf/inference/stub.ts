@@ -17,16 +17,16 @@ export class StubClient implements InferenceClient {
     private readonly overrides: Partial<InferenceClient> = {},
   ) {}
 
-  fastReply(context: PromptContext): FastReplyOutput {
+  async fastReply(context: PromptContext): Promise<FastReplyOutput> {
     if (this.overrides.fastReply) {
-      return this.overrides.fastReply(context);
+      return await this.overrides.fastReply(context);
     }
     return { bubbles: ["嗯，听到了。"] };
   }
 
-  tick(context: PromptContext): Record<string, unknown> {
+  async tick(context: PromptContext): Promise<Record<string, unknown>> {
     if (this.overrides.tick) {
-      return this.overrides.tick(context);
+      return await this.overrides.tick(context);
     }
     return {
       schema_version: "1.0",
@@ -50,9 +50,11 @@ export class StubClient implements InferenceClient {
     };
   }
 
-  sceneSettle(context: PromptContext): Record<string, unknown> {
+  async sceneSettle(
+    context: PromptContext,
+  ): Promise<Record<string, unknown>> {
     if (this.overrides.sceneSettle) {
-      return this.overrides.sceneSettle(context);
+      return await this.overrides.sceneSettle(context);
     }
     return {
       schema_version: "1.0",

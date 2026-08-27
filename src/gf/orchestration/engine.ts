@@ -10,7 +10,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
 import { newId } from "../domain/ids.js";
-import { StubClient } from "../inference/stub.js";
+import type { InferenceClient } from "../inference/base.js";
 import { Metrics } from "../observability/metrics.js";
 import { FastReplyAssembler, TickAssembler } from "../prompts/assembler.js";
 import type { Manifest } from "../prompts/manifest.js";
@@ -54,7 +54,7 @@ export class Engine {
       state: StateStore;
     },
     private readonly manifest: Manifest,
-    private readonly inference: StubClient,
+    private readonly inference: InferenceClient,
     private readonly outbox: OutboxWorker,
     private readonly scheduler: Scheduler,
     private readonly metrics: Metrics,
@@ -63,7 +63,7 @@ export class Engine {
     this.queue = new EventQueue(stores.events);
   }
 
-  processOnce(now = new Date()): EngineEvent {
+  async processOnce(now = new Date()): Promise<EngineEvent> {
     const eventId = this.queue.nextEventId();
     if (!eventId) {
       const scheduled = this.scheduler.nextEvent(now);
@@ -75,18 +75,19 @@ export class Engine {
         return { kind: "idle" };
       }
       this.metrics.incr("scheduled_events");
-      return this.processOnce(now);
+      return await this.processOnce(now);
     }
 
     const event = this.loadEvent(eventId);
     if (!event) {
       return { kind: "idle" };
     }
-    const outcome =
+    const outcome = await (
       event.origin === "user"
         ? this.handleUser(event)
-        : this.handleWorld(event);
-    this.maybeSettle(now);
+        : this.handleWorld(event)
+    );
+    await this.maybeSettle(now);
     return outcome;
   }
 
@@ -98,7 +99,7 @@ export class Engine {
     return rowToEvent(row);
   }
 
-  private handleUser(event: WorldEvent): EngineEvent {
+  private async handleUser(event: WorldEvent): Promise<EngineEvent> {
     this.metrics.incr("user_messages");
     let scene = this.stores.scenes.getOpenScene();
     if (!scene) {
@@ -131,7 +132,7 @@ export class Engine {
         },
       ],
     );
-    const output = this.inference.fastReply(context);
+    const output = await this.inference.fastReply(context);
     const capability = this.stores.state.latestCapabilitySnapshot();
     const speech: SurfaceMessage = {
       schema_version: "1.0",
@@ -168,16 +169,17 @@ export class Engine {
     };
   }
 
-  private handleWorld(event: WorldEvent): EngineEvent {
+  private async handleWorld(event: WorldEvent): Promise<EngineEvent> {
     this.metrics.incr("world_events");
+    const baseStateRevision = this.stores.state.currentRevision();
     const assembler = new TickAssembler(this.manifest, {
       worldState: this.stores.state.stateDocuments().world_state,
     });
     const context = assembler.assemble(event as unknown as Record<string, unknown>);
-    const proposal = this.inference.tick(context);
+    const proposal = await this.inference.tick(context);
     proposal.operation_id = (proposal.operation_id as string) ?? newId("op");
     proposal.trigger_event_id = event.event_id;
-    proposal.base_state_revision = this.stores.state.currentRevision();
+    proposal.base_state_revision = baseStateRevision;
     const result = this.stateManager.submitOperation("tick", proposal, {
       triggerEvent: event,
       inputSources: context.inputSources,
@@ -199,7 +201,7 @@ export class Engine {
     };
   }
 
-  private maybeSettle(now: Date): void {
+  private async maybeSettle(now: Date): Promise<void> {
     const scene = this.stores.scenes.getOpenScene();
     if (!scene) {
       return;
@@ -223,6 +225,7 @@ export class Engine {
     }
     const sceneId = scene.scene_id as string;
     const batchId = newId("batch");
+    const baseStateRevision = this.stores.state.currentRevision();
     const messageIds = messages.map(
       (message) => message.message_id as string,
     );
@@ -240,18 +243,18 @@ export class Engine {
       promptHash: "settle",
       manifestHash: this.manifest.manifestHash,
       slotCharCounts: {},
-      modelId: "stub",
+      modelId: this.inference.modelId,
       inputSources: messageIds.map((messageId) => ({
         source_type: "message" as const,
         source_id: messageId,
       })),
     };
-    const proposal = this.inference.sceneSettle(context);
+    const proposal = await this.inference.sceneSettle(context);
     proposal.operation_id = newId("op");
     proposal.scene_id = sceneId;
     proposal.batch_id = batchId;
     proposal.processed_message_ids = messageIds;
-    proposal.base_state_revision = this.stores.state.currentRevision();
+    proposal.base_state_revision = baseStateRevision;
     const result = this.stateManager.submitOperation(
       "scene_settlement",
       proposal,

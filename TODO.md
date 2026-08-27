@@ -136,9 +136,9 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | `M11-002` | `DONE` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
 | `M11-003` | `DONE` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
 | `M11-004` | `DONE` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
-| `M11-005` | `READY` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
-| `M11-006` | `BLOCKED` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. |
-| `M11-007` | `BLOCKED` | ENG | `M11-001..005` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
+| `M11-005` | `DONE` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
+| `M11-006` | `READY` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. |
+| `M11-007` | `READY` | ENG | `M11-001..005` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
 
 ```text
 Task: M11-001
@@ -192,6 +192,19 @@ Rollback: Revert the M11-004 task commit; Scheduler returns to fixed UTC phase/d
 Owner decision still needed: None.
 ```
 
+```text
+Task: M11-005
+Assignee: Codex
+Started / completed: 2026-08-28 / 2026-08-28
+Outcome: InferenceClient is now a provider-neutral asynchronous port injected into Engine. StubClient remains deterministic, CLI model work is serialized without delaying synchronous inbound persistence, and tick/settlement calls freeze their base revision before awaiting the model so stale proposals fail StateManager CAS. A blocking-model test proves a concurrent BEGIN IMMEDIATE succeeds while inference is suspended.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19-architecture-invariants-v1.md section 3; PROJECT-HANDOFF.md; docs/product/03-interaction-v1.md; docs/cognition/02-framework-v3.5.md.
+Files changed: TODO.md; src/gf/inference/base.ts; src/gf/inference/stub.ts; src/gf/orchestration/engine.ts; src/gf/cli.ts; src/gf/tests/engine.test.ts.
+Checks: pnpm test (62/62); contract validation; full project audit including 2758 canon entries; git diff --check.
+Known residual risk: SurfaceMessage v1 has no base-state revision, so reply model calls must remain engine-serialized until the M2 call lifecycle adds an explicit reservation/CAS contract. Outbox Adapter is still synchronous; a real network delivery port belongs to the Feishu adapter task.
+Rollback: Revert the M11-005 task commit; inference and Engine return to synchronous StubClient coupling.
+Owner decision still needed: Provider choice and credential source for M11-006.
+```
+
 ---
 
 ## M2.0 (M20): Final Affect-Off Cognitive Baseline
@@ -207,9 +220,9 @@ required for correct operation.
 | `M20-001` | `BLOCKED` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
 | `M20-002` | `BLOCKED` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
-| `M20-004` | `BLOCKED` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. |
+| `M20-004` | `READY` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
-| `M20-006` | `BLOCKED` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. |
+| `M20-006` | `READY` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
 | `M20-008` | `BLOCKED` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. |
 

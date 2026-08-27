@@ -198,6 +198,7 @@ async function runRepl(options: CliOptions): Promise<void> {
   const gateway = new Gateway({ debounceSeconds: options.debounce });
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   let closed = false;
+  let engineWork = Promise.resolve();
   rl.setPrompt("博士> ");
   rl.prompt();
 
@@ -240,20 +241,27 @@ async function runRepl(options: CliOptions): Promise<void> {
           break;
       }
     } else if (!result.dropped) {
-      runtime.engine.processOnce();
-      runtime.engine.processOnce();
+      engineWork = engineWork
+        .then(async () => {
+          await runtime.engine.processOnce();
+          await runtime.engine.processOnce();
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     }
     if (!closed) {
       rl.prompt();
     }
   });
 
-  rl.on("close", () => {
+  rl.on("close", async () => {
+    await engineWork;
     const flushed = gateway.flush();
     for (const event of flushed) {
       runtime.stateManager.ingestEvent(event);
     }
-    runtime.engine.processOnce();
+    await runtime.engine.processOnce();
     console.log("\n—— 会话结束，出向队列已提交。");
     runtime.db.close();
     process.exit(0);
@@ -266,7 +274,7 @@ async function runDryRun(options: CliOptions): Promise<void> {
   let committed = 0;
   for (let i = 0; i < options.dryRun; i += 1) {
     const now = new Date(base.getTime() + i * options.advanceMinutes * 60_000);
-    const outcome = runtime.engine.processOnce(now);
+    const outcome = await runtime.engine.processOnce(now);
     if (outcome.kind === "tick" && outcome.operationId) {
       committed += 1;
     }

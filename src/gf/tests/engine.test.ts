@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { CliAdapter } from "../adapters/cli.js";
 import { OutboxWorker } from "../delivery/outbox.js";
 import { Gateway } from "../gateway/gateway.js";
+import type { InferenceClient } from "../inference/base.js";
 import { StubClient } from "../inference/stub.js";
 import { Metrics } from "../observability/metrics.js";
 import { Engine } from "../orchestration/engine.js";
@@ -30,7 +31,7 @@ function buildEngine(options: {
   idleSettleSeconds?: number;
   rolloverMessages?: number;
   now?: Date;
-  stub?: StubClient;
+  inference?: InferenceClient;
 }) {
   const dir = mkdtempSync(join(tmpdir(), "gf-engine-"));
   const dbPath = join(dir, "gf.db");
@@ -51,13 +52,13 @@ function buildEngine(options: {
   const adapter = new CliAdapter((line) => sent.push(line));
   const outbox = new OutboxWorker(() => connect(dbPath), adapter, metrics);
   const scheduler = new Scheduler(db, { now: options.now ?? new Date() });
-  const stub = options.stub ?? new StubClient();
+  const inference = options.inference ?? new StubClient();
   const engine = new Engine(
     db,
     stateManager,
     { events, scenes, state },
     manifest,
-    stub,
+    inference,
     outbox,
     scheduler,
     metrics,
@@ -89,14 +90,14 @@ function buildEngine(options: {
   };
 }
 
-test("user message -> fast reply -> speech/outbox atomic commit -> delivery", () => {
+test("user message -> fast reply -> speech/outbox atomic commit -> delivery", async () => {
   const rt = buildEngine({});
   try {
     const gateway = new Gateway({ debounceSeconds: 0 });
     const result = gateway.handleLine("在吗");
     assert.equal(result.events.length, 1);
     rt.stateManager.ingestEvent(result.events[0]);
-    const outcome = rt.engine.processOnce();
+    const outcome = await rt.engine.processOnce();
     assert.equal(outcome.kind, "reply");
     assert.equal(rt.state.currentRevision(), 1);
     const speechRows = rt.db
@@ -116,11 +117,13 @@ test("user message -> fast reply -> speech/outbox atomic commit -> delivery", ()
   }
 });
 
-test("scheduled phase event produces a committed no-speech tick", () => {
+test("scheduled phase event produces a committed no-speech tick", async () => {
   // Asia/Shanghai: scheduler starts at 20:59 evening, then enters night.
   const rt = buildEngine({ now: new Date("2026-08-05T12:59:00Z") });
   try {
-    const outcome = rt.engine.processOnce(new Date("2026-08-05T13:00:00Z"));
+    const outcome = await rt.engine.processOnce(
+      new Date("2026-08-05T13:00:00Z"),
+    );
     assert.equal(outcome.kind, "tick");
     assert.equal(rt.state.currentRevision(), 1);
     const outboxRows = rt.db.prepare("SELECT * FROM outbox").all();
@@ -131,13 +134,13 @@ test("scheduled phase event produces a committed no-speech tick", () => {
   }
 });
 
-test("outbox crash recovery does not duplicate delivery", () => {
+test("outbox crash recovery does not duplicate delivery", async () => {
   const rt = buildEngine({});
   try {
     const gateway = new Gateway({ debounceSeconds: 0 });
     const event = gateway.handleLine("在吗").events[0];
     rt.stateManager.ingestEvent(event);
-    rt.engine.processOnce();
+    await rt.engine.processOnce();
     assert.equal(rt.sent.length, 1);
 
     // Simulate crash after delivery record but before outbox marked sent.
@@ -155,13 +158,13 @@ test("outbox crash recovery does not duplicate delivery", () => {
   }
 });
 
-test("idle scene settles and closes", () => {
+test("idle scene settles and closes", async () => {
   const rt = buildEngine({ idleSettleSeconds: 0, rolloverMessages: 30 });
   try {
     const gateway = new Gateway({ debounceSeconds: 0 });
     const event = gateway.handleLine("聊聊").events[0];
     rt.stateManager.ingestEvent(event);
-    rt.engine.processOnce();
+    await rt.engine.processOnce();
     const scene = rt.db.prepare("SELECT * FROM scenes").get() as {
       status: string;
       summary: string | null;
@@ -179,18 +182,70 @@ test("idle scene settles and closes", () => {
   }
 });
 
-test("injected stub reply bubbles are committed verbatim", () => {
-  const stub = new StubClient({
-    fastReply: () => ({ bubbles: ["第一段", "第二段"] }),
+test("injected stub reply bubbles are committed verbatim", async () => {
+  const inference = new StubClient({
+    fastReply: async () => ({ bubbles: ["第一段", "第二段"] }),
   });
-  const rt = buildEngine({ stub });
+  const rt = buildEngine({ inference });
   try {
     const event = userEvent("测试");
     rt.stateManager.ingestEvent(event);
-    const outcome = rt.engine.processOnce();
+    const outcome = await rt.engine.processOnce();
     assert.equal(outcome.kind, "reply");
     assert.deepEqual(rt.sent, ["第一段", "第二段"]);
   } finally {
+    rt.cleanup();
+  }
+});
+
+test("model await holds no database write transaction", async () => {
+  let signalEntered!: () => void;
+  let releaseModel!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    signalEntered = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    releaseModel = resolve;
+  });
+  const fallback = new StubClient();
+  const inference: InferenceClient = {
+    modelId: "blocking-test-v1",
+    async fastReply() {
+      signalEntered();
+      await released;
+      return { bubbles: ["事务外完成。"] };
+    },
+    async tick(context) {
+      return await fallback.tick(context);
+    },
+    async sceneSettle(context) {
+      return await fallback.sceneSettle(context);
+    },
+  };
+  const rt = buildEngine({ inference });
+  let processing: Promise<unknown> | undefined;
+  try {
+    rt.stateManager.ingestEvent(userEvent("检查事务边界"));
+    processing = rt.engine.processOnce();
+    await entered;
+
+    const concurrentWriter = connect(rt.dbPath);
+    try {
+      assert.doesNotThrow(() => {
+        concurrentWriter.exec("BEGIN IMMEDIATE");
+        concurrentWriter.exec("ROLLBACK");
+      });
+    } finally {
+      concurrentWriter.close();
+    }
+
+    releaseModel();
+    const outcome = await processing;
+    assert.deepEqual(rt.sent, ["事务外完成。"]);
+    assert.equal((outcome as { kind: string }).kind, "reply");
+  } finally {
+    releaseModel();
+    await processing?.catch(() => undefined);
     rt.cleanup();
   }
 });

@@ -14,7 +14,7 @@ export interface FastReplyOutput {
 
 export interface InferenceClient {
   modelId: string;
-  fastReply(context: PromptContext): FastReplyOutput;
-  tick(context: PromptContext): Record<string, unknown>;
-  sceneSettle(context: PromptContext): Record<string, unknown>;
+  fastReply(context: PromptContext): Promise<FastReplyOutput>;
+  tick(context: PromptContext): Promise<Record<string, unknown>>;
+  sceneSettle(context: PromptContext): Promise<Record<string, unknown>>;
 }
