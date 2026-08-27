@@ -2,6 +2,7 @@
 
 - 状态：**OWN-001 Owner 评审主草案，未签字**
 - 日期：2026-08-07
+- 最近补充：2026-08-28（生活轮次、认知接缝与首条飞书消息验收）
 - 适用实例：特里蒙重组过渡期的缪尔赛思
 - 实现目标：严格 TypeScript、离散事件模拟、可回放、可替换参数
 
@@ -42,6 +43,37 @@
 - docs/15 持有“一个开放行动怎样进入该模型并被裁定”的接口；
 - 两者都不替 Affect Utility 选择行动；
 - Owner 未签字前，两者都不进入正式 Prompt、Schema 或运行规则。
+
+### 0.1 WorldX 只作为运行结构参考
+
+本文参考 WorldX 已跑通的生活场景结构，但不把它当作 GF 的产品或架构权威。参考
+快照为 2026-08-28，主要证据是其
+[`SimulationEngine`](https://github.com/YGYOOO/WorldX/blob/main/server/src/simulation/simulation-engine.ts)、
+[`Perceiver`](https://github.com/YGYOOO/WorldX/blob/main/server/src/simulation/perceiver.ts)、
+[`ActionMenuBuilder`](https://github.com/YGYOOO/WorldX/blob/main/server/src/simulation/action-menu-builder.ts)
+和
+[`ActionExecutor`](https://github.com/YGYOOO/WorldX/blob/main/server/src/simulation/action-executor.ts)。
+
+WorldX 证明了一条很实用的场景循环可以运行：配置世界与时间，推进 tick，生成局部
+感知，检索记忆，选择动作，校验地点/对象/容量/时长，执行后写事件和记忆。GF 复用
+的是这些**接缝和顺序**，不是它的有限语义动作集、直接状态写入或随机实现。
+
+| WorldX 结构 | GF 吸收的部分 | GF 必须替换的部分 |
+|---|---|---|
+| `GameTime` / `SceneConfig` | 显式世界时区、步长和事件边界 | 不设场景结束即全局重置；连续生活按真实时间映射和离线边界推进 |
+| `Perceiver` | 当前位置、可见对象、在场主体与近期事件的局部投影 | 只投影有合法来源的 `Perception`；不把 emotion label 或隐藏全状态交给 Policy |
+| `ActionMenuBuilder` | 对容量、冷却、邻接和可用交互的机器校验思路 | 菜单不得进入 Open Policy；合法 affordance 只供 Compiler / Adjudicator 使用 |
+| `ActionExecutor` | 开始、占用、持续、完成、释放与结果事件的生命周期 | 拆成 Action Compiler、World Adjudicator、纯 `WorldEngine.step` 与 StateManager 唯一提交边界 |
+| `currentAction` + duration | 行动不是一句话瞬时完成 | 用 `Activity`、`ProcessInstance`、区间 `Reservation` 和未来事件边界表示 |
+| object capacity | 同一对象不能被无限并发使用 | 容量成为有单位、可审计、不可重复花费的区间预留 |
+| interaction effects | 配置驱动的后果 | 不写任意字段；只产生类型化资源转移、过程输出、condition 变化或 observation |
+| event / snapshot / timeline | 结果可追踪、可恢复 | 客观事实只经 StateManager 原子提交到 ledger/reducer；快照可由事实重建 |
+| 随机角色顺序、idle 与 observation | 日常可有有界差异 | 随机抽样必须显式 seed、抽样坐标和版本；不能依赖 `Math.random()` 或数据库顺序 |
+| 日终反思与记忆 | 结果回到主观历史 | 记忆只从合法感知和已提交结果派生；反思不能新增世界事实或绕过来源闭包 |
+
+这张对照表只说明为什么采用某些运行接缝。GF 的最终权威仍是
+[`invariants/19`](../invariants/19-architecture-invariants-v1.md)、本文和
+[`15-world-runtime-interaction-rules-draft-v1.md`](15-world-runtime-interaction-rules-draft-v1.md)。
 
 ---
 
@@ -775,6 +807,114 @@ t_next = min(
 这些触发条件来自世界状态，不是固定剧情模板。触发只要求主体重新决定，不规定她
 会采取什么行动，更不规定她必须联系博士。
 
+### 11.4 一次完整生活轮次
+
+世界推进和认知 episode 是两条不同频率的循环。世界可以连续生活，认知只在新的
+决策边界出现时运行：
+
+```text
+committed snapshot @ revision r
+  -> WorldClock / Scheduler 计算 t_next
+  -> World Drivers 提供有来源的已到期输入
+  -> WorldEngine.step 纯计算 WorldStepResult proposal
+  -> StateManager 校验 revision / source closure / idempotency 并原子提交
+  -> ChangeAggregator 聚合本轮已提交变化
+  -> PerceptionProjector 只投影她实际可见的变化
+  -> CognitiveGate: ignore / accumulate / wake
+       | ignore / accumulate: 不调用 Policy，既有 Activity / Process 继续
+       v wake
+     Working Self -> Open Policy -> OpenActionProposal (+ optional AttentionIntent)
+  -> Action Compiler -> WorldCommand[] 或显式 capability_gap
+  -> World Adjudicator / WorldEngine -> WorldOutcomeProposal
+  -> StateManager 原子提交 outcome、Activity / Process / Reservation 与未来边界
+  -> 已提交结果再次进入 Perception / memory / 下一轮 Gate
+```
+
+顺序有六条不可交换的要求：
+
+1. `WorldEngine.step` 只读 snapshot 并返回 proposal，不开事务、不写数据库、不调用模型。
+2. `StateManager` 提交发生在 Perception 之前；未提交的计算结果不得成为角色经历。
+3. `PerceptionProjector` 发生在 `CognitiveGate` 之前；隐藏事实不能借 hard interrupt、
+   AttentionSubscription 或 Affect 旁路进入 cognition。
+4. `Working Self` 只在 `wake` 后构建。`ignore / accumulate` 是正常生活结果，不是漏处理。
+5. Open Policy 不读取执行菜单。Compiler 可读取版本化能力和合法 affordance；不能编译
+   时返回原始语义及 `capability_gap`，不得换成“最接近”的罐头动作。
+6. 行动结果提交后才可形成 subjective episodic record。Memory 可以保留她实际看到、
+   尝试和理解的内容，但不能复制她未感知的 objective snapshot 作为第二套事实。
+
+`ChangeAggregator -> PerceptionProjector -> CognitiveGate` 的 admission 语义由
+[`20-cognitive-admission-attention-v1.md`](../cognition/20-cognitive-admission-attention-v1.md)
+持有；Working Self、Memory 与 Affect 边界由
+[`13-memory-affect-hybrid-architecture-v1.md`](../cognition/13-memory-affect-hybrid-architecture-v1.md)
+持有。本文只规定世界变化怎样合法到达那些接口。
+
+### 11.5 Activity、Process 与中断
+
+一个被接受的行动通常不是立即完成，而是一次原子提交创建：
+
+```text
+Activity(started)
++ ProcessInstance(reserved/running)
++ Reservation(resource/capacity, [t0, t1))
++ next event boundary
+```
+
+之后 WorldEngine 可在没有 LLM 的情况下推进它。只要原路径仍合法，就不能每个 tick
+重新询问 Policy“还要不要继续”。完成、失败、资源失效、可感知告警、承诺冲突或
+主体此前留下的 AttentionSubscription 命中时，才形成新的 admission 输入。
+
+新事件不自动取消旧 Activity。Runtime 可以为安全暂停设备，但若角色需要在继续、
+暂停、委托或改期之间真正选择，必须先提交可感知变化，再回到 CognitiveGate。生理
+睡眠同样是 Activity，不等于关闭世界，也不等于持续运行认知。
+
+### 11.6 提交、并发与失败语义
+
+一次权威提交至少要把同一因果闭包内的内容原子化：
+
+```text
+WorldEvent(s)
++ resource / process / activity reducer deltas
++ reservation lifecycle
++ next-boundary cursor
++ source refs / base revision / rule version / idempotency key
+```
+
+模型调用和 adapter 投递永远在数据库事务之外。CAS 冲突时丢弃过期 proposal，使用
+新 revision 重算；不得把旧结果硬贴到新状态。所有随机选择都由 `randomSeed + stable
+draw coordinate + distribution version` 决定，并写入 audit，使重算能区分“相同输入的
+同一次抽样”和“新事实下的新尝试”。
+
+Compiler、Adjudicator 或引擎不能静默吞掉无效行动。至少要显式区分：
+
+- `capability_gap`：语义当前无法编译；
+- `rejected`：地点、时间、资源、能力、知识、权限、安全或世界规则不满足；
+- `waiting / delayed`：已合法开始或排队，但尚未完成；
+- `partial / interrupted / failed`：实际发生了部分后果、被中断或失败；
+- `completed / no_effect`：完成，或合法尝试后没有产生目标变化。
+
+这些是 outcome 事实的机器分类，不是 Policy 的语义候选。错误返回也必须保留 attempted
+内容、约束类别、来源与 revision，供后续 Perception、记忆检索和重新计划使用。
+
+### 11.7 从生活事件到统一消息出口
+
+主动联系不是 WorldEngine 的固定收尾，也不是某种异常的自动副作用。只有 `wake` 后的
+Open Policy 自己提出 `communicate` 语义，才进入通信执行链：
+
+```text
+OpenActionProposal(communicate, recipient=Doctor)
+  -> Action Compiler / World Adjudicator
+     检查通道能力、收件人、隐私、来源、当前 Activity 与 /mute
+  -> SurfaceMessage proposal
+  -> StateManager 原子提交 speech + outbox
+  -> Feishu adapter 幂等投递
+  -> delivery receipt / failure 作为新输入回到统一事件路径
+```
+
+发出、送达、对方看见和对方理解是不同事实。Adapter 不能补内容、绕过 `/mute`、重写
+失败消息或直接读取 Memory。CLI、飞书和未来平台只替换末端 adapter；同一意图只能
+形成一份权威 speech/outbox 记录。该出口的主题权威仍是
+[`03-interaction-v1.md`](../product/03-interaction-v1.md)，本文只固定世界生活循环的接入点。
+
 ---
 
 ## 12. 一个涌现链条示例
@@ -795,6 +935,40 @@ t_next = min(
 
 这类活人感来自多个平凡系统互相占用资源，而不是从候选事件集中抽到“设备故障”。
 泵是否达到阈值由使用与磨损决定，维护后它也会长时间正常，不会为了新鲜感反复坏。
+
+### 12.1 S-4 到首条飞书消息的验收轨迹
+
+首条消息需要证明“她先在世界里生活，后来选择联系”，而不是证明“定时器能推送一段
+文案”。推荐保留下面这条逐项可审计的轨迹：
+
+1. `WorldClock` 到达 S-4 培养或观察边界；没有任何用户消息触发本轮。
+2. `WorldEngine.step` 依据配方消耗水、能源和已预留容量，推进培养过程并产生观察窗口；
+   StateManager 先提交这些客观变化。
+3. 合法传感器或在场主体产生带噪读数。隐藏的 `true_state` 不直接进入 Perception。
+4. ChangeAggregator 聚合变化，PerceptionProjector 生成可见 observation，CognitiveGate
+   决定 `ignore / accumulate / wake`。只有 `wake` 才运行 Working Self 与 Open Policy。
+5. 若 Policy 提出亲自查看，Compiler 生成 `move / observe / use_object` 等有限原语；
+   Adjudicator 校验位置、终端占用、权限、仪器和时间，提交开始态与完成边界，而不是
+   在同一句行动中宣告读数已确认。
+6. 完成边界到达后，引擎结算成本与读数质量；StateManager 提交 completed/partial/failure
+   outcome。她的 episodic record 只包含自己实际观察和尝试的部分。
+7. 新结果再次进入 Gate。Policy 可以继续工作、询问 NPC、等待、留下 AttentionIntent、
+   联系博士，或什么也不说；系统不得把 S-4 自动转换成聊天话题。
+8. 只有 Policy 明确提出联系博士，内容又只引用本轮已提交且允许说出的来源，才提交
+   speech + outbox 并由飞书 adapter 投递。送达回执随后回到 ledger。
+
+验收分两层：
+
+- **确定性链路验收**使用冻结的 Policy fixture 提出一条 `communicate`，证明从无用户
+  输入的世界变化到 speech/outbox/飞书投递可回放、可重试且不重复。这只证明管线，
+  不证明主体必然想联系。
+- **真实 Policy 验收**在 Owner 授权的闭合 S-4 生活场景中运行并保留首次实际送达证据。
+  若她选择沉默，该轮仍是合法结果，但不能伪造消息、提高触达权重或反复制造异常来
+  “刷出”一次主动联系；等待下一次真实决策边界。
+
+这两层都要记录触发 WorldEvent、Perception source closure、WakeDecision、OpenAction、
+WorldOutcome、speech/outbox id、adapter receipt 和适用版本。缺任何一段，都只能算
+“推送 demo”，不能算 Agent 从自己的生活里发出的第一条消息。
 
 ---
 
@@ -857,20 +1031,39 @@ interface ProcessInstance {
   randomSeed: string;
 }
 
+interface ActivityRecord {
+  id: string;
+  actorId: string;
+  semanticDescription: string; // 开放文本，不是行为枚举
+  status: "running" | "waiting" | "paused" | "completed" | "cancelled";
+  executionRefIds: string[];   // Process / movement / communication 等执行记录
+  reservations: ReservationRef[];
+  interruptibility: "none" | "lossy" | "safe";
+  startedAt: string;
+  expectedNextBoundaryAt?: string;
+  sourceRefs: string[];
+  revision: number;
+}
+
 interface WorldStepInput {
   fromTime: string;
   untilTime: string;
   baseStateRevision: number;
   commands: WorldCommand[];
+  sourceRefs: string[];
   ruleSetVersion: string;
   randomSeed: string;
+  idempotencyKey: string;
 }
 
 interface WorldStepResult {
+  baseStateRevision: number;
   proposedEvents: WorldEventProposal[];
   resourceDeltas: ResourceDelta[];
   processDeltas: ProcessDelta[];
+  activityDeltas: ActivityDelta[];
   nextEventTime?: string;
+  inputHash: string;
   audit: WorldStepAudit;
 }
 ```
@@ -878,8 +1071,9 @@ interface WorldStepResult {
 `ResourceLaw` 和 `ProcessStatus` 是机器状态的有限类型，允许严格校验；角色的意图、
 关切、情绪和语义行动不因此被枚举。
 
-生产配方、资源类型、地点图和参数放版本化 JSON/YAML 数据；积分、守恒、预留、队列
-和随机模型写成纯 TypeScript。模型调用不得发生在 `WorldEngine.step` 内部。
+`ActivityRecord.status` 与 `ProcessStatus` 一样只是客观执行生命周期，不是她能想到的
+行动类型。生产配方、资源类型、地点图和参数放版本化 JSON/YAML 数据；积分、守恒、
+预留、队列和随机模型写成纯 TypeScript。模型调用不得发生在 `WorldEngine.step` 内部。
 
 ---
 
@@ -899,6 +1093,14 @@ interface WorldStepResult {
 | `WM-P10` | 联想与记忆不能直接写资源账户、工序状态、环境或 NPC 决定 |
 | `WM-P11` | 离线聚合结果与逐事件边界执行结果一致 |
 | `WM-P12` | 任何世界产出都能追到配方、输入账户、容量预留、外部来源或恢复规律 |
+| `WM-P13` | `WorldEngine.step` 不写状态；同一因果闭包只有 StateManager 成功提交后才同时可见于 ledger 与 reducer state |
+| `WM-P14` | Perception 与 CognitiveGate 的输入只来自已提交且主体可见的变化，隐藏事实不能经 hard interrupt、Attention 或 Affect 绕过 |
+| `WM-P15` | Open Policy 输入不含有限 Action Menu；不能编译或不能裁定的意图返回显式 capability/constraint outcome，不被静默替换或丢弃 |
+| `WM-P16` | 已接受且路径仍合法的 Activity / Process 自动推进，不在每个 tick 重复调用 Policy；新决策边界才重新 admission |
+| `WM-P17` | 日界线、离线恢复和进程重启不重置仍有效的 Activity、Process、Reservation、位置、记忆或承诺来源 |
+| `WM-P18` | subjective episodic record 只能引用合法 Perception 与已提交 outcome，不能克隆未感知 objective state |
+| `WM-P19` | 主动与被动文本只经同一 speech/outbox/adapter 路径；`/mute` 时世界与认知可继续，出向投递为零 |
+| `WM-P20` | 首条主动消息的触发链能从 adapter receipt 追溯到 speech、OpenAction、WakeDecision、Perception 与已提交 WorldEvent |
 
 ---
 
@@ -928,7 +1130,9 @@ interface WorldStepResult {
 - 交通、供应商、价格、天气和公共服务；
 - OpenAction -> WorldCommand 编译；
 - WorldOutcome -> observation/memory/Working Self；
-- `affect_mode=off` 先完成整条闭环。
+- `affect_mode=off` 先完成整条闭环；
+- 主动与被动表达接入同一 speech/outbox，并在闭合 S-4 场景后接飞书文字 adapter；
+- 分别完成冻结 Policy fixture 的确定性投递测试和真实 Policy 的首条消息证据。
 
 ### M4：校准与扩展
 

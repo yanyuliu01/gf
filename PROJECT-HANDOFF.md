@@ -128,16 +128,20 @@ World Drivers
   schedule / commitments / NPC / environment / trusted bridge / user
       |
       v
-WorldEvent Ledger -> Perception Projector -> subjective Observation
+WorldEvent Ledger -> Perception Projector -> CognitiveGate
+      |                                      | ignore / accumulate
+      |                                      +------------------> life/processes continue
       |                                      |
-      |                                      v
-      |                         Memory + Beliefs + Open Loops
+      |                                      v wake
+      |                         Memory retrieval + Beliefs + Open Loops
+      |                                      ^
+      |            optional Affect ----------+
+      |            (active: retrieval salience only)
       |                                      |
       |                    Facts + Commitments + Persona
       |                                      |
       |                                      v
-      |                              Working Self
-      |                         (+ optional Affect fragment)
+      |                         Working Self (no Affect label)
       |                                      |
       |                                      v
       |                         Open Generative Policy

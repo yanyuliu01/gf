@@ -30,7 +30,7 @@ flowchart TB
 
   subgraph P["E. Working Self 与开放行动"]
     direction LR
-    WORKING["Working Self Builder<br/>事实 + 记忆 + 承诺 + 可选 affect"]
+    WORKING["Working Self Builder<br/>事实 + lived evidence + 承诺<br/>不含 Affect state label"]
     POLICY["Open Generative Policy<br/>LLM 直接生成开放行动"]
     ACTION["Action Proposal<br/>意图 / 世界行动 / communication plan"]
   end
@@ -51,10 +51,9 @@ flowchart TB
   RETRIEVE --> WORKING
   STATE -->|"事实与承诺"| WORKING
 
-  RETRIEVE --> MODE
+  MEMORY --> MODE
   MODE -->|"shadow / active"| APPRAISE --> AFFECT --> SNAP
-  MODE -.->|"off：整段旁路"| WORKING
-  SNAP -->|"active：注入 Working Self"| WORKING
+  SNAP -.->|"active：只 bias retrieval salience"| RETRIEVE
   SNAP -.->|"shadow：只记录"| AUDIT
 
   WORKING --> POLICY --> ACTION --> ADJ

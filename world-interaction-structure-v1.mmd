@@ -21,14 +21,18 @@ flowchart TB
   subgraph COGNITION["B. 认知与开放行动（仅在需要主体判断时运行）"]
     direction LR
     PERCEPTION["Perception Projector<br/>只给出她实际可见的观察"]
-    MEMORY["Memory / Beliefs / Commitments<br/>事实、信念、承诺分离"]
-    AFFECT["Optional Affect Utility<br/>解释事件与连续残留<br/>不选择行动"]
-    SELF["Working Self<br/>当下事实、关注、张力与未决义务"]
+    GATE{"CognitiveGate<br/>ignore / accumulate / wake"}
+    DEFER["不启动 Policy<br/>既有 Activity / Process 继续"]
+    MEMORY["Memory retrieval / Beliefs<br/>事实、信念、承诺分离"]
+    AFFECT["Optional Affect Utility<br/>只 bias retrieval salience / soft attention<br/>不选择行动"]
+    SELF["Working Self<br/>只读 lived evidence<br/>不含 Affect state label"]
     POLICY["Open Generative Policy<br/>LLM 直接提出开放意图 / 计划"]
     ACTION["OpenActionProposal<br/>只能声明想做什么"]
     COMPILER["Action Compiler<br/>开放语义 -> 有限执行原语"]
-    PERCEPTION --> MEMORY --> SELF --> POLICY --> ACTION --> COMPILER
-    MEMORY -.-> AFFECT -.-> SELF
+    PERCEPTION --> GATE
+    GATE -->|"ignore / accumulate"| DEFER
+    GATE -->|"wake"| MEMORY --> SELF --> POLICY --> ACTION --> COMPILER
+    AFFECT -.->|"active only"| MEMORY
   end
 
   ORCH -->|"用户消息或已提交的决策事件"| PERCEPTION
@@ -77,7 +81,7 @@ flowchart TB
   classDef writer fill:#fceef1,stroke:#a64d63,color:#5c2635,stroke-width:3px;
   classDef note fill:#ffffff,stroke:#a64d63,color:#5c2635,stroke-dasharray:6 4;
   class DOCTOR,CLOCK,PROCESS,NPC,DRIVERS,QUEUE,ORCH input;
-  class PERCEPTION,MEMORY,SELF,POLICY,ACTION,COMPILER cognition;
+  class PERCEPTION,GATE,DEFER,MEMORY,SELF,POLICY,ACTION,COMPILER cognition;
   class AFFECT affect;
   class LAWS,ADJ,ENGINE,OUTCOME world;
   class LEDGER,REDUCERS,STATE,SURFACE,OUTBOX commit;

@@ -37,13 +37,17 @@ flowchart TB
   subgraph A["C. Agent 认知与开放行动"]
     direction LR
     OBS["Perception Projector<br/>只生成她实际可见的 observation"]
-    MEM["Memory / Beliefs / Commitments<br/>主观证据、反证、未决义务"]
-    AFFECT["Optional Affect Utility<br/>事件解释与连续残留<br/>不选择行动、不写世界"]
-    SELF["Working Self<br/>事实 + 观察 + 记忆 + 承诺<br/>+ 可选 Affect fragment"]
+    GATE{"CognitiveGate<br/>ignore / accumulate / wake"}
+    QUIET["不启动 Policy<br/>世界与已接受过程继续"]
+    MEM["Memory retrieval / Beliefs<br/>主观证据、反证、未决义务"]
+    AFFECT["Optional Affect Utility<br/>只 bias retrieval salience / soft attention<br/>不选择行动、不写世界"]
+    SELF["Working Self<br/>事实 + 观察 + 记忆 + 承诺<br/>不含 Affect state label"]
     POLICY["Open Generative Policy<br/>直接生成一个开放意图/计划"]
     COMMAND["Action Compiler<br/>OpenAction -> WorldCommand"]
-    OBS --> MEM --> SELF --> POLICY --> COMMAND
-    MEM -.-> AFFECT -.-> SELF
+    OBS --> GATE
+    GATE -->|"ignore / accumulate"| QUIET
+    GATE -->|"wake"| MEM --> SELF --> POLICY --> COMMAND
+    AFFECT -.->|"active only"| MEM
   end
 
   subgraph D["D. 裁定、提交与反馈"]
@@ -69,6 +73,6 @@ flowchart TB
   classDef commit fill:#f3f5f8,stroke:#7d8998,color:#394455;
   class CLOCK,NPC,ENV,EXT,QUEUE input;
   class STEP,LEDGER,CAP,PROC,BIO,MAP,STATE world;
-  class OBS,MEM,SELF,POLICY,COMMAND cognition;
+  class OBS,GATE,QUIET,MEM,SELF,POLICY,COMMAND cognition;
   class AFFECT affect;
   class HARD,RESULT,WRITER,SURFACE commit;

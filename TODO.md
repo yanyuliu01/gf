@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-08-27**
+Snapshot: **2026-08-28**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -58,7 +58,7 @@ OWN-001 world runtime decisions
 OWN-002 concern/tension seed
         |
         v
-M2.0 / M20 contracts -> Wake/energy baseline -> final off pipeline -> M2.1 / M21 world autonomy
+M2.0 / M20 contracts -> Wake/energy baseline -> final off pipeline -> M2.1 / M21 world autonomy -> M21-012 first Feishu message
         |
         v
 M2.2 / M22 shadow Affect -> M2.3 / M23 active Affect -> M3 / M30 longitudinal proof
@@ -110,7 +110,7 @@ unchanged.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, and deterministic stepping. [`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. Sign-off belongs in docs/14; draft existence is not approval. |
+| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, deterministic stepping, and the committed-change -> Perception -> Cognitive Admission -> open action -> adjudication -> commit life loop. [`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. 2026-08-28 review added a non-authoritative WorldX seam audit, explicit Activity/Process lifecycle, failure semantics, unified message handoff, and S-4-to-first-Feishu acceptance trace. Sign-off belongs in docs/14; draft existence is not approval. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
 | `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize Seed A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime Prompt S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
@@ -118,6 +118,18 @@ unchanged.
 | `OWN-006` | `READY` | OWNER | none | Confirm or replace the PRD north-star metric. It must remain an audit measure and must never feed character strategy or contact frequency. |
 | `OWN-007` | `LATER` | OWNER | M30 results | Review 7-day logs and decide whether active Affect creates meaningful continuity, only more dramatic language, or harmful behavioral pressure. |
 | `OWN-008` | `WAITING_OWNER` | OWNER | none | Provide 6-10 lived cognitive sequences and blind evaluation notes in [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md). Do not define fatigue levels, account-to-feeling mappings, capability prose, token counts, or conversion coefficients. Judge whether the open self-experience/action is source-grounded, character-consistent, and free of system-cost excuses. |
+
+### OWN-001 Draft Review Evidence (2026-08-28)
+
+```text
+Outcome: Extended docs/16 with a WorldX seam audit and an executable life-cycle protocol from deterministic world stepping through commit, legal Perception, Cognitive Admission, open action, adjudication, subjective memory, and the unified message outlet. Added S-4-to-first-Feishu deterministic/live acceptance layers. Corrected four active architecture diagrams and the handoff so Affect only biases retrieval salience/soft attention and never injects a state label into Working Self.
+Authority read: AGENTS.md; CONTEXT.md; docs/README.md; docs/invariants/19 section 3; docs/world/15; docs/world/16; docs/cognition/13; docs/cognition/20; docs/product/03; docs/owner/14; WorldX SimulationEngine, Perceiver, ActionMenuBuilder, and ActionExecutor.
+Files changed: docs/world/16; docs/README; docs/owner/14; PROJECT-HANDOFF.md; TODO.md; computable-world, world-interaction, memory-affect-hybrid, and memory-affect-runtime-loop Mermaid/SVG/PNG artifacts.
+Checks: pnpm test (62/62); contract validation (12 schemas, 9 positive fixtures, 12 negative contracts); full project audit (2758 canon entries, 10 diagrams); visual inspection of four regenerated diagrams; git diff --check.
+Known residual risk: World/resource/process/Activity schemas and the Feishu adapter do not exist yet; the design is not runtime evidence. Real-Policy silence remains a valid result and cannot be optimized away merely to satisfy first-message delivery.
+Rollback: Revert the OWN-001 design-review commit; no deployed schema, migration, Prompt, or runtime behavior changes.
+Owner decision still needed: Fill docs/14 A0-A5 and explicitly sign off OWN-001 before M21 schemas freeze.
+```
 
 Owner responses belong in `docs/owner/14-owner-input-workbook-v1.md`. Engineering
 must not block M1.1 fixes on these items. `OWN-008` also does not block the M2
@@ -264,11 +276,12 @@ consequences; protagonist association only changes attention.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M21-007` | `BLOCKED` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, WorldCommand, and WorldStep schemas from docs/16. Resource laws are machine semantics, not semantic action candidates; TS types are generated. |
+| `M21-007` | `BLOCKED` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. |
 | `M21-008` | `BLOCKED` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
 | `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
-| `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. Offline and stepwise execution match. |
+| `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
 | `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
+| `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
 | `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
 | `M21-002` | `BLOCKED` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
 | `M21-003` | `BLOCKED` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
@@ -330,7 +343,7 @@ These items must not add current schema fields or block M1.1/M2.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `L40-001` | `LATER` | ENG | M30 release | Feishu text adapter with idempotency, receipts, retries, and capability events. |
+| `L40-001` | `CANCELLED` | ENG | superseded by `M21-012` | Former post-M30 Feishu text-adapter task. Owner reprioritized the first Feishu message as the completion surface for the initial independent-life slice; implementation and delivery evidence now belong to `M21-012`. ID retained for history. |
 | `L40-002` | `LATER` | ENG | stable text surface | Versioned multimodal communication plan and text/audio/image renderers with semantic conservation. |
 | `L40-003` | `LATER` | ENG + OWNER | M30 evidence | Expand the approved local resource/process kernel beyond the ecology department into more organizations, industries, and NPC roles without all-NPC continuous LLM calls. |
 | `L40-004` | `LATER` | ENG + OWNER | explicit capability event | Cross-world gifts/shared assets with consent, provenance, asset state, and synchronized adjudication. |

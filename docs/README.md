@@ -46,7 +46,7 @@ docs/
 
 | # | 文档 | 回答什么 | 状态 |
 |---|---|---|---|
-| 16 | `world/16-computable-world-model-draft-v1.md` | 资源、过程、容量、生态与组织怎样构成可编码世界 | **`OWN-001` 主草案，未签字** |
+| 16 | `world/16-computable-world-model-draft-v1.md` | 资源、过程、容量、生态与组织怎样构成可编码世界，以及世界推进怎样接入感知、认知和消息出口 | **`OWN-001` 主草案，未签字** |
 | 15 | `world/15-world-runtime-interaction-rules-draft-v1.md` | 一个开放行动怎样进入世界并被裁定 | 裁定接口草案；不是世界内核 |
 
 ### 认知
