@@ -153,6 +153,7 @@ export class Engine {
     const result = this.stateManager.submitReply(speech, {
       triggerEvent: event,
       scene: { scene_id: scene.scene_id as string },
+      inputSources: context.inputSources,
     });
     if (result.committed) {
       this.metrics.incr("replies_committed");
@@ -179,6 +180,7 @@ export class Engine {
     proposal.base_state_revision = this.stores.state.currentRevision();
     const result = this.stateManager.submitOperation("tick", proposal, {
       triggerEvent: event,
+      inputSources: context.inputSources,
     });
     if (result.committed) {
       this.metrics.incr("ticks_committed");
@@ -239,6 +241,10 @@ export class Engine {
       manifestHash: this.manifest.manifestHash,
       slotCharCounts: {},
       modelId: "stub",
+      inputSources: messageIds.map((messageId) => ({
+        source_type: "message" as const,
+        source_id: messageId,
+      })),
     };
     const proposal = this.inference.sceneSettle(context);
     proposal.operation_id = newId("op");
@@ -249,7 +255,7 @@ export class Engine {
     const result = this.stateManager.submitOperation(
       "scene_settlement",
       proposal,
-      { sceneId, batchId },
+      { sceneId, batchId, inputSources: context.inputSources },
     );
     if (result.committed) {
       this.metrics.incr("scenes_settled");

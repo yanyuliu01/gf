@@ -9,6 +9,7 @@
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import type { SourceRef } from "../validation/sourceClosure.js";
 import type { Manifest } from "./manifest.js";
 
 export class AssemblyError extends Error {
@@ -25,6 +26,7 @@ export interface PromptContext {
   manifestHash: string;
   slotCharCounts: Record<string, number>;
   modelId: string;
+  inputSources: SourceRef[];
 }
 
 const PLACEHOLDER_RE = /\{\{[^}]+\}\}/;
@@ -33,6 +35,26 @@ const SYSTEM_TEMPLATE_RE =
   /^## System message 模板[^\S\r\n]*\r?\n(?:[^\S\r\n]*\r?\n)*```[^\S\r\n]*\r?\n([\s\S]*?)\r?\n```[^\S\r\n]*\r?$/m;
 const EMPTY_DIALOGUE_SAMPLES_LINE_RE =
   /(\r?\n)\{\{S3_dialogue_samples\}\}\r?\n/;
+const SOURCE_TYPES = new Set<SourceRef["source_type"]>([
+  "message",
+  "event",
+  "claim",
+  "external_action",
+  "canon",
+]);
+
+function isSourceRef(value: unknown): value is SourceRef {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const ref = value as Partial<SourceRef>;
+  return (
+    typeof ref.source_type === "string" &&
+    SOURCE_TYPES.has(ref.source_type as SourceRef["source_type"]) &&
+    typeof ref.source_id === "string" &&
+    ref.source_id.length > 0
+  );
+}
 
 function messageText(content: unknown): string {
   if (typeof content === "string") {
@@ -63,6 +85,7 @@ function messageText(content: unknown): string {
 
 export class FastReplyAssembler {
   private slotCharCounts: Record<string, number> = {};
+  private inputSources = new Map<string, SourceRef>();
 
   constructor(
     private readonly manifest: Manifest,
@@ -75,6 +98,10 @@ export class FastReplyAssembler {
       recentEvents?: Record<string, unknown>[];
     } = {},
   ) {}
+
+  private recordInputSource(ref: SourceRef): void {
+    this.inputSources.set(`${ref.source_type}:${ref.source_id}`, ref);
+  }
 
   private systemTemplate(): string {
     const raw = readFileSync(this.templatePath, "utf-8");
@@ -169,7 +196,14 @@ export class FastReplyAssembler {
                   )
                   .join(" ")
               : "";
-        return value ? value.slice(0, 60) : null;
+        if (!value) {
+          return null;
+        }
+        const eventId = event.event_id;
+        if (typeof eventId === "string" && eventId.length > 0) {
+          this.recordInputSource({ source_type: "event", source_id: eventId });
+        }
+        return value.slice(0, 60);
       })
       .filter((text): text is string => text !== null);
     if (recent.length > 0) {
@@ -197,6 +231,10 @@ export class FastReplyAssembler {
     const hits = (this.state.canonHits ?? []).slice(0, 2);
     return hits
       .map((hit) => {
+        const sourceId = hit.id;
+        if (typeof sourceId === "string" && sourceId.length > 0) {
+          this.recordInputSource({ source_type: "canon", source_id: sourceId });
+        }
         const label = hit.label as string;
         const text = (hit.role_safe_text ?? hit.text ?? "") as string;
         if (label === "canon_self") {
@@ -216,7 +254,17 @@ export class FastReplyAssembler {
       return "（暂无）";
     }
     return memories
-      .map((memory) => `- ${String(memory.content ?? "")}`)
+      .map((memory) => {
+        const refs = memory.source_refs;
+        if (Array.isArray(refs)) {
+          for (const ref of refs) {
+            if (isSourceRef(ref)) {
+              this.recordInputSource(ref);
+            }
+          }
+        }
+        return `- ${String(memory.content ?? "")}`;
+      })
       .join("\n");
   }
 
@@ -294,6 +342,7 @@ export class FastReplyAssembler {
   ): PromptContext {
     const template = this.systemTemplate();
     this.slotCharCounts = {};
+    this.inputSources.clear();
     const system = this.fillSlots(template);
     const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
       { role: "system", content: system },
@@ -309,6 +358,9 @@ export class FastReplyAssembler {
         continue;
       }
       seen.add(messageId);
+      if (messageId) {
+        this.recordInputSource({ source_type: "message", source_id: messageId });
+      }
       const role =
         item.direction === "outbound"
           ? "assistant"
@@ -326,6 +378,7 @@ export class FastReplyAssembler {
       manifestHash: this.manifest.manifestHash,
       slotCharCounts: { ...this.slotCharCounts },
       modelId: "stub",
+      inputSources: [...this.inputSources.values()],
     };
   }
 }
@@ -375,6 +428,9 @@ export class TickAssembler {
       manifestHash: this.manifest.manifestHash,
       slotCharCounts: {},
       modelId: "stub",
+      inputSources: [
+        { source_type: "event", source_id: String(event.event_id) },
+      ],
     };
   }
 }

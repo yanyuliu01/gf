@@ -21,7 +21,7 @@ import { SchemaRegistry, ValidationError } from "../validation/schemas.js";
 import {
   SourceClosure,
   type SourceRef,
-  closureFromDb,
+  closureFromInputs,
 } from "../validation/sourceClosure.js";
 import {
   EMPTY_STATE_DOCUMENTS,
@@ -265,7 +265,7 @@ export class StateManager {
       triggerEvent?: WorldEvent | null;
       sceneId?: string | null;
       batchId?: string | null;
-      extraSources?: Iterable<[string, string]>;
+      inputSources?: Iterable<SourceRef>;
     } = {},
   ): CommitResult {
     if (kind === "tick") {
@@ -285,7 +285,7 @@ export class StateManager {
         triggerEvent: options.triggerEvent ?? null,
         sceneId: options.sceneId ?? null,
         batchId: options.batchId ?? null,
-        extraSources: options.extraSources ?? [],
+        inputSources: options.inputSources ?? [],
       });
       db.exec("COMMIT");
       return result;
@@ -308,7 +308,7 @@ export class StateManager {
       debtsAdd?: DebtLike[];
       triggerEvent: WorldEvent;
       scene: { scene_id: string };
-      extraSources?: Iterable<[string, string]>;
+      inputSources?: Iterable<SourceRef>;
     },
   ): CommitResult {
     this.schemas.validate("surface-message.schema.json", speech);
@@ -344,7 +344,7 @@ export class StateManager {
         proposal,
         triggerEvent: options.triggerEvent,
         scene: options.scene,
-        extraSources: options.extraSources ?? [],
+        inputSources: options.inputSources ?? [],
       });
       db.exec("COMMIT");
       return result;
@@ -368,7 +368,7 @@ export class StateManager {
       triggerEvent: WorldEvent | null;
       sceneId: string | null;
       batchId: string | null;
-      extraSources: Iterable<[string, string]>;
+      inputSources: Iterable<SourceRef>;
     },
   ): CommitResult {
     const { kind, proposal, triggerEvent, sceneId, batchId } = options;
@@ -388,7 +388,12 @@ export class StateManager {
       );
     }
 
-    const closure = closureFromDb(db, triggerEvent, options.extraSources);
+    const closure = closureFromInputs(db, [
+      ...(triggerEvent
+        ? [{ source_type: "event" as const, source_id: triggerEvent.event_id }]
+        : []),
+      ...options.inputSources,
+    ]);
     const claims = (proposal.claims as ClaimLike[] | undefined) ?? [];
     const patches = (proposal.patch_ops as PatchOp[] | undefined) ?? [];
     this.validateClaims(db, claims, closure);
@@ -477,7 +482,7 @@ export class StateManager {
       proposal: ReplyProposal;
       triggerEvent: WorldEvent;
       scene: { scene_id: string };
-      extraSources: Iterable<[string, string]>;
+      inputSources: Iterable<SourceRef>;
     },
   ): CommitResult {
     const { speech, claims, patches, debtsAdd, proposal, triggerEvent, scene } =
@@ -492,7 +497,10 @@ export class StateManager {
 
     const store = new StateStore(db);
     const baseRevision = store.currentRevision();
-    const closure = closureFromDb(db, triggerEvent, options.extraSources);
+    const closure = closureFromInputs(db, [
+      { source_type: "event", source_id: triggerEvent.event_id },
+      ...options.inputSources,
+    ]);
     closure.checkRefs(speech.source_refs);
     this.validateClaims(db, claims, closure);
     this.validatePatches(db, patches, baseRevision, closure);
@@ -678,6 +686,9 @@ export class StateManager {
       this.schemas.validate("claim.schema.json", claim);
       this.policy.checkClaim(claim as Parameters<Policy["checkClaim"]>[0]);
       closure.checkRefs(claim.source_refs);
+      if (claim.causal_action_ref) {
+        closure.checkRef(claim.causal_action_ref);
+      }
       const hasUserReport = claim.source_refs.some(
         (ref) => ref.source_type === "message",
       );

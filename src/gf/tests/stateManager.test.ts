@@ -144,6 +144,9 @@ test("crossworld: doctor_attestation with explicit user report commits", () => {
     ];
     const result = rt.stateManager.submitOperation("tick", proposal, {
       triggerEvent: event,
+      inputSources: [
+        { source_type: "message", source_id: message.message_id },
+      ],
     });
     assert.equal(result.committed, true);
     const claim = rt.db
@@ -258,6 +261,9 @@ test("reply commit writes speech + outbox + scene messages atomically", () => {
     const result = rt.stateManager.submitReply(speech, {
       triggerEvent: event,
       scene: { scene_id: scene.scene_id as string },
+      inputSources: [
+        { source_type: "message", source_id: message.message_id },
+      ],
     });
     assert.equal(result.committed, true);
     assert.equal(result.committedRevision, 1);
@@ -268,6 +274,269 @@ test("reply commit writes speech + outbox + scene messages atomically", () => {
     assert.equal(outboxRows.length, 1);
     const sceneMessages = rt.scenes.messagesInScene(scene.scene_id as string);
     assert.equal(sceneMessages.length, 2);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("stored but unseen event is outside the call source closure", () => {
+  const rt = setupRuntime();
+  try {
+    const visible = userEvent("这是本轮可见消息");
+    const hidden = userEvent("这是数据库里另一条未见消息");
+    rt.stateManager.ingestEvent(visible);
+    rt.stateManager.ingestEvent(hidden);
+    const proposal = tickProposal(visible.event_id, 0);
+    proposal.claims = [
+      {
+        claim_id: "clm_unseen_event",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "引用了未提供给本轮调用的事件",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [{ source_type: "event", source_id: hidden.event_id }],
+      },
+    ];
+
+    assert.throws(
+      () =>
+        rt.stateManager.submitOperation("tick", proposal, {
+          triggerEvent: visible,
+        }),
+      /source event:.* outside legal closure/,
+    );
+    assert.equal(rt.state.currentRevision(), 0);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("stored but unseen message is outside the call source closure", () => {
+  const rt = setupRuntime();
+  try {
+    const visible = userEvent("这是本轮可见消息");
+    const hidden = userEvent("这是数据库里另一条未见消息");
+    rt.stateManager.ingestEvent(visible);
+    rt.stateManager.ingestEvent(hidden);
+    const hiddenMessageId = (hidden.payload as { message_id: string }).message_id;
+    const proposal = tickProposal(visible.event_id, 0);
+    proposal.claims = [
+      {
+        claim_id: "clm_unseen_message",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "引用了未提供给本轮调用的消息",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "message", source_id: hiddenMessageId },
+        ],
+      },
+    ];
+
+    assert.throws(
+      () =>
+        rt.stateManager.submitOperation("tick", proposal, {
+          triggerEvent: visible,
+        }),
+      /source message:.* outside legal closure/,
+    );
+    assert.equal(rt.state.currentRevision(), 0);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("stored but unseen claim is outside the call source closure", () => {
+  const rt = setupRuntime();
+  try {
+    const seedEvent = userEvent("作为种子声明的证据");
+    rt.stateManager.ingestEvent(seedEvent);
+    const seedMessageId = (seedEvent.payload as { message_id: string }).message_id;
+    const seedProposal = tickProposal(seedEvent.event_id, 0);
+    seedProposal.claims = [
+      {
+        claim_id: "clm_seed",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "一条已经持久化的声明",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "message", source_id: seedMessageId },
+        ],
+      },
+    ];
+    rt.stateManager.submitOperation("tick", seedProposal, {
+      triggerEvent: seedEvent,
+      inputSources: [
+        { source_type: "message", source_id: seedMessageId },
+      ],
+    });
+
+    const visible = userEvent("新一轮可见消息");
+    rt.stateManager.ingestEvent(visible);
+    const proposal = tickProposal(visible.event_id, 1);
+    proposal.claims = [
+      {
+        claim_id: "clm_unseen_claim",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "引用了未提供给本轮调用的声明",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [{ source_type: "claim", source_id: "clm_seed" }],
+      },
+    ];
+
+    assert.throws(
+      () =>
+        rt.stateManager.submitOperation("tick", proposal, {
+          triggerEvent: visible,
+        }),
+      /source claim:clm_seed outside legal closure/,
+    );
+    assert.equal(rt.state.currentRevision(), 1);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("visible claim recursively exposes its recorded provenance", () => {
+  const rt = setupRuntime();
+  try {
+    const seedEvent = userEvent("作为种子声明的证据");
+    rt.stateManager.ingestEvent(seedEvent);
+    const seedMessageId = (seedEvent.payload as { message_id: string }).message_id;
+    const seedProposal = tickProposal(seedEvent.event_id, 0);
+    seedProposal.claims = [
+      {
+        claim_id: "clm_recursive_seed",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "一条带有来源的声明",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "message", source_id: seedMessageId },
+        ],
+      },
+    ];
+    rt.stateManager.submitOperation("tick", seedProposal, {
+      triggerEvent: seedEvent,
+      inputSources: [
+        { source_type: "message", source_id: seedMessageId },
+      ],
+    });
+
+    const visible = userEvent("新一轮可见消息");
+    rt.stateManager.ingestEvent(visible);
+    const proposal = tickProposal(visible.event_id, 1);
+    proposal.claims = [
+      {
+        claim_id: "clm_recursive_result",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "沿可见声明追溯到原始消息",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "message", source_id: seedMessageId },
+        ],
+      },
+    ];
+
+    const result = rt.stateManager.submitOperation("tick", proposal, {
+      triggerEvent: visible,
+      inputSources: [{ source_type: "claim", source_id: "clm_recursive_seed" }],
+    });
+    assert.equal(result.committed, true);
+    assert.equal(rt.state.currentRevision(), 2);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("claim causal action must also be inside the call source closure", () => {
+  const rt = setupRuntime();
+  try {
+    const visible = userEvent("我报告了一件事");
+    const hidden = userEvent("未提供给本轮调用的因果事件");
+    rt.stateManager.ingestEvent(visible);
+    rt.stateManager.ingestEvent(hidden);
+    const visibleMessageId = (visible.payload as { message_id: string }).message_id;
+    const proposal = tickProposal(visible.event_id, 0);
+    proposal.claims = [
+      {
+        claim_id: "clm_hidden_causal",
+        scope: "terra",
+        kind: "doctor_attestation",
+        text: "因果动作不可越过本轮可见性",
+        epistemic_status: "attested",
+        lands_in_terra: true,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "message", source_id: visibleMessageId },
+        ],
+        causal_action_ref: {
+          source_type: "event",
+          source_id: hidden.event_id,
+        },
+      },
+    ];
+
+    assert.throws(
+      () =>
+        rt.stateManager.submitOperation("tick", proposal, {
+          triggerEvent: visible,
+          inputSources: [
+            { source_type: "message", source_id: visibleMessageId },
+          ],
+        }),
+      /source event:.* outside legal closure/,
+    );
+    assert.equal(rt.state.currentRevision(), 0);
+  } finally {
+    rt.cleanup();
+  }
+});
+
+test("stable-looking canon id is illegal unless assembled for the call", () => {
+  const rt = setupRuntime();
+  try {
+    const visible = userEvent("本轮没有检索到任何 canon");
+    rt.stateManager.ingestEvent(visible);
+    const proposal = tickProposal(visible.event_id, 0);
+    proposal.claims = [
+      {
+        claim_id: "clm_unseen_canon",
+        scope: "doctor_world",
+        kind: "doctor_disclosure",
+        text: "不能仅凭合法格式引用 canon",
+        epistemic_status: "reported",
+        lands_in_terra: false,
+        privacy_scope: "private_im",
+        source_refs: [
+          { source_type: "canon", source_id: "cs_0123456789abcdef" },
+        ],
+      },
+    ];
+
+    assert.throws(
+      () =>
+        rt.stateManager.submitOperation("tick", proposal, {
+          triggerEvent: visible,
+        }),
+      /source canon:cs_0123456789abcdef outside legal closure/,
+    );
+    assert.equal(rt.state.currentRevision(), 0);
   } finally {
     rt.cleanup();
   }

@@ -134,7 +134,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 |---|---|---|---|---|
 | `M11-001` | `DONE` | ENG | none | Make Prompt template parsing EOL-agnostic. All 19 runtime tests pass; add LF and CRLF fixture coverage. Do not normalize user content. |
 | `M11-002` | `DONE` | ENG | none | Define canon byte/EOL normalization before hashing and apply it consistently in build/audit. Full audit passes without regenerating a machine-specific manifest. |
-| `M11-003` | `READY` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
+| `M11-003` | `DONE` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
 | `M11-004` | `READY` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `READY` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
 | `M11-006` | `BLOCKED` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. |
@@ -163,6 +163,19 @@ Files changed: TODO.md; corpus/README.md; corpus/canon/README.md; corpus/canon/m
 Checks: pnpm test (50/50); Python canon tests (3/3); canon audit (2758 entries); contract validation; full project audit; git diff --check.
 Known residual risk: The shared contract is for manifest-listed text files; a future binary artifact needs an explicit binary hash mode rather than this newline normalization.
 Rollback: Revert the M11-002 task commit; the tracked v2 manifest and raw-byte audit return together.
+Owner decision still needed: None.
+```
+
+```text
+Task: M11-003
+Assignee: Codex
+Started / completed: 2026-08-27 / 2026-08-27
+Outcome: Source legality is now built from the trigger and source-bearing inputs actually assembled for each call; stored history is not globally visible, claims and causal events expand recorded provenance recursively, and claim causal-action refs are validated too.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19-architecture-invariants-v1.md section 3; docs/cognition/02-framework-v3.5.md; prompts/README.md.
+Files changed: TODO.md; src/gf/validation/sourceClosure.ts; src/gf/state/stateManager.ts; src/gf/prompts/assembler.ts; src/gf/orchestration/engine.ts; src/gf/tests/stateManager.test.ts; src/gf/tests/promptsAssembler.test.ts.
+Checks: pnpm test (57/57); contract validation; full project audit including 2758 canon entries; git diff --check.
+Known residual risk: StateManager trusts its in-process caller to pass the assembler-produced inputSources unchanged; M2 versioned call-input contracts and replay hashes remain future work.
+Rollback: Revert the M11-003 task commit; database-global closure behavior and its visibility leak return together.
 Owner decision still needed: None.
 ```
 
