@@ -1,6 +1,6 @@
 # GF Project Handoff
 
-Status snapshot: **2026-08-07**
+Status snapshot: **2026-08-29**
 Primary implementation language: **TypeScript**
 Operational backlog: [`TODO.md`](TODO.md)
 Owner input workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
@@ -71,9 +71,9 @@ companion. The decisive additional mechanisms are:
    expression consume a recoverable character resource without exposing token
    counters or operator billing to the character.
 
-### Pending OWN-001 Direction: Computable World Kernel
+### Frozen OWN-001 Direction: Computable World Kernel
 
-The current Owner-review proposal is
+The Owner-approved v1 semantic baseline is
 `docs/world/16-computable-world-model-draft-v1.md`. It corrects the earlier
 interaction-only draft by defining the world as a hybrid discrete-event,
 stock-flow, and production-process system. Resources, capacity reservations,
@@ -90,11 +90,12 @@ shows event routing, the no-LLM world path, open action adjudication, and the
 single `StateManager` fact writer. SVG and Mermaid sources share each diagram's
 base name.
 
-This direction is not frozen until the Owner signs `OWN-001`. The retained
+The Owner accepted this direction on 2026-08-29. Parameters and S-4 seed values
+start from the engineering defaults in docs/16 and remain versioned calibration
+inputs rather than immutable canon. The retained
 `docs/world/15-world-runtime-interaction-rules-draft-v1.md` describes the
-open-action adjudication interface, not the world kernel itself. The next Owner
-input is a resource/endowment table and 3-5 production recipes, not Prompt or
-Affect Utility tuning.
+open-action adjudication interface, not the world kernel itself. The signed
+decision is recorded once in `docs/owner/14-owner-input-workbook-v1.md`.
 
 ## 4. Frozen Architectural Decisions
 

@@ -120,7 +120,7 @@ Owner decision still needed: None for this sync. The user directed continuation 
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `OWN-001` | `WAITING_OWNER` | OWNER | none | Review the computable world kernel in [`docs/world/16-computable-world-model-draft-v1.md`](docs/world/16-computable-world-model-draft-v1.md): resource endowments, stock-flow conservation, process recipes, capacity allocation, ecology/physiology, organization queues, exogenous drivers, deterministic stepping, and the committed-change -> Perception -> Cognitive Admission -> open action -> adjudication -> commit life loop. [`docs/world/15-world-runtime-interaction-rules-draft-v1.md`](docs/world/15-world-runtime-interaction-rules-draft-v1.md) is retained only as the open-action adjudication layer. 2026-08-28 review added a non-authoritative WorldX seam audit, explicit Activity/Process lifecycle, failure semantics, unified message handoff, and S-4-to-first-Feishu acceptance trace. Sign-off belongs in docs/14; draft existence is not approval. |
+| `OWN-001` | `DONE` | OWNER | none | Accepted the computable world kernel v1 direction: resource/process world stepping, committed-change -> Perception -> Cognitive Admission -> open action -> adjudication -> commit, WorldX-informed execution seams, Activity/Process continuity, and the S-4-to-first-Feishu acceptance trace. A0/A1 accepted; A2-A5 and S-4 seed use docs/16 engineering defaults for the first versioned trial. Signed 2026-08-29 in docs/14. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
 | `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize Seed A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime Prompt S3 text. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
@@ -144,6 +144,18 @@ Owner decision still needed: Fill docs/14 A0-A5 and explicitly sign off OWN-001 
 Owner responses belong in `docs/owner/14-owner-input-workbook-v1.md`. Engineering
 must not block M1.1 fixes on these items. `OWN-008` also does not block the M2
 engine-side capacity implementation; it supplies later blind-evaluation fixtures.
+
+### OWN-001 Completion Evidence (2026-08-29)
+
+```text
+Outcome: Owner accepted the docs/16 v1 semantic direction through the requested continuation after the explicit confirmation text: A0/A1 defaults are accepted; A2-A5 action, NPC, ordinary-day, and failure semantics plus the S-4 seed begin with the docs/16 engineering defaults. Parameters and seeds remain versioned calibration inputs, not immutable canon. The authoritative signature is recorded in docs/14; docs/16 and PROJECT-HANDOFF only point to that decision and describe its implementation scope.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/invariants/19; docs/owner/14 section A and H; docs/world/16 sections 0-16; PROJECT-HANDOFF.md.
+Files changed: docs/owner/14-owner-input-workbook-v1.md; docs/world/16-computable-world-model-draft-v1.md; docs/README.md; PROJECT-HANDOFF.md; TODO.md.
+Checks: full project audit including contract validation, 2758 canon entries, and 10 diagrams; git diff --check.
+Known residual risk: Numerical endowments, production recipes, timings, and S-4 calibration have not yet earned runtime evidence. M21-007 through M21-011 must version them and demonstrate deterministic replay; ordinary Policy silence remains valid.
+Rollback: Revert the OWN-001 sign-off commit and restore dependent tasks to BLOCKED; no schema, migration, runtime behavior, provider call, world fact, or outbound message changes.
+Owner decision still needed: None for OWN-001. OWN-003 remains a separate gate for M20-020.
+```
 
 ---
 
@@ -239,8 +251,8 @@ required for correct operation.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-001` | `BLOCKED` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
-| `M20-002` | `BLOCKED` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
+| `M20-001` | `READY` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
+| `M20-002` | `READY` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
