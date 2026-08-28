@@ -5,17 +5,24 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const schemaPath = join(root, "schemas", "cognitive-runtime.schema.json");
 const commonPath = join(root, "schemas", "common.schema.json");
-const outputPath = join(root, "src", "gf", "generated", "cognitiveRuntimeTypes.ts");
-
-const cognitive = JSON.parse(readFileSync(schemaPath, "utf8"));
 const common = JSON.parse(readFileSync(commonPath, "utf8"));
+const targets = [
+  {
+    schemaName: "cognitive-runtime.schema.json",
+    outputName: "cognitiveRuntimeTypes.ts",
+  },
+  {
+    schemaName: "agent-pipeline.schema.json",
+    outputName: "agentPipelineTypes.ts",
+  },
+];
 
 const localNames = new Map([
   ["id", "Id"],
   ["timestamp", "Timestamp"],
   ["sourceRef", "SourceRef"],
+  ["privacyScope", "PrivacyScope"],
   ["sourceRefs", "SourceRefs"],
   ["hash", "Sha256Hash"],
   ["purpose", "CognitivePurpose"],
@@ -29,7 +36,7 @@ function refName(ref) {
     throw new Error(`unsupported schema reference: ${ref}`);
   }
   if (file === "common.schema.json") {
-    return { id: "Id", timestamp: "Timestamp", sourceRef: "SourceRef" }[name] ?? name;
+    return localNames.get(name) ?? name;
   }
   if (file === "" || file === undefined) {
     return localNames.get(name) ?? name;
@@ -87,36 +94,46 @@ function declaration(name, schema) {
   return `export type ${name} = ${type};`;
 }
 
-const declarations = [
-  "export type Id = string;",
-  "export type Timestamp = string;",
-  declaration("SourceRef", common.$defs.sourceRef),
-  ...Object.entries(cognitive.$defs).map(([rawName, schema]) =>
-    declaration(localNames.get(rawName) ?? rawName, schema),
-  ),
-];
+function render(schema, schemaName) {
+  const declarations = [
+    "export type Id = string;",
+    "export type Timestamp = string;",
+    declaration("PrivacyScope", common.$defs.privacyScope),
+    declaration("SourceRef", common.$defs.sourceRef),
+    ...Object.entries(schema.$defs).map(([rawName, definition]) =>
+      declaration(localNames.get(rawName) ?? rawName, definition),
+    ),
+  ];
+  return [
+    "/**",
+    " * GENERATED FILE. DO NOT EDIT.",
+    ` * Source: schemas/${schemaName} and schemas/common.schema.json`,
+    " * Regenerate with: npm run generate:types",
+    " */",
+    "",
+    ...declarations.flatMap((value) => [value, ""]),
+  ].join("\n");
+}
 
-const output = [
-  "/**",
-  " * GENERATED FILE. DO NOT EDIT.",
-  " * Source: schemas/cognitive-runtime.schema.json and schemas/common.schema.json",
-  " * Regenerate with: npm run generate:types",
-  " */",
-  "",
-  ...declarations.flatMap((value) => [value, ""]),
-].join("\n");
-
-if (process.argv.includes("--check")) {
-  let current;
-  try {
-    current = readFileSync(outputPath, "utf8");
-  } catch {
-    current = "";
+for (const target of targets) {
+  const schemaPath = join(root, "schemas", target.schemaName);
+  const outputPath = join(root, "src", "gf", "generated", target.outputName);
+  const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
+  const output = render(schema, target.schemaName);
+  if (process.argv.includes("--check")) {
+    let current;
+    try {
+      current = readFileSync(outputPath, "utf8");
+    } catch {
+      current = "";
+    }
+    if (current !== output) {
+      process.stderr.write(
+        `Generated types for ${target.schemaName} are stale. Run npm run generate:types.\n`,
+      );
+      process.exitCode = 1;
+    }
+  } else {
+    writeFileSync(outputPath, output, "utf8");
   }
-  if (current !== output) {
-    process.stderr.write("Generated cognitive runtime types are stale. Run npm run generate:types.\n");
-    process.exitCode = 1;
-  }
-} else {
-  writeFileSync(outputPath, output, "utf8");
 }

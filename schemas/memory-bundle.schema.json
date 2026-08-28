@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/memory-bundle.schema.json",
+  "title": "Memory bundle v1",
+  "$ref": "agent-pipeline.schema.json#/$defs/MemoryBundleV1"
+}

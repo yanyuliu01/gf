@@ -219,6 +219,75 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
     for fixture_key, schema_name in cognitive_contracts.items():
         all_validators[schema_name].validate(cognitive[fixture_key])
 
+    pipeline = load_json(FIXTURES / "agent-pipeline.valid.json")
+    pipeline_contracts = {
+        "observation": "observation.schema.json",
+        "memory_bundle": "memory-bundle.schema.json",
+        "working_self": "working-self.schema.json",
+        "open_action_proposal": "open-action-proposal.schema.json",
+        "world_outcome_proposal": "world-outcome-proposal.schema.json",
+    }
+    for fixture_key, schema_name in pipeline_contracts.items():
+        all_validators[schema_name].validate(pipeline[fixture_key])
+
+    omniscient_observation = copy.deepcopy(pipeline["observation"])
+    omniscient_observation["hidden_world_snapshot"] = {"s4_actual_moisture": 0.21}
+    expect_invalid(
+        all_validators["observation.schema.json"],
+        omniscient_observation,
+        "observation contains hidden world snapshot",
+    )
+
+    ungrounded_memory = copy.deepcopy(pipeline["memory_bundle"])
+    ungrounded_memory["evidence"][0]["source_refs"] = []
+    expect_invalid(
+        all_validators["memory-bundle.schema.json"],
+        ungrounded_memory,
+        "memory evidence has no source",
+    )
+
+    labelled_working_self = copy.deepcopy(pipeline["working_self"])
+    labelled_working_self["energy_balance"] = 42
+    expect_invalid(
+        all_validators["working-self.schema.json"],
+        labelled_working_self,
+        "working self exposes energy account",
+    )
+
+    commitment_projection = copy.deepcopy(pipeline["working_self"])
+    commitment_projection["evidence"][0]["role"] = "commitment_projection"
+    expect_invalid(
+        all_validators["working-self.schema.json"],
+        commitment_projection,
+        "working self consumes commitment projection",
+    )
+
+    finite_action = copy.deepcopy(pipeline["open_action_proposal"])
+    finite_action["action_type"] = "observe"
+    expect_invalid(
+        all_validators["open-action-proposal.schema.json"],
+        finite_action,
+        "open action is replaced by finite action type",
+    )
+
+    effectless_success = copy.deepcopy(pipeline["world_outcome_proposal"])
+    effectless_success["proposed_effects"] = []
+    expect_invalid(
+        all_validators["world-outcome-proposal.schema.json"],
+        effectless_success,
+        "accepted outcome proposes no effect",
+    )
+
+    unexplained_rejection = copy.deepcopy(pipeline["world_outcome_proposal"])
+    unexplained_rejection["status"] = "rejected"
+    unexplained_rejection["proposed_effects"] = []
+    unexplained_rejection["hard_constraint_classes"] = []
+    expect_invalid(
+        all_validators["world-outcome-proposal.schema.json"],
+        unexplained_rejection,
+        "rejected outcome has no hard constraint class",
+    )
+
     hidden_fact_subscription = copy.deepcopy(cognitive["attention_subscription"])
     hidden_fact_subscription["observable_filter"]["hidden_fact_ids"] = ["fact_secret"]
     expect_invalid(
@@ -420,6 +489,62 @@ def validate_cross_field_contracts() -> None:
             raise AssertionError(
                 f"cognitive runtime schema contains forbidden mapping {forbidden_mapping!r}"
             )
+
+    pipeline = load_json(FIXTURES / "agent-pipeline.valid.json")
+    memory = pipeline["memory_bundle"]
+    memory_ids = {item["memory_id"] for item in memory["evidence"]}
+    supporting = set(memory["supporting_memory_ids"])
+    counter = set(memory["counter_memory_ids"])
+    if not supporting.issubset(memory_ids) or not counter.issubset(memory_ids):
+        raise AssertionError("memory bundle role ids must reference included evidence")
+    if supporting & counter:
+        raise AssertionError("memory cannot be supporting and counter in one bundle")
+
+    def source_key(ref: dict) -> tuple[str, str]:
+        return ref["source_type"], ref["source_id"]
+
+    for container_name in ("memory_bundle", "working_self"):
+        container = pipeline[container_name]
+        closure = {source_key(ref) for ref in container["input_closure"]["source_refs"]}
+        evidence_key = "evidence"
+        for item in container[evidence_key]:
+            if not {source_key(ref) for ref in item["source_refs"]}.issubset(closure):
+                raise AssertionError(f"{container_name}: evidence escapes input closure")
+
+    working_self = pipeline["working_self"]
+    action = pipeline["open_action_proposal"]
+    working_closure = {
+        source_key(ref) for ref in working_self["input_closure"]["source_refs"]
+    }
+    if not {source_key(ref) for ref in action["source_refs"]}.issubset(working_closure):
+        raise AssertionError("open action source refs escape Working Self closure")
+    if action["source_closure_hash"] != working_self["input_closure"]["closure_hash"]:
+        raise AssertionError("open action closure hash differs from Working Self")
+
+    outcome = pipeline["world_outcome_proposal"]
+    if outcome["action_proposal_id"] != action["proposal_id"]:
+        raise AssertionError("world outcome does not reference its open action")
+    if outcome["base_state_revision"] != action["base_state_revision"]:
+        raise AssertionError("world outcome revision differs from open action")
+
+    pipeline_schema = load_json(SCHEMAS / "agent-pipeline.schema.json")
+    working_self_schema = json.dumps(
+        pipeline_schema["$defs"]["WorkingSelfV1"], sort_keys=True
+    ).lower()
+    forbidden_working_self_fields = (
+        "energy", "token", "provider", "price", "fatigue", "affect",
+        "capacity", "suggested_behavior", "capability_effects", "commitment_projection",
+    )
+    leaked = [term for term in forbidden_working_self_fields if term in working_self_schema]
+    if leaked:
+        raise AssertionError(f"WorkingSelfV1 leaks hidden/runtime fields: {leaked}")
+
+    open_action_schema = json.dumps(
+        pipeline_schema["$defs"]["OpenActionProposalV1"], sort_keys=True
+    ).lower()
+    for finite_field in ("action_type", "candidate", "claimed_outcome", "success"):
+        if finite_field in open_action_schema:
+            raise AssertionError(f"OpenActionProposalV1 contains {finite_field!r}")
 
 
 def validate_migration() -> None:
@@ -625,8 +750,8 @@ def main() -> int:
     validate_cross_field_contracts()
     validate_migration()
     print(
-        f"OK: {len(all_validators)} schemas, 21 positive contract samples, "
-        "17 negative contracts, migration 001 invariants"
+        f"OK: {len(all_validators)} schemas, 26 positive contract samples, "
+        "24 negative contracts, migration 001 invariants"
     )
     return 0
 

@@ -8,6 +8,8 @@ export type Id = string;
 
 export type Timestamp = string;
 
+export type PrivacyScope = "internal" | "private_im" | "public_allowed";
+
 export interface SourceRef {
   "source_type": "message" | "event" | "claim" | "external_action" | "canon";
   "source_id": Id;

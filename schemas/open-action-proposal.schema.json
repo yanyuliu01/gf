@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/open-action-proposal.schema.json",
+  "title": "Open action proposal v1",
+  "$ref": "agent-pipeline.schema.json#/$defs/OpenActionProposalV1"
+}

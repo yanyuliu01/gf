@@ -251,14 +251,26 @@ required for correct operation.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-001` | `READY` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. |
+| `M20-001` | `DONE` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. Completed 2026-08-29. |
 | `M20-002` | `READY` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
-| `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
+| `M20-005` | `READY` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
 | `M20-006` | `DONE` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. Completed 2026-08-29. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
 | `M20-008` | `DONE` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. Completed 2026-08-29. |
+
+### M20-001 Evidence (2026-08-29)
+
+```text
+Outcome: Froze strict v1 entry schemas for subject-specific Observation, source-closed MemoryBundle, evidence-array WorkingSelf, open-text OpenActionProposal, and adjudication-only WorldOutcomeProposal. Working Self carries source-linked evidence roles rather than fixed psychological slots and cannot accept energy, token, provider, Affect, fatigue, capability prose, suggested behavior, or Commitment projection fields. OpenAction has no finite action type or claimed result. Accepted/partial outcomes require proposed effects; rejected outcomes require a hard-constraint class. Generated TypeScript now covers both cognitive runtime and final agent pipeline contracts.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/README.md; docs/invariants/19 section 3; docs/cognition/13 sections 1-8; docs/world/15 sections 14-17; docs/world/16 sections 11-16; docs/owner/14 OWN-001 signature.
+Files changed: TODO.md; schemas/agent-pipeline.schema.json and five entry schemas; scripts/generate-schema-types.mjs; src/gf/generated/agentPipelineTypes.ts; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/tests/agentPipelineContracts.test.ts; tests/contracts/agent-pipeline.valid.json; tests/validate_contracts.py.
+Checks: pnpm test (73/73, including generated-type drift check); contract validation (31 schemas, 26 positive samples, 24 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: Schema validates payload shape while cross-row source closure, base-revision CAS, authoritative effect commits, and replay remain StateManager work in M20-003/M20-024. Working Self role names are machine evidence categories, not required fixed slots; M20-014 must assemble only the roles actually supported by the episode.
+Rollback: Revert the M20-001 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
 
 ### M20-008 Evidence (2026-08-29)
 
@@ -300,7 +312,7 @@ Owner decision still needed: None.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-010` | `BLOCKED` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. |
+| `M20-010` | `READY` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. |
 | `M20-011` | `BLOCKED` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
 | `M20-012` | `BLOCKED` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, epistemic status, and **action-to-adjudication-outcome**; then SQLite FTS5 reranking. No vector database. The outcome dimension persists `what was proposed -> what the adjudicator returned -> which hard-constraint class caused a rejection`, reusing the `M20-022` classes (location / time / resource / capability / knowledge / permission / world rule). Tests prove that episodes sharing an outcome shape but no lexical overlap are retrievable together. |
 | `M20-013` | `BLOCKED` | ENG | `M20-012` | Retrieve supporting and counter-evidence under a fixed context budget. Tests prevent mood/current hypothesis from suppressing relevant contradiction. |
@@ -334,7 +346,7 @@ consequences; protagonist association only changes attention.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M21-007` | `BLOCKED` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. |
+| `M21-007` | `READY` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. |
 | `M21-008` | `BLOCKED` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
 | `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
 | `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |

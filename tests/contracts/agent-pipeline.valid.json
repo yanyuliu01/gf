@@ -1,0 +1,121 @@
+{
+  "observation": {
+    "schema_version": "1.0",
+    "observation_id": "observation_s4_0001",
+    "actor_id": "terra",
+    "summary": "生态园 S-4 终端显示根区含水量低于本轮基线。",
+    "sensing_basis": "co_located",
+    "subject_ids": ["s4_terminal", "s4_root_zone"],
+    "location_id": "eco_garden",
+    "privacy_scope": "internal",
+    "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "observed_at": "2026-08-29T09:00:00+08:00",
+    "projection_version": "perception_projector.v1",
+    "base_state_revision": 20,
+    "input_closure_hash": "1000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "memory_bundle": {
+    "schema_version": "1.0",
+    "bundle_id": "memory_bundle_0001",
+    "actor_id": "terra",
+    "evidence": [
+      {
+        "memory_id": "memory_s4_prior_0001",
+        "kind": "episodic",
+        "summary": "上一次类似波动最终来自灌溉管路的短暂阻塞。",
+        "source_refs": [{ "source_type": "event", "source_id": "evt_s4_prior_0001" }],
+        "as_of": "2026-08-28T15:00:00+08:00"
+      },
+      {
+        "memory_id": "memory_s4_counter_0001",
+        "kind": "belief",
+        "summary": "当前读数也可能是终端刷新延迟，尚不能断定根区真的缺水。",
+        "source_refs": [{ "source_type": "event", "source_id": "evt_terminal_delay_0001" }],
+        "as_of": "2026-08-29T08:50:00+08:00"
+      }
+    ],
+    "supporting_memory_ids": ["memory_s4_prior_0001"],
+    "counter_memory_ids": ["memory_s4_counter_0001"],
+    "input_closure": {
+      "source_refs": [
+        { "source_type": "event", "source_id": "evt_s4_prior_0001" },
+        { "source_type": "event", "source_id": "evt_terminal_delay_0001" }
+      ],
+      "closure_hash": "2000000000000000000000000000000000000000000000000000000000000002",
+      "base_state_revision": 20
+    },
+    "retrieval_version": "memory_retrieval.v1",
+    "retrieved_at": "2026-08-29T09:00:01+08:00"
+  },
+  "working_self": {
+    "schema_version": "1.0",
+    "working_self_id": "working_self_0001",
+    "episode_id": "cognitive_episode_0002",
+    "actor_id": "terra",
+    "evidence": [
+      {
+        "evidence_id": "ws_current_fact_0001",
+        "role": "current_fact",
+        "narrative": "我刚在生态园看到 S-4 根区含水量低于本轮基线。",
+        "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+        "as_of": "2026-08-29T09:00:00+08:00"
+      },
+      {
+        "evidence_id": "ws_counter_0001",
+        "role": "counter_evidence",
+        "narrative": "终端刚才有过刷新延迟，这个读数需要现场复核。",
+        "source_refs": [{ "source_type": "event", "source_id": "evt_terminal_delay_0001" }],
+        "as_of": "2026-08-29T08:50:00+08:00"
+      }
+    ],
+    "input_closure": {
+      "source_refs": [
+        { "source_type": "event", "source_id": "evt_s4_reading_0001" },
+        { "source_type": "event", "source_id": "evt_terminal_delay_0001" }
+      ],
+      "closure_hash": "3000000000000000000000000000000000000000000000000000000000000003",
+      "base_state_revision": 20
+    },
+    "assembler_version": "working_self_builder.v1",
+    "assembled_at": "2026-08-29T09:00:02+08:00"
+  },
+  "open_action_proposal": {
+    "schema_version": "1.0",
+    "proposal_id": "open_action_0001",
+    "actor_id": "terra",
+    "policy_run_id": "prompt_run_policy_0002",
+    "intent": "先在现场复核 S-4 的实际含水状态，再判断是否需要调整灌溉。",
+    "plan": ["检查终端刷新状态", "观察根区和植株表面", "根据现场证据决定是否调整"],
+    "source_refs": [
+      { "source_type": "event", "source_id": "evt_s4_reading_0001" },
+      { "source_type": "event", "source_id": "evt_terminal_delay_0001" }
+    ],
+    "source_closure_hash": "3000000000000000000000000000000000000000000000000000000000000003",
+    "base_state_revision": 20,
+    "proposed_at": "2026-08-29T09:00:05+08:00"
+  },
+  "world_outcome_proposal": {
+    "schema_version": "1.0",
+    "outcome_id": "world_outcome_0001",
+    "action_proposal_id": "open_action_0001",
+    "actor_id": "terra",
+    "status": "accepted",
+    "summary": "现场复核动作合法，可开始检查终端与根区。",
+    "hard_constraint_classes": [],
+    "proposed_effects": [
+      {
+        "effect_id": "effect_activity_started_0001",
+        "kind": "activity.started",
+        "summary": "开始在生态园复核 S-4 状态。",
+        "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+        "privacy_scope": "internal"
+      }
+    ],
+    "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "adjudicator_version": "world_adjudicator.v1",
+    "rule_version": "world_rules.v1",
+    "source_closure_hash": "4000000000000000000000000000000000000000000000000000000000000004",
+    "base_state_revision": 20,
+    "proposed_at": "2026-08-29T09:00:06+08:00"
+  }
+}
