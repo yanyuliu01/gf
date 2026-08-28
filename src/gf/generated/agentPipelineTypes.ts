@@ -17,6 +17,13 @@ export interface SourceRef {
   "observed_at"?: Timestamp | null;
 }
 
+export interface EventSourceRef {
+  "source_type": "event";
+  "source_id": Id;
+  "quote_hash"?: string | null;
+  "observed_at"?: Timestamp | null;
+}
+
 export type SourceRefs = SourceRef[];
 
 export type Sha256Hash = string;
@@ -118,4 +125,26 @@ export interface WorldOutcomeProposalV1 {
   "source_closure_hash": Sha256Hash;
   "base_state_revision": number;
   "proposed_at": Timestamp;
+}
+
+export interface CommitmentV1 {
+  "schema_version": "1.0";
+  "commitment_id": Id;
+  "subject_id": Id;
+  "object_id": Id;
+  "content": string;
+  "condition": string | null;
+  "due_at": Timestamp | null;
+  "status": "active" | "fulfilled" | "broken" | "released";
+  "source_refs": SourceRefs;
+  "fulfillment_event_refs": EventSourceRef[];
+  "broken_event_refs": EventSourceRef[];
+  "released_event_refs": EventSourceRef[];
+  "debt_id": Id | null;
+  "derived_from_ledger": true;
+  "projection_scope": "adjudication_audit_only";
+  "projection_version": Id;
+  "base_state_revision": number;
+  "input_closure_hash": Sha256Hash;
+  "derived_at": Timestamp;
 }

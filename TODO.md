@@ -252,8 +252,8 @@ required for correct operation.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M20-001` | `DONE` | ENG | `PM-001`, `OWN-001` | Freeze versioned schemas for Observation, MemoryBundle/input closure, WorkingSelf, OpenActionProposal, and WorldOutcomeProposal. JSON Schema is authority; TS types are generated. Completed 2026-08-29. |
-| `M20-002` | `READY` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
-| `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
+| `M20-002` | `DONE` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. Completed 2026-08-29. |
+| `M20-003` | `READY` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
 | `M20-005` | `DONE` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. Completed 2026-08-29. |
 | `M20-006` | `DONE` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. Completed 2026-08-29. |
@@ -269,6 +269,18 @@ Files changed: TODO.md; schemas/agent-pipeline.schema.json and five entry schema
 Checks: pnpm test (73/73, including generated-type drift check); contract validation (31 schemas, 26 positive samples, 24 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
 Known residual risk: Schema validates payload shape while cross-row source closure, base-revision CAS, authoritative effect commits, and replay remain StateManager work in M20-003/M20-024. Working Self role names are machine evidence categories, not required fixed slots; M20-014 must assemble only the roles actually supported by the episode.
 Rollback: Revert the M20-001 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M20-002 Evidence (2026-08-29)
+
+```text
+Outcome: Froze CommitmentV1 as an explicitly ledger-derived, adjudication/audit-only projection with subject, object, open content and condition, due time, status, evidence, optional reply-debt link, and fulfillment/broken/released event references. Active projections cannot carry terminal events; every terminal status requires its matching committed event. The schema cannot claim authoritative fact status or become a Working Self input. Generated TypeScript and positive/negative contract coverage were updated.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/invariants/19 B1-B3 and C2; docs/cognition/13 sections 3 and 6; docs/world/15 sections 14-17; M20-001 pipeline contracts.
+Files changed: TODO.md; schemas/agent-pipeline.schema.json; schemas/commitment.schema.json; scripts/generate-schema-types.mjs; src/gf/generated/agentPipelineTypes.ts; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/tests/agentPipelineContracts.test.ts; tests/contracts/agent-pipeline.valid.json; tests/validate_contracts.py.
+Checks: pnpm test (74/74); contract validation (32 schemas, 27 positive samples, 29 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: Schema proves projection shape and event support, but only M20-003 persistence plus the reducer can prove statuses are recomputed from ledger history rather than accepted from a proposer. Different agents' subjective understandings remain separate memory/belief records by design.
+Rollback: Revert the M20-002 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
 Owner decision still needed: None.
 ```
 

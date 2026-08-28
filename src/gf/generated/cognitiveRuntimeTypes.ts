@@ -17,6 +17,13 @@ export interface SourceRef {
   "observed_at"?: Timestamp | null;
 }
 
+export interface EventSourceRef {
+  "source_type": "event";
+  "source_id": Id;
+  "quote_hash"?: string | null;
+  "observed_at"?: Timestamp | null;
+}
+
 export type SourceRefs = SourceRef[];
 
 export type Sha256Hash = string;

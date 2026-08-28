@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import type {
+  CommitmentV1,
   MemoryBundleV1,
   ObservationV1,
   OpenActionProposalV1,
@@ -28,6 +29,7 @@ const contracts = {
   working_self: "working-self.schema.json",
   open_action_proposal: "open-action-proposal.schema.json",
   world_outcome_proposal: "world-outcome-proposal.schema.json",
+  commitment: "commitment.schema.json",
 } as const;
 
 function keys(refs: readonly SourceRef[]): Set<string> {
@@ -45,10 +47,13 @@ test("final agent pipeline fixtures satisfy versioned schemas", () => {
   const workingSelf = fixture.working_self as WorkingSelfV1;
   const action = fixture.open_action_proposal as OpenActionProposalV1;
   const outcome = fixture.world_outcome_proposal as WorldOutcomeProposalV1;
+  const commitment = fixture.commitment as CommitmentV1;
   assert.equal(observation.actor_id, memory.actor_id);
   assert.equal(memory.actor_id, workingSelf.actor_id);
   assert.equal(workingSelf.actor_id, action.actor_id);
   assert.equal(action.proposal_id, outcome.action_proposal_id);
+  assert.equal(commitment.derived_from_ledger, true);
+  assert.equal(commitment.projection_scope, "adjudication_audit_only");
 });
 
 test("Working Self and open action remain source-closed", () => {
@@ -96,4 +101,8 @@ test("contracts reject hidden state, finite actions, and claimed success", () =>
     registry.isValid("world-outcome-proposal.schema.json", outcome),
     false,
   );
+
+  const commitment = structuredClone(fixture.commitment as CommitmentV1);
+  commitment.status = "fulfilled";
+  assert.equal(registry.isValid("commitment.schema.json", commitment), false);
 });

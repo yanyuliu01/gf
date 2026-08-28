@@ -25,6 +25,7 @@ const localNames = new Map([
   ["id", "Id"],
   ["timestamp", "Timestamp"],
   ["sourceRef", "SourceRef"],
+  ["eventSourceRef", "EventSourceRef"],
   ["privacyScope", "PrivacyScope"],
   ["sourceRefs", "SourceRefs"],
   ["hash", "Sha256Hash"],
@@ -103,6 +104,7 @@ function render(schema, schemaName) {
     "export type Timestamp = string;",
     declaration("PrivacyScope", common.$defs.privacyScope),
     declaration("SourceRef", common.$defs.sourceRef),
+    declaration("EventSourceRef", common.$defs.eventSourceRef),
     ...Object.entries(schema.$defs).map(([rawName, definition]) =>
       declaration(localNames.get(rawName) ?? rawName, definition),
     ),

@@ -226,6 +226,7 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         "working_self": "working-self.schema.json",
         "open_action_proposal": "open-action-proposal.schema.json",
         "world_outcome_proposal": "world-outcome-proposal.schema.json",
+        "commitment": "commitment.schema.json",
     }
     for fixture_key, schema_name in pipeline_contracts.items():
         all_validators[schema_name].validate(pipeline[fixture_key])
@@ -286,6 +287,48 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         all_validators["world-outcome-proposal.schema.json"],
         unexplained_rejection,
         "rejected outcome has no hard constraint class",
+    )
+
+    ungrounded_commitment = copy.deepcopy(pipeline["commitment"])
+    ungrounded_commitment["source_refs"] = []
+    expect_invalid(
+        all_validators["commitment.schema.json"],
+        ungrounded_commitment,
+        "commitment projection has no ledger evidence",
+    )
+
+    authoritative_commitment = copy.deepcopy(pipeline["commitment"])
+    authoritative_commitment["derived_from_ledger"] = False
+    expect_invalid(
+        all_validators["commitment.schema.json"],
+        authoritative_commitment,
+        "commitment projection claims fact authority",
+    )
+
+    policy_visible_commitment = copy.deepcopy(pipeline["commitment"])
+    policy_visible_commitment["projection_scope"] = "working_self"
+    expect_invalid(
+        all_validators["commitment.schema.json"],
+        policy_visible_commitment,
+        "commitment projection is exposed to Policy",
+    )
+
+    unsupported_fulfillment = copy.deepcopy(pipeline["commitment"])
+    unsupported_fulfillment["status"] = "fulfilled"
+    expect_invalid(
+        all_validators["commitment.schema.json"],
+        unsupported_fulfillment,
+        "fulfilled commitment has no fulfillment event",
+    )
+
+    active_after_fulfillment = copy.deepcopy(pipeline["commitment"])
+    active_after_fulfillment["fulfillment_event_refs"] = [
+        {"source_type": "event", "source_id": "evt_commitment_fulfilled_0001"}
+    ]
+    expect_invalid(
+        all_validators["commitment.schema.json"],
+        active_after_fulfillment,
+        "active commitment already has a terminal event",
     )
 
     hidden_fact_subscription = copy.deepcopy(cognitive["attention_subscription"])
@@ -750,8 +793,8 @@ def main() -> int:
     validate_cross_field_contracts()
     validate_migration()
     print(
-        f"OK: {len(all_validators)} schemas, 26 positive contract samples, "
-        "24 negative contracts, migration 001 invariants"
+        f"OK: {len(all_validators)} schemas, 27 positive contract samples, "
+        "29 negative contracts, migration 001 invariants"
     )
     return 0
 

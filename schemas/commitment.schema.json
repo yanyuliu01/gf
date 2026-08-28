@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/commitment.schema.json",
+  "title": "Commitment projection v1",
+  "$ref": "agent-pipeline.schema.json#/$defs/CommitmentV1"
+}

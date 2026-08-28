@@ -117,5 +117,26 @@
     "source_closure_hash": "4000000000000000000000000000000000000000000000000000000000000004",
     "base_state_revision": 20,
     "proposed_at": "2026-08-29T09:00:06+08:00"
+  },
+  "commitment": {
+    "schema_version": "1.0",
+    "commitment_id": "commitment_s4_followup_0001",
+    "subject_id": "terra",
+    "object_id": "veyl",
+    "content": "完成 S-4 现场复核后，把确认过的结果发给薇尔。",
+    "condition": "S-4 现场复核完成",
+    "due_at": "2026-08-29T17:00:00+08:00",
+    "status": "active",
+    "source_refs": [{ "source_type": "event", "source_id": "evt_commitment_spoken_0001" }],
+    "fulfillment_event_refs": [],
+    "broken_event_refs": [],
+    "released_event_refs": [],
+    "debt_id": null,
+    "derived_from_ledger": true,
+    "projection_scope": "adjudication_audit_only",
+    "projection_version": "commitment_projection.v1",
+    "base_state_revision": 20,
+    "input_closure_hash": "5000000000000000000000000000000000000000000000000000000000000005",
+    "derived_at": "2026-08-29T09:00:07+08:00"
   }
 }
