@@ -1,0 +1,185 @@
+{
+  "wake_candidate": {
+    "schema_version": "1.0",
+    "candidate_id": "wake_candidate_0001",
+    "actor_id": "terra",
+    "committed_revision": 12,
+    "observation_refs": [{ "source_type": "event", "source_id": "evt_observation_0001" }],
+    "boundary_kind": "observable_change",
+    "occurred_at": "2026-08-29T08:00:00+08:00",
+    "input_closure_hash": "0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "wake_decision": {
+    "schema_version": "1.0",
+    "decision_id": "wake_decision_0001",
+    "candidate_id": "wake_candidate_0001",
+    "actor_id": "terra",
+    "disposition": "wake",
+    "queue_lane": "normal",
+    "reason_codes": ["observable_change"],
+    "matched_rule_ids": [],
+    "observation_refs": [{ "source_type": "event", "source_id": "evt_observation_0001" }],
+    "gate_version": "cognitive_gate.v1",
+    "parameter_version": "cognitive_gate.params.v1",
+    "base_state_revision": 12,
+    "input_closure_hash": "0000000000000000000000000000000000000000000000000000000000000001",
+    "decided_at": "2026-08-29T08:00:01+08:00"
+  },
+  "attention_intent": {
+    "schema_version": "1.0",
+    "intent_id": "attention_intent_0001",
+    "actor_id": "terra",
+    "concern": "S-4 样本的稳定性",
+    "future_change": "如果后续可见读数继续偏离，就重新注意它",
+    "scope": {
+      "kind": "object",
+      "subject_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+      "valid_until": "2026-08-29T18:00:00+08:00"
+    },
+    "lifecycle": "active",
+    "evidence_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "policy_run_id": "prompt_run_policy_0001",
+    "source_closure_hash": "0000000000000000000000000000000000000000000000000000000000000002",
+    "base_state_revision": 12,
+    "created_at": "2026-08-29T08:01:00+08:00",
+    "supersedes_intent_id": null
+  },
+  "attention_subscription": {
+    "schema_version": "1.0",
+    "subscription_id": "attention_subscription_0001",
+    "intent_id": "attention_intent_0001",
+    "actor_id": "terra",
+    "status": "active",
+    "observable_filter": {
+      "event_kinds": ["observation.s4_reading_changed"],
+      "entity_ids": ["s4_terminal"],
+      "location_ids": ["eco_garden"],
+      "match_mode": "any"
+    },
+    "perception_only": true,
+    "evidence_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "compiler_version": "attention_compiler.v1",
+    "base_state_revision": 12,
+    "created_at": "2026-08-29T08:01:01+08:00",
+    "expires_at": "2026-08-29T18:00:00+08:00"
+  },
+  "inference_usage_receipt": {
+    "schema_version": "1.0",
+    "receipt_id": "usage_receipt_0001",
+    "prompt_run_id": "prompt_run_policy_0001",
+    "provider_request_id": "provider-request-0001",
+    "model_id": "model-version-1",
+    "tokenizer_version": "tokenizer.v1",
+    "input_tokens": 120,
+    "cached_input_tokens": 20,
+    "output_tokens": 30,
+    "reasoning_tokens": 10,
+    "attempt_ordinal": 1,
+    "completion_status": "completed",
+    "usage_source": "provider",
+    "received_at": "2026-08-29T08:01:05+08:00"
+  },
+  "experienced_usage_breakdown": {
+    "schema_version": "1.0",
+    "breakdown_id": "usage_breakdown_0001",
+    "usage_receipt_id": "usage_receipt_0001",
+    "prompt_run_id": "prompt_run_policy_0001",
+    "segments": [
+      {
+        "segment_id": "segment_current_message",
+        "purpose": "current_message",
+        "token_count": 40,
+        "experienced": true,
+        "source_refs": [{ "source_type": "message", "source_id": "msg_0001" }]
+      },
+      {
+        "segment_id": "segment_runtime",
+        "purpose": "runtime_overhead",
+        "token_count": 15,
+        "experienced": false,
+        "source_refs": []
+      }
+    ],
+    "attempt_class": "accepted_semantic",
+    "classification_version": "usage_classifier.v1",
+    "input_closure_hash": "0000000000000000000000000000000000000000000000000000000000000002"
+  },
+  "cognitive_energy_account": {
+    "schema_version": "1.0",
+    "actor_id": "terra",
+    "available": 80,
+    "reserved": 10,
+    "capacity": 100,
+    "protected_reply_reserve": 20,
+    "recovered_at": "2026-08-29T08:00:00+08:00",
+    "recovery_model_version": "energy_recovery.v1",
+    "revision": 4
+  },
+  "cognitive_energy_reservation": {
+    "schema_version": "1.0",
+    "reservation_id": "energy_reservation_0001",
+    "actor_id": "terra",
+    "wake_decision_id": "wake_decision_0001",
+    "prompt_run_id": "prompt_run_policy_0001",
+    "purpose": "policy",
+    "max_normalized_token_units": 20,
+    "access_class": "autonomous",
+    "base_state_revision": 12,
+    "accounting_version": "cognitive_energy.v1",
+    "expires_at": "2026-08-29T08:06:00+08:00",
+    "idempotency_key": "energy-reservation:prompt-run-policy-0001"
+  },
+  "cognitive_energy_settlement": {
+    "schema_version": "1.0",
+    "settlement_id": "energy_settlement_0001",
+    "reservation_id": "energy_reservation_0001",
+    "usage_receipt_id": "usage_receipt_0001",
+    "experienced_breakdown_id": "usage_breakdown_0001",
+    "normalized_token_units": 14,
+    "energy_spent": 14,
+    "released_reservation": 6,
+    "accounting_version": "cognitive_energy.v1",
+    "source_refs": [{ "source_type": "event", "source_id": "evt_observation_0001" }],
+    "settled_at": "2026-08-29T08:01:06+08:00"
+  },
+  "cognitive_capacity_envelope": {
+    "schema_version": "2.0",
+    "envelope_id": "capacity_envelope_0001",
+    "actor_id": "terra",
+    "reservation_id": "energy_reservation_0001",
+    "access_class": "autonomous",
+    "visibility": "engine_only",
+    "max_semantic_input_units": 80,
+    "max_deliberation_units": 20,
+    "max_expression_units": 20,
+    "max_tool_rounds": 2,
+    "mandatory_source_refs": [{ "source_type": "message", "source_id": "msg_0001" }],
+    "accounting_version": "cognitive_energy.v1",
+    "base_state_revision": 12
+  },
+  "cognitive_episode_evidence": {
+    "schema_version": "2.0",
+    "episode_id": "cognitive_episode_0001",
+    "actor_id": "terra",
+    "purpose": "policy",
+    "subject_refs": [{ "source_type": "message", "source_id": "msg_0001" }],
+    "result_refs": [{ "source_type": "event", "source_id": "evt_observation_0001" }],
+    "started_at": "2026-08-29T08:01:01+08:00",
+    "ended_at": "2026-08-29T08:01:06+08:00",
+    "completion": "completed",
+    "prompt_run_id": "prompt_run_policy_0001",
+    "source_closure_hash": "0000000000000000000000000000000000000000000000000000000000000002"
+  },
+  "self_experience_proposal": {
+    "schema_version": "2.0",
+    "proposal_id": "self_experience_0001",
+    "actor_id": "terra",
+    "narrative": "刚才连续核对了几项互相牵连的读数，我想先停一下确认没有漏掉关键反证。",
+    "evidence_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "uncertainty_narrative": "也可能只是异常刚出现时需要更集中。",
+    "policy_run_id": "prompt_run_policy_0001",
+    "source_closure_hash": "0000000000000000000000000000000000000000000000000000000000000002",
+    "base_state_revision": 12,
+    "as_of": "2026-08-29T08:01:06+08:00"
+  }
+}

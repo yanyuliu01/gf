@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/cognitive-episode-evidence.schema.json",
+  "title": "Cognitive episode evidence v2",
+  "$ref": "cognitive-runtime.schema.json#/$defs/CognitiveEpisodeEvidenceV2"
+}

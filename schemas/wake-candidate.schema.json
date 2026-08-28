@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/wake-candidate.schema.json",
+  "title": "Wake candidate v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/WakeCandidateV1"
+}

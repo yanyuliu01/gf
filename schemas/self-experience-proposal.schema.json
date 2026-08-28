@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/self-experience-proposal.schema.json",
+  "title": "Self experience proposal v2",
+  "$ref": "cognitive-runtime.schema.json#/$defs/SelfExperienceProposalV2"
+}

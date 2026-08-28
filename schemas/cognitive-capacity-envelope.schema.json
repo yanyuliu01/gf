@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/cognitive-capacity-envelope.schema.json",
+  "title": "Cognitive capacity envelope v2",
+  "$ref": "cognitive-runtime.schema.json#/$defs/CognitiveCapacityEnvelopeV2"
+}

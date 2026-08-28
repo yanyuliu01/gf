@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/wake-decision.schema.json",
+  "title": "Wake decision v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/WakeDecisionV1"
+}

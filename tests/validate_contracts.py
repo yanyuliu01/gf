@@ -201,6 +201,64 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         all_validators[schema_name].validate(value)
         loaded[fixture_name] = value
 
+    cognitive = load_json(FIXTURES / "cognitive-runtime.valid.json")
+    cognitive_contracts = {
+        "wake_candidate": "wake-candidate.schema.json",
+        "wake_decision": "wake-decision.schema.json",
+        "attention_intent": "attention-intent.schema.json",
+        "attention_subscription": "attention-subscription.schema.json",
+        "inference_usage_receipt": "inference-usage-receipt.schema.json",
+        "experienced_usage_breakdown": "experienced-usage-breakdown.schema.json",
+        "cognitive_energy_account": "cognitive-energy-account.schema.json",
+        "cognitive_energy_reservation": "cognitive-energy-reservation.schema.json",
+        "cognitive_energy_settlement": "cognitive-energy-settlement.schema.json",
+        "cognitive_capacity_envelope": "cognitive-capacity-envelope.schema.json",
+        "cognitive_episode_evidence": "cognitive-episode-evidence.schema.json",
+        "self_experience_proposal": "self-experience-proposal.schema.json",
+    }
+    for fixture_key, schema_name in cognitive_contracts.items():
+        all_validators[schema_name].validate(cognitive[fixture_key])
+
+    hidden_fact_subscription = copy.deepcopy(cognitive["attention_subscription"])
+    hidden_fact_subscription["observable_filter"]["hidden_fact_ids"] = ["fact_secret"]
+    expect_invalid(
+        all_validators["attention-subscription.schema.json"],
+        hidden_fact_subscription,
+        "attention subscription bypasses perception",
+    )
+
+    non_perceptual_subscription = copy.deepcopy(cognitive["attention_subscription"])
+    non_perceptual_subscription["perception_only"] = False
+    expect_invalid(
+        all_validators["attention-subscription.schema.json"],
+        non_perceptual_subscription,
+        "attention subscription is not perception-only",
+    )
+
+    exposed_envelope = copy.deepcopy(cognitive["cognitive_capacity_envelope"])
+    exposed_envelope["visibility"] = "prompt_input"
+    expect_invalid(
+        all_validators["cognitive-capacity-envelope.schema.json"],
+        exposed_envelope,
+        "capacity envelope exposed to policy prompt",
+    )
+
+    labelled_experience = copy.deepcopy(cognitive["self_experience_proposal"])
+    labelled_experience["fatigue_level"] = "high"
+    expect_invalid(
+        all_validators["self-experience-proposal.schema.json"],
+        labelled_experience,
+        "self experience receives a fatigue enum",
+    )
+
+    numeric_episode = copy.deepcopy(cognitive["cognitive_episode_evidence"])
+    numeric_episode["account_snapshot"] = {"available": 80}
+    expect_invalid(
+        all_validators["cognitive-episode-evidence.schema.json"],
+        numeric_episode,
+        "episode evidence leaks account numbers",
+    )
+
     old_source_ref = copy.deepcopy(loaded["scene-settlement.valid.json"])
     source = old_source_ref["claims"][0]["source_refs"][0]
     source["type"] = source.pop("source_type")
@@ -340,6 +398,28 @@ def validate_cross_field_contracts() -> None:
     probe = load_json(FIXTURES / "probe-judgement.valid.json")
     if [item["aspect"] for item in probe["verdicts"]] != [1, 2, 3, 4, 5]:
         raise AssertionError("probe aspects are not in the required 1..5 order")
+
+    cognitive_schema = load_json(SCHEMAS / "cognitive-runtime.schema.json")
+    subjective_defs = {
+        name: cognitive_schema["$defs"][name]
+        for name in ("CognitiveEpisodeEvidenceV2", "SelfExperienceProposalV2")
+    }
+    forbidden_subjective_fields = (
+        "fatigue", "energy", "token", "provider", "price", "account_snapshot",
+        "capability_effects", "attention_state", "suggested_behavior",
+    )
+    for name, definition in subjective_defs.items():
+        encoded = json.dumps(definition, sort_keys=True).lower()
+        leaked = [term for term in forbidden_subjective_fields if term in encoded]
+        if leaked:
+            raise AssertionError(f"{name}: hidden runtime vocabulary leaked: {leaked}")
+
+    full_cognitive_schema = json.dumps(cognitive_schema, sort_keys=True).lower()
+    for forbidden_mapping in ("fatigue_level", "fatigue_state", "energy_to_feeling"):
+        if forbidden_mapping in full_cognitive_schema:
+            raise AssertionError(
+                f"cognitive runtime schema contains forbidden mapping {forbidden_mapping!r}"
+            )
 
 
 def validate_migration() -> None:
@@ -545,8 +625,8 @@ def main() -> int:
     validate_cross_field_contracts()
     validate_migration()
     print(
-        f"OK: {len(all_validators)} schemas, 9 positive fixtures, "
-        "12 negative contracts, migration 001 invariants"
+        f"OK: {len(all_validators)} schemas, 21 positive contract samples, "
+        "17 negative contracts, migration 001 invariants"
     )
     return 0
 

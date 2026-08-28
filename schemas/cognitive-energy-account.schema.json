@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/cognitive-energy-account.schema.json",
+  "title": "Cognitive energy account v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/CognitiveEnergyAccountV1"
+}

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/experienced-usage-breakdown.schema.json",
+  "title": "Experienced usage breakdown v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/ExperiencedUsageBreakdownV1"
+}

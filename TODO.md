@@ -244,9 +244,21 @@ required for correct operation.
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
-| `M20-006` | `READY` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. |
+| `M20-006` | `DONE` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. Completed 2026-08-29. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
 | `M20-008` | `BLOCKED` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. |
+
+### M20-006 Evidence (2026-08-29)
+
+```text
+Outcome: Froze 12 strict runtime entry schemas backed by one shared cognitive definition graph: WakeCandidate/Decision, source-linked AttentionIntent and perception-only compiled AttentionSubscription, raw usage receipt and experienced segment breakdown, numeric energy account/reservation/settlement, engine-only CapacityEnvelope, nonnumeric source-linked CognitiveEpisodeEvidence, and optional open-text SelfExperienceProposal. Added deterministic schema-derived TypeScript generation plus drift checking in the normal test command. Contract tests reject hidden-fact subscription fields, non-perceptual subscriptions, prompt-visible envelopes, fatigue enums, and numeric account leakage into lived evidence.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/README.md; docs/invariants/19 section 3; docs/cognition/18 sections 1-7; docs/cognition/20 sections 2-13; docs/history/17 sections 3-4 for retained v1 accounting shapes.
+Files changed: TODO.md; package.json; schemas/cognitive-runtime.schema.json and 12 cognitive entry schemas; scripts/generate-schema-types.mjs; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/tests/cognitiveRuntimeContracts.test.ts; tests/contracts/cognitive-runtime.valid.json; tests/validate_contracts.py.
+Checks: npm test (67/67, including generated-type drift check); contract validation (25 schemas, 21 positive samples, 17 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: JSON Schema constrains individual payload shape, not cross-row conservation, lease idempotency, expiry ordering, or cached-input arithmetic. Those runtime properties remain owned by M20-016 through M20-019. Provider/model identifiers remain raw audit fields in InferenceUsageReceipt and are forbidden from subjective evidence and Policy input.
+Rollback: Revert the M20-006 commit; no migration, database row, world fact, provider call, or outbound message is changed.
+Owner decision still needed: None.
+```
 
 ### M20-004 Evidence (2026-08-28)
 

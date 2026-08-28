@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/cognitive-runtime.schema.json",
+  "title": "GF cognitive runtime shared definitions",
+  "$defs": {
+    "sourceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "purpose": {
+      "enum": ["appraisal", "policy", "npc_policy", "surface", "reflection"]
+    },
+    "accessClass": {
+      "enum": ["autonomous", "reply", "safety"]
+    },
+    "WakeCandidateV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "candidate_id", "actor_id", "committed_revision",
+        "observation_refs", "boundary_kind", "occurred_at", "input_closure_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "candidate_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "committed_revision": { "type": "integer", "minimum": 0 },
+        "observation_refs": { "$ref": "#/$defs/sourceRefs" },
+        "boundary_kind": {
+          "enum": [
+            "observable_change", "activity_boundary", "runtime_hard_interrupt",
+            "attention_match", "accumulated_signal"
+          ]
+        },
+        "occurred_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "input_closure_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "WakeDecisionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "decision_id", "candidate_id", "actor_id", "disposition",
+        "queue_lane", "reason_codes", "matched_rule_ids", "observation_refs",
+        "gate_version", "parameter_version", "base_state_revision",
+        "input_closure_hash", "decided_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "decision_id": { "$ref": "common.schema.json#/$defs/id" },
+        "candidate_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "disposition": { "enum": ["ignore", "accumulate", "wake"] },
+        "queue_lane": { "enum": ["none", "background", "normal", "reply", "safety"] },
+        "reason_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "observable_change", "current_activity_boundary", "runtime_hard_interrupt",
+              "attention_subscription_match", "accumulated_signal", "no_material_change",
+              "deduplicated", "non_recursive_internal_change", "insufficient_observable_evidence"
+            ]
+          }
+        },
+        "matched_rule_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "observation_refs": { "$ref": "#/$defs/sourceRefs" },
+        "gate_version": { "$ref": "common.schema.json#/$defs/id" },
+        "parameter_version": { "$ref": "common.schema.json#/$defs/id" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "input_closure_hash": { "$ref": "#/$defs/hash" },
+        "decided_at": { "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    },
+    "AttentionScopeV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "subject_refs"],
+      "properties": {
+        "kind": { "enum": ["activity", "object", "time_window", "commitment", "plan", "concern"] },
+        "subject_refs": { "$ref": "#/$defs/sourceRefs" },
+        "valid_until": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "AttentionIntentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "intent_id", "actor_id", "concern", "future_change",
+        "scope", "lifecycle", "evidence_refs", "policy_run_id", "source_closure_hash",
+        "base_state_revision", "created_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "intent_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "concern": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "future_change": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "scope": { "$ref": "#/$defs/AttentionScopeV1" },
+        "lifecycle": { "enum": ["active", "suspended", "cancelled", "expired", "completed", "superseded"] },
+        "evidence_refs": { "$ref": "#/$defs/sourceRefs" },
+        "policy_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "source_closure_hash": { "$ref": "#/$defs/hash" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "created_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "supersedes_intent_id": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "ObservableFilterV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_kinds", "entity_ids", "location_ids", "match_mode"],
+      "properties": {
+        "event_kinds": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "entity_ids": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "location_ids": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "match_mode": { "enum": ["any", "all"] }
+      }
+    },
+    "AttentionSubscriptionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "subscription_id", "intent_id", "actor_id", "status",
+        "observable_filter", "perception_only", "evidence_refs", "compiler_version",
+        "base_state_revision", "created_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "subscription_id": { "$ref": "common.schema.json#/$defs/id" },
+        "intent_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "status": { "enum": ["active", "suspended", "cancelled", "expired", "completed", "superseded"] },
+        "observable_filter": { "$ref": "#/$defs/ObservableFilterV1" },
+        "perception_only": { "const": true },
+        "evidence_refs": { "$ref": "#/$defs/sourceRefs" },
+        "compiler_version": { "$ref": "common.schema.json#/$defs/id" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "created_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "expires_at": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "InferenceUsageReceiptV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "receipt_id", "prompt_run_id", "provider_request_id",
+        "model_id", "tokenizer_version", "input_tokens", "output_tokens",
+        "attempt_ordinal", "completion_status", "usage_source", "received_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "receipt_id": { "$ref": "common.schema.json#/$defs/id" },
+        "prompt_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "provider_request_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "model_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "tokenizer_version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "reasoning_tokens": { "type": "integer", "minimum": 0 },
+        "attempt_ordinal": { "type": "integer", "minimum": 1 },
+        "completion_status": { "enum": ["completed", "transport_error", "cancelled"] },
+        "usage_source": { "enum": ["provider", "local_tokenizer", "versioned_estimate"] },
+        "received_at": { "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    },
+    "TokenSegmentUsageV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["segment_id", "purpose", "token_count", "experienced", "source_refs"],
+      "properties": {
+        "segment_id": { "$ref": "common.schema.json#/$defs/id" },
+        "purpose": {
+          "enum": [
+            "current_message", "safety", "world_fact", "memory", "commitment",
+            "working_self", "deliberation", "self_experience", "expression", "runtime_overhead"
+          ]
+        },
+        "token_count": { "type": "integer", "minimum": 0 },
+        "experienced": { "type": "boolean" },
+        "source_refs": {
+          "type": "array", "maxItems": 64,
+          "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+        }
+      }
+    },
+    "ExperiencedUsageBreakdownV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "breakdown_id", "usage_receipt_id", "prompt_run_id",
+        "segments", "attempt_class", "classification_version", "input_closure_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "breakdown_id": { "$ref": "common.schema.json#/$defs/id" },
+        "usage_receipt_id": { "$ref": "common.schema.json#/$defs/id" },
+        "prompt_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "segments": {
+          "type": "array", "minItems": 1, "maxItems": 128,
+          "items": { "$ref": "#/$defs/TokenSegmentUsageV1" }
+        },
+        "attempt_class": { "enum": ["accepted_semantic", "transport_retry", "runtime_repair"] },
+        "classification_version": { "$ref": "common.schema.json#/$defs/id" },
+        "input_closure_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "CognitiveEnergyAccountV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "actor_id", "available", "reserved", "capacity",
+        "protected_reply_reserve", "recovered_at", "recovery_model_version", "revision"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "available": { "type": "number", "minimum": 0 },
+        "reserved": { "type": "number", "minimum": 0 },
+        "capacity": { "type": "number", "minimum": 0 },
+        "protected_reply_reserve": { "type": "number", "minimum": 0 },
+        "recovered_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "recovery_model_version": { "$ref": "common.schema.json#/$defs/id" },
+        "revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "CognitiveEnergyReservationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "reservation_id", "actor_id", "wake_decision_id", "prompt_run_id",
+        "purpose", "max_normalized_token_units", "access_class", "base_state_revision",
+        "accounting_version", "expires_at", "idempotency_key"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "reservation_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "wake_decision_id": { "$ref": "common.schema.json#/$defs/id" },
+        "prompt_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "purpose": { "$ref": "#/$defs/purpose" },
+        "max_normalized_token_units": { "type": "number", "minimum": 0 },
+        "access_class": { "$ref": "#/$defs/accessClass" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "accounting_version": { "$ref": "common.schema.json#/$defs/id" },
+        "expires_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "idempotency_key": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "CognitiveEnergySettlementV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "settlement_id", "reservation_id", "usage_receipt_id",
+        "experienced_breakdown_id", "normalized_token_units", "energy_spent",
+        "released_reservation", "accounting_version", "source_refs", "settled_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "settlement_id": { "$ref": "common.schema.json#/$defs/id" },
+        "reservation_id": { "$ref": "common.schema.json#/$defs/id" },
+        "usage_receipt_id": { "$ref": "common.schema.json#/$defs/id" },
+        "experienced_breakdown_id": { "$ref": "common.schema.json#/$defs/id" },
+        "normalized_token_units": { "type": "number", "minimum": 0 },
+        "energy_spent": { "type": "number", "minimum": 0 },
+        "released_reservation": { "type": "number", "minimum": 0 },
+        "accounting_version": { "$ref": "common.schema.json#/$defs/id" },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "settled_at": { "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    },
+    "CognitiveCapacityEnvelopeV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "envelope_id", "actor_id", "reservation_id", "access_class",
+        "visibility", "max_semantic_input_units", "max_deliberation_units",
+        "max_expression_units", "max_tool_rounds", "mandatory_source_refs",
+        "accounting_version", "base_state_revision"
+      ],
+      "properties": {
+        "schema_version": { "const": "2.0" },
+        "envelope_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "reservation_id": { "$ref": "common.schema.json#/$defs/id" },
+        "access_class": { "$ref": "#/$defs/accessClass" },
+        "visibility": { "const": "engine_only" },
+        "max_semantic_input_units": { "type": "integer", "minimum": 0 },
+        "max_deliberation_units": { "type": "integer", "minimum": 0 },
+        "max_expression_units": { "type": "integer", "minimum": 0 },
+        "max_tool_rounds": { "type": "integer", "minimum": 0 },
+        "mandatory_source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "accounting_version": { "$ref": "common.schema.json#/$defs/id" },
+        "base_state_revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "CognitiveEpisodeEvidenceV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "episode_id", "actor_id", "purpose", "subject_refs",
+        "result_refs", "started_at", "ended_at", "completion", "prompt_run_id",
+        "source_closure_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": "2.0" },
+        "episode_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "purpose": { "$ref": "#/$defs/purpose" },
+        "subject_refs": { "$ref": "#/$defs/sourceRefs" },
+        "result_refs": {
+          "type": "array", "maxItems": 64,
+          "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+        },
+        "started_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "ended_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "completion": { "enum": ["completed", "interrupted"] },
+        "prompt_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "source_closure_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "SelfExperienceProposalV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "proposal_id", "actor_id", "narrative", "evidence_refs",
+        "policy_run_id", "source_closure_hash", "base_state_revision", "as_of"
+      ],
+      "properties": {
+        "schema_version": { "const": "2.0" },
+        "proposal_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "narrative": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "evidence_refs": { "$ref": "#/$defs/sourceRefs" },
+        "uncertainty_narrative": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "policy_run_id": { "$ref": "common.schema.json#/$defs/id" },
+        "source_closure_hash": { "$ref": "#/$defs/hash" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "as_of": { "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    }
+  }
+}

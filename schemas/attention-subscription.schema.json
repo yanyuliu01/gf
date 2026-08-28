@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/attention-subscription.schema.json",
+  "title": "Attention subscription v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/AttentionSubscriptionV1"
+}
