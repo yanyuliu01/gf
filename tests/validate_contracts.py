@@ -591,15 +591,15 @@ def validate_cross_field_contracts() -> None:
 
 
 def validate_migration() -> None:
-    sql = (ROOT / "migrations" / "001_initial.sql").read_text(encoding="utf-8")
     connection = sqlite3.connect(":memory:")
     try:
-        connection.executescript(sql)
+        for migration in sorted((ROOT / "migrations").glob("[0-9][0-9][0-9]_*.sql")):
+            connection.executescript(migration.read_text(encoding="utf-8"))
         version = connection.execute(
             "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1"
         ).fetchone()
-        if version != ("001",):
-            raise AssertionError("initial migration did not register version 001")
+        if version != ("002",):
+            raise AssertionError("migration chain did not register version 002")
         required = {
             "world_events",
             "operation_commits",
@@ -610,6 +610,20 @@ def validate_migration() -> None:
             "outbox",
             "operation_processed_messages",
             "runtime_revision",
+            "observations",
+            "observation_sources",
+            "belief_proposals",
+            "belief_proposal_sources",
+            "open_loop_records",
+            "open_loop_sources",
+            "commitment_projections",
+            "commitment_projection_sources",
+            "action_proposal_audit",
+            "action_proposal_sources",
+            "world_outcome_audit",
+            "world_outcome_sources",
+            "derived_input_closures",
+            "derived_input_sources",
         }
         actual = {
             row[0]
@@ -621,6 +635,7 @@ def validate_migration() -> None:
         if missing:
             raise AssertionError(f"migration missing tables: {sorted(missing)}")
         validate_sql_invariants(connection)
+        validate_pipeline_sql_invariants(connection)
     finally:
         connection.close()
 
@@ -787,6 +802,117 @@ def validate_sql_invariants(connection: sqlite3.Connection) -> None:
         raise AssertionError("stale CAS update unexpectedly succeeded")
 
 
+def validate_pipeline_sql_invariants(connection: sqlite3.Connection) -> None:
+    commitment_sql = """
+        INSERT INTO commitment_projections(
+            projection_id, commitment_id, schema_version, subject_id, object_id,
+            content, condition_text, due_at, status,
+            fulfillment_event_refs_json, broken_event_refs_json,
+            released_event_refs_json, debt_id, derived_from_ledger,
+            projection_scope, projection_version, base_state_revision,
+            input_closure_hash, payload_json, derived_at
+        ) VALUES (?, ?, '1.0', 'terra', 'veyl', 'send S-4 result', NULL, NULL, ?,
+                  ?, ?, ?, NULL, 1, 'adjudication_audit_only',
+                  'commitment_projection.v1', 3, ?, '{}', '2026-08-29T09:00:00Z')
+    """
+    closure_hash = "5" * 64
+    expect_integrity_error(
+        connection,
+        commitment_sql,
+        (
+            "projection_bad_fulfilled", "commitment_bad_fulfilled", "fulfilled",
+            "[]", "[]", "[]", closure_hash,
+        ),
+    )
+    expect_integrity_error(
+        connection,
+        commitment_sql,
+        (
+            "projection_bad_active", "commitment_bad_active", "active",
+            '[{"source_type":"event","source_id":"evt_done"}]', "[]", "[]",
+            closure_hash,
+        ),
+    )
+    connection.execute(
+        commitment_sql,
+        (
+            "projection_active", "commitment_active", "active", "[]", "[]", "[]",
+            closure_hash,
+        ),
+    )
+
+    action_sql = """
+        INSERT INTO action_proposal_audit(
+            proposal_id, schema_version, actor_id, policy_run_id, intent,
+            source_closure_hash, base_state_revision, payload_json, proposed_at
+        ) VALUES (?, '1.0', 'terra', 'prompt_run_policy_2', 'inspect S-4',
+                  ?, 3, '{}', '2026-08-29T09:00:01Z')
+    """
+    connection.execute(action_sql, ("open_action_2", "6" * 64))
+    outcome_sql = """
+        INSERT INTO world_outcome_audit(
+            outcome_id, schema_version, action_proposal_id, actor_id, status,
+            summary, hard_constraint_classes_json, proposed_effects_json,
+            adjudicator_version, rule_version, source_closure_hash,
+            base_state_revision, payload_json, proposed_at
+        ) VALUES (?, '1.0', 'open_action_2', 'terra', ?, ?, ?, ?,
+                  'world_adjudicator.v1', 'world_rules.v1', ?, 3, '{}',
+                  '2026-08-29T09:00:02Z')
+    """
+    expect_integrity_error(
+        connection,
+        outcome_sql,
+        ("outcome_bad_success", "accepted", "bad", "[]", "[]", "7" * 64),
+    )
+    expect_integrity_error(
+        connection,
+        outcome_sql,
+        ("outcome_bad_reject", "rejected", "bad", "[]", "[]", "7" * 64),
+    )
+    connection.execute(
+        outcome_sql,
+        (
+            "outcome_accepted", "accepted", "started inspection", "[]",
+            '[{"effect_id":"effect_1"}]', "7" * 64,
+        ),
+    )
+    expect_integrity_error(
+        connection,
+        "UPDATE action_proposal_audit SET intent = ? WHERE proposal_id = ?",
+        ("mutated", "open_action_2"),
+    )
+    expect_integrity_error(
+        connection,
+        "DELETE FROM world_outcome_audit WHERE outcome_id = ?",
+        ("outcome_accepted",),
+    )
+
+    connection.execute(
+        """
+        INSERT INTO derived_input_closures(
+            artifact_kind, artifact_id, closure_hash, base_state_revision, created_at
+        ) VALUES ('working_self', 'working_self_2', ?, 3, '2026-08-29T09:00:00Z')
+        """,
+        ("8" * 64,),
+    )
+    connection.execute(
+        """
+        INSERT INTO derived_input_sources(
+            artifact_kind, artifact_id, source_type, source_id, ordinal
+        ) VALUES ('working_self', 'working_self_2', 'event', 'evt_visible', 0)
+        """
+    )
+    expect_integrity_error(
+        connection,
+        """
+        INSERT INTO derived_input_sources(
+            artifact_kind, artifact_id, source_type, source_id, ordinal
+        ) VALUES ('working_self', 'missing', 'event', 'evt_hidden', 0)
+        """,
+        (),
+    )
+
+
 def main() -> int:
     all_validators = validators()
     validate_fixtures(all_validators)
@@ -794,7 +920,7 @@ def main() -> int:
     validate_migration()
     print(
         f"OK: {len(all_validators)} schemas, 27 positive contract samples, "
-        "29 negative contracts, migration 001 invariants"
+        "29 negative contracts, migrations 001-002 invariants"
     )
     return 0
 
