@@ -246,7 +246,19 @@ required for correct operation.
 | `M20-005` | `BLOCKED` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
 | `M20-006` | `DONE` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. Completed 2026-08-29. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
-| `M20-008` | `BLOCKED` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. |
+| `M20-008` | `DONE` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. Completed 2026-08-29. |
+
+### M20-008 Evidence (2026-08-29)
+
+```text
+Outcome: Added injectable ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. Every deterministic decision/accounting operation is synchronous and returns only a proposal or derived snapshot; AttentionContextProvider is the sole asynchronous read boundary. The ports consume M20-006 generated contract types, CapacityLimiter can only return an engine-only envelope, and no state-label projector exists.
+Authority read: AGENTS.md; TODO.md; docs/invariants/19 section 3; docs/cognition/18 sections 1-7; docs/cognition/20 sections 2-13; M20-006 generated contracts.
+Files changed: TODO.md; src/gf/cognition/runtimePorts.ts; src/gf/tests/cognitiveRuntimePorts.test.ts.
+Checks: pnpm test (70/70); contract validation (25 schemas, 21 positive samples, 17 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: These are dependency-injection boundaries, not implementations. Conservation, expiry, idempotency, admission semantics, and StateManager commit authority remain runtime acceptance work in M20-015 through M20-019.
+Rollback: Revert the M20-008 commit; no schema, migration, database, provider, world fact, or outbound message changes.
+Owner decision still needed: None.
+```
 
 ### M20-006 Evidence (2026-08-29)
 
