@@ -7,7 +7,7 @@ test("migration 002 adds derived pipeline persistence without world-event tables
   const rt = setupRuntime();
   try {
     const version = rt.db
-      .prepare("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
+      .prepare("SELECT version FROM schema_migrations WHERE version = '002'")
       .get() as { version: string };
     assert.equal(version.version, "002");
 

@@ -598,8 +598,8 @@ def validate_migration() -> None:
         version = connection.execute(
             "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1"
         ).fetchone()
-        if version != ("002",):
-            raise AssertionError("migration chain did not register version 002")
+        if version != ("003",):
+            raise AssertionError("migration chain did not register version 003")
         required = {
             "world_events",
             "operation_commits",
@@ -624,6 +624,27 @@ def validate_migration() -> None:
             "world_outcome_sources",
             "derived_input_closures",
             "derived_input_sources",
+            "attention_intents",
+            "attention_intent_sources",
+            "attention_subscription_records",
+            "attention_subscription_sources",
+            "cognitive_energy_accounts",
+            "cognitive_energy_reservations",
+            "cognitive_energy_settlements",
+            "cognitive_energy_settlement_sources",
+            "inference_usage_receipts",
+            "experienced_usage_breakdowns",
+            "experienced_usage_segments",
+            "experienced_usage_segment_sources",
+            "wake_candidates",
+            "wake_candidate_sources",
+            "wake_decision_audit",
+            "salience_accumulations",
+            "salience_accumulation_sources",
+            "cognitive_episode_evidence",
+            "cognitive_episode_sources",
+            "subjective_experience_records",
+            "subjective_experience_sources",
         }
         actual = {
             row[0]
@@ -636,6 +657,7 @@ def validate_migration() -> None:
             raise AssertionError(f"migration missing tables: {sorted(missing)}")
         validate_sql_invariants(connection)
         validate_pipeline_sql_invariants(connection)
+        validate_cognitive_sql_invariants(connection)
     finally:
         connection.close()
 
@@ -913,6 +935,126 @@ def validate_pipeline_sql_invariants(connection: sqlite3.Connection) -> None:
     )
 
 
+def validate_cognitive_sql_invariants(connection: sqlite3.Connection) -> None:
+    account_sql = """
+        INSERT INTO cognitive_energy_accounts(
+            actor_id, schema_version, available, reserved, capacity,
+            protected_reply_reserve, recovered_at, recovery_model_version, revision
+        ) VALUES (?, '1.0', ?, ?, ?, ?, '2026-08-29T10:00:00Z', 'recovery.v1', 0)
+    """
+    expect_integrity_error(
+        connection,
+        account_sql,
+        ("bad_account", 90, 20, 100, 10),
+    )
+    expect_integrity_error(
+        connection,
+        account_sql,
+        ("bad_reserve", 80, 0, 100, 90),
+    )
+    connection.execute(account_sql, ("terra_energy", 80, 10, 100, 20))
+
+    connection.execute(
+        """
+        INSERT INTO wake_candidates(
+            candidate_id, schema_version, actor_id, committed_revision,
+            boundary_kind, input_closure_hash, payload_json, occurred_at
+        ) VALUES ('candidate_nonwake', '1.0', 'terra_energy', 4,
+                  'observable_change', ?, '{}', '2026-08-29T10:00:01Z')
+        """,
+        ("9" * 64,),
+    )
+    wake_sql = """
+        INSERT INTO wake_decision_audit(
+            decision_id, schema_version, candidate_id, actor_id, disposition,
+            wake, queue_lane, reason_codes_json, matched_rule_ids_json,
+            gate_version, parameter_version, affect_mode, affect_contributed,
+            base_state_revision, input_closure_hash, payload_json, decided_at
+        ) VALUES (?, '1.0', 'candidate_nonwake', 'terra_energy', ?, ?, 'none',
+                  '["no_material_change"]', '[]', 'gate.v1', 'params.v1', ?, ?,
+                  4, ?, '{}', '2026-08-29T10:00:02Z')
+    """
+    expect_integrity_error(
+        connection,
+        wake_sql,
+        ("decision_bad_wake", "ignore", 1, "off", 0, "9" * 64),
+    )
+    expect_integrity_error(
+        connection,
+        wake_sql,
+        ("decision_bad_shadow", "ignore", 0, "shadow", 1, "9" * 64),
+    )
+    connection.execute(
+        wake_sql,
+        ("decision_nonwake", "ignore", 0, "shadow", 0, "9" * 64),
+    )
+
+    receipt_sql = """
+        INSERT INTO inference_usage_receipts(
+            receipt_id, schema_version, prompt_run_id, provider_request_id,
+            model_id, tokenizer_version, input_tokens, cached_input_tokens,
+            output_tokens, reasoning_tokens, attempt_ordinal, completion_status,
+            usage_source, payload_json, received_at
+        ) VALUES (?, '1.0', ?, ?, 'model.v1', 'tokenizer.v1', 100, ?, 20, 5,
+                  1, 'completed', 'provider', '{}', '2026-08-29T10:00:03Z')
+    """
+    expect_integrity_error(
+        connection,
+        receipt_sql,
+        ("receipt_bad_cache", "run_bad", "provider_bad", 101),
+    )
+    connection.execute(
+        receipt_sql,
+        ("receipt_1", "run_1", "provider_1", 30),
+    )
+    expect_integrity_error(
+        connection,
+        "UPDATE inference_usage_receipts SET input_tokens = 1 WHERE receipt_id = 'receipt_1'",
+        (),
+    )
+
+    connection.execute(
+        """
+        INSERT INTO attention_intents(
+            intent_id, schema_version, actor_id, concern, future_change, scope_json,
+            lifecycle, policy_run_id, source_closure_hash, base_state_revision,
+            payload_json, created_at
+        ) VALUES ('intent_1', '1.0', 'terra_energy', 'S-4', 'visible change', '{}',
+                  'active', 'run_1', ?, 4, '{}', '2026-08-29T10:00:04Z')
+        """,
+        ("a" * 64,),
+    )
+    subscription_sql = """
+        INSERT INTO attention_subscription_records(
+            record_id, subscription_id, intent_id, schema_version, actor_id,
+            status, observable_filter_json, perception_only, compiler_version,
+            base_state_revision, payload_json, created_at
+        ) VALUES (?, ?, 'intent_1', '1.0', 'terra_energy', 'active', '{}', ?,
+                  'compiler.v1', 4, '{}', '2026-08-29T10:00:05Z')
+    """
+    expect_integrity_error(
+        connection,
+        subscription_sql,
+        ("subscription_record_bad", "subscription_bad", 0),
+    )
+    connection.execute(
+        subscription_sql,
+        ("subscription_record_1", "subscription_1", 1),
+    )
+
+    for table in ("cognitive_episode_evidence", "subjective_experience_records"):
+        columns = {
+            row[1].lower()
+            for row in connection.execute(f"PRAGMA table_info({table})")
+        }
+        forbidden = {
+            name for name in columns
+            if any(term in name for term in ("energy", "token", "provider", "price", "fatigue"))
+        }
+        if forbidden:
+            raise AssertionError(f"{table}: hidden counters leaked into subjective table: {forbidden}")
+
+
 def main() -> int:
     all_validators = validators()
     validate_fixtures(all_validators)
@@ -920,7 +1062,7 @@ def main() -> int:
     validate_migration()
     print(
         f"OK: {len(all_validators)} schemas, 27 positive contract samples, "
-        "29 negative contracts, migrations 001-002 invariants"
+        "29 negative contracts, migrations 001-003 invariants"
     )
     return 0
 
