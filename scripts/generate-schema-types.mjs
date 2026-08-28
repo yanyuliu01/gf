@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const rootFlag = process.argv.indexOf("--root");
+const root = rootFlag >= 0
+  ? resolve(process.argv[rootFlag + 1])
+  : dirname(dirname(fileURLToPath(import.meta.url)));
 const commonPath = join(root, "schemas", "common.schema.json");
 const common = JSON.parse(readFileSync(commonPath, "utf8"));
 const targets = [

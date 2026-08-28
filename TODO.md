@@ -255,7 +255,7 @@ required for correct operation.
 | `M20-002` | `READY` | ENG | `OWN-001` | Freeze `CommitmentV1` with subject, object, content, condition/due time, status, sources, and fulfillment/broken/released events. `debt` remains the reply-specific subtype. **It is a projection derived from the ledger, not an authoritative object** (`docs/invariants/19` B2–B3): the ledger utterance is the fact, `status` is recomputed rather than written by any proposer, World Adjudicator and audit may read it, Working Self and Open Policy may not. Two agents may hold inconsistent understandings of the same interaction; that is a required property, not a defect to reconcile. |
 | `M20-003` | `BLOCKED` | ENG | `M20-001`, `M20-002` | Add migration `002_*` for observations, beliefs/open loops as needed, commitments, action/outcome audit, and derived-input hashes. Do not modify `001_initial.sql`. |
 | `M20-004` | `DONE` | ENG | `M11-005` | Define TypeScript ports for Perception, MemoryRetriever, CommitmentReader, WorkingSelfBuilder, OpenPolicy, ActionCompiler, and WorldAdjudicator. Ports use async boundaries where I/O/model calls occur. Completed 2026-08-28. |
-| `M20-005` | `READY` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. |
+| `M20-005` | `DONE` | ENG | `M20-001` | Add schema-to-TypeScript generation/check so CI fails when generated types drift from JSON Schema. Completed 2026-08-29. |
 | `M20-006` | `DONE` | ENG | `M11-005` | Freeze versioned JSON Schemas for WakeCandidate/Decision, source-linked `AttentionIntent` / compiled `AttentionSubscription`, raw InferenceUsageReceipt, ExperiencedUsageBreakdown, CognitiveEnergyAccount/Reservation/Settlement, engine-only CognitiveCapacityEnvelope, source-linked nonnumeric CognitiveEpisodeEvidence, and optional free-form SelfExperienceProposal. No fatigue enum or account-to-feeling mapping; TS types are generated. Completed 2026-08-29. |
 | `M20-007` | `BLOCKED` | ENG | `M20-003`, `M20-006` | Add an additive migration for AttentionIntent/subscription lifecycle, numeric cognitive-energy accounts, reservations, settlements, immutable usage receipts/segment classification, nonnumeric cognitive episodes, subjective experience records, accumulated salience, and derived Wake audit including `wake=false`. Derived rows are not WorldEvents; do not modify deployed migrations. |
 | `M20-008` | `DONE` | ENG | `M11-005`, `M20-006` | Define injectable TypeScript ports for ChangeAggregator, CognitiveGate, AttentionCompiler, AttentionContextProvider, CognitiveBudgetPlanner, CognitiveCapacityLimiter, CognitiveEnergyEngine, UsageClassifier, and UsageSettlement. There is no fatigue projector. Pure decision functions perform no writes or model calls. Completed 2026-08-29. |
@@ -269,6 +269,18 @@ Files changed: TODO.md; schemas/agent-pipeline.schema.json and five entry schema
 Checks: pnpm test (73/73, including generated-type drift check); contract validation (31 schemas, 26 positive samples, 24 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
 Known residual risk: Schema validates payload shape while cross-row source closure, base-revision CAS, authoritative effect commits, and replay remain StateManager work in M20-003/M20-024. Working Self role names are machine evidence categories, not required fixed slots; M20-014 must assemble only the roles actually supported by the episode.
 Rollback: Revert the M20-001 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M20-005 Evidence (2026-08-29)
+
+```text
+Outcome: Made schema-derived TypeScript drift checking a fail-closed part of the normal test/CI command for both cognitive-runtime and agent-pipeline contract families. Added an isolated temporary-root replay that first proves a clean generated tree passes, then mutates one generated file and proves the checker exits nonzero with the owning schema named.
+Authority read: AGENTS.md; TODO.md; schemas/README.md; M20-001 and M20-006 schema families; package.json test command.
+Files changed: TODO.md; scripts/generate-schema-types.mjs; src/gf/tests/schemaGeneration.test.ts.
+Checks: pnpm test (74/74, including an induced generated-file drift failure); contract validation (31 schemas, 26 positive samples, 24 negative contracts); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: The generator deliberately supports the JSON Schema subset used by the two generated contract definition graphs. Adding unsupported composition keywords to a generated graph must extend the generator and its drift test in the same task.
+Rollback: Revert the M20-005 commit; schemas and already generated files remain usable, but CI no longer proves they agree.
 Owner decision still needed: None.
 ```
 
