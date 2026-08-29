@@ -24,6 +24,7 @@ export interface StructuredMemoryQuery {
   memoryKinds?: readonly MemoryKind[];
   occurredFrom?: string;
   occurredTo?: string;
+  maxBaseStateRevision?: number;
   outcomeStatuses?: readonly OutcomeStatus[];
   hardConstraintClasses?: readonly HardConstraintClass[];
   text?: string;
@@ -106,6 +107,10 @@ export class StructuredMemorySearch {
       if (query.occurredTo) {
         where.push("julianday(document.occurred_at) <= julianday(?)");
         params.push(query.occurredTo);
+      }
+      if (query.maxBaseStateRevision !== undefined) {
+        where.push("document.base_state_revision <= ?");
+        params.push(query.maxBaseStateRevision);
       }
 
       const rows = db.prepare(
@@ -194,6 +199,15 @@ function validateQuery(
     if (value !== undefined && Number.isNaN(Date.parse(value))) {
       throw new StructuredMemorySearchError(`${label} must be an ISO timestamp`);
     }
+  }
+  if (
+    query.maxBaseStateRevision !== undefined
+    && (!Number.isInteger(query.maxBaseStateRevision)
+      || query.maxBaseStateRevision < 0)
+  ) {
+    throw new StructuredMemorySearchError(
+      "maxBaseStateRevision must be a non-negative integer",
+    );
   }
 }
 
