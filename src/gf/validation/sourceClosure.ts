@@ -8,19 +8,15 @@
  */
 
 import type { DatabaseSync } from "node:sqlite";
+import type { SourceRef } from "../generated/agentPipelineTypes.js";
+
+export type { SourceRef } from "../generated/agentPipelineTypes.js";
 
 export class SourceClosureError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "SourceClosureError";
   }
-}
-
-export interface SourceRef {
-  source_type: "message" | "event" | "claim" | "external_action" | "canon";
-  source_id: string;
-  quote_hash?: string | null;
-  observed_at?: string | null;
 }
 
 const CANON_ID_RE = /^(?:cs|ck|cw)_[0-9a-f]{16}$/;
@@ -46,7 +42,7 @@ export class SourceClosure {
     }
   }
 
-  checkRefs(refs: SourceRef[] | undefined): void {
+  checkRefs(refs: readonly SourceRef[] | undefined): void {
     for (const ref of refs ?? []) {
       this.checkRef(ref);
     }

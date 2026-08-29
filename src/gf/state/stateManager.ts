@@ -16,8 +16,16 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { newId, parseIso, utcnowIso } from "../domain/ids.js";
+import type {
+  BeliefProposalV1,
+  ObservationV1,
+} from "../generated/agentPipelineTypes.js";
 import { Policy } from "../validation/policy.js";
 import { SchemaRegistry, ValidationError } from "../validation/schemas.js";
+import {
+  computeInputClosureHash,
+  normalizeSourceRefs,
+} from "../validation/derivedInputClosure.js";
 import {
   SourceClosure,
   type SourceRef,
@@ -55,6 +63,14 @@ export interface IngestResult {
   inserted: boolean;
   replay: boolean;
   expiredImpulse: boolean;
+}
+
+export interface CognitiveArtifactCommitResult {
+  committed: boolean;
+  replay: boolean;
+  baseRevision: number;
+  observationIds: string[];
+  beliefProposalIds: string[];
 }
 
 export interface WorldEvent {
@@ -348,6 +364,163 @@ export class StateManager {
       });
       db.exec("COMMIT");
       return result;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /**
+   * Persist subject-side cognition without creating WorldEvents or changing
+   * authoritative reducer state. The exact call-input roots are stored beside
+   * every artifact for replay and source-closure audit.
+   */
+  submitCognitiveArtifacts(
+    artifacts: {
+      observations?: readonly ObservationV1[];
+      beliefProposals?: readonly BeliefProposalV1[];
+    },
+    options: { inputSources: readonly SourceRef[] },
+  ): CognitiveArtifactCommitResult {
+    const observations = [...(artifacts.observations ?? [])];
+    const beliefProposals = [...(artifacts.beliefProposals ?? [])];
+    if (observations.length + beliefProposals.length === 0) {
+      throw new CommitRejected("cognitive artifact batch is empty");
+    }
+
+    for (const observation of observations) {
+      this.schemas.validate("observation.schema.json", observation);
+    }
+    for (const belief of beliefProposals) {
+      this.schemas.validate("belief-proposal.schema.json", belief);
+      if (belief.status !== "proposed") {
+        throw new CommitRejected(
+          `new belief ${belief.proposal_id} must enter as proposed`,
+        );
+      }
+    }
+
+    let inputSources: SourceRef[];
+    try {
+      inputSources = normalizeSourceRefs(options.inputSources);
+    } catch (error) {
+      throw new CommitRejected(String(error));
+    }
+    if (inputSources.length === 0) {
+      throw new CommitRejected("cognitive artifacts require input sources");
+    }
+    const revisions = new Set([
+      ...observations.map((item) => item.base_state_revision),
+      ...beliefProposals.map((item) => item.base_state_revision),
+    ]);
+    if (revisions.size !== 1) {
+      throw new CommitRejected("cognitive artifact batch mixes state revisions");
+    }
+    const baseRevision = [...revisions][0];
+    const expectedClosureHash = computeInputClosureHash(
+      baseRevision,
+      inputSources,
+    );
+    for (const artifact of [...observations, ...beliefProposals]) {
+      if (artifact.input_closure_hash !== expectedClosureHash) {
+        throw new CommitRejected(
+          `artifact input_closure_hash does not match exact call inputs`,
+        );
+      }
+    }
+
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const currentRevision = new StateStore(db).currentRevision();
+      if (baseRevision !== currentRevision) {
+        throw new CommitRejected(
+          `stale base_state_revision ${baseRevision} != current ${currentRevision}`,
+        );
+      }
+
+      const closure = closureFromInputs(db, inputSources);
+      for (const observation of observations) {
+        closure.checkRefs(observation.source_refs);
+      }
+      for (const belief of beliefProposals) {
+        closure.checkRefs(belief.source_refs);
+      }
+
+      const existing = [
+        ...observations.map((item) => this.cognitiveArtifactRecord(
+          db,
+          "observation",
+          item.observation_id,
+        )),
+        ...beliefProposals.map((item) => this.cognitiveArtifactRecord(
+          db,
+          "belief_proposal",
+          item.proposal_id,
+        )),
+      ];
+      if (existing.some((payload) => payload !== undefined)) {
+        const requestedPayloads = [
+          ...observations.map((item) => canonicalJson(item)),
+          ...beliefProposals.map((item) => canonicalJson(item)),
+        ];
+        if (
+          existing.some((record) => record === undefined)
+          || existing.some((record, index) =>
+            record?.payloadJson !== requestedPayloads[index]
+            || record.closureHash !== expectedClosureHash
+            || record.baseRevision !== baseRevision
+          )
+        ) {
+          throw new CommitRejected(
+            "cognitive artifact id already exists with a different batch",
+          );
+        }
+        db.exec("COMMIT");
+        return {
+          committed: false,
+          replay: true,
+          baseRevision,
+          observationIds: observations.map((item) => item.observation_id),
+          beliefProposalIds: beliefProposals.map((item) => item.proposal_id),
+        };
+      }
+
+      for (const observation of observations) {
+        this.insertObservation(db, observation);
+        this.insertDerivedInputClosure(db, {
+          artifactKind: "observation",
+          artifactId: observation.observation_id,
+          closureHash: expectedClosureHash,
+          baseRevision,
+          createdAt: observation.observed_at,
+          inputSources,
+        });
+      }
+      for (const belief of beliefProposals) {
+        this.insertBeliefProposal(db, belief);
+        this.insertDerivedInputClosure(db, {
+          artifactKind: "belief_proposal",
+          artifactId: belief.proposal_id,
+          closureHash: expectedClosureHash,
+          baseRevision,
+          createdAt: belief.proposed_at,
+          inputSources,
+        });
+      }
+      db.exec("COMMIT");
+      return {
+        committed: true,
+        replay: false,
+        baseRevision,
+        observationIds: observations.map((item) => item.observation_id),
+        beliefProposalIds: beliefProposals.map((item) => item.proposal_id),
+      };
     } catch (error) {
       db.exec("ROLLBACK");
       if (error instanceof CommitRejected || error instanceof ValidationError) {
@@ -824,6 +997,170 @@ export class StateManager {
       claimIds.push(claim.claim_id);
     }
     return claimIds;
+  }
+
+  private cognitiveArtifactRecord(
+    db: DatabaseSync,
+    kind: "observation" | "belief_proposal",
+    artifactId: string,
+  ): {
+    payloadJson: string;
+    closureHash: string | null;
+    baseRevision: number | null;
+  } | undefined {
+    const table = kind === "observation" ? "observations" : "belief_proposals";
+    const idColumn = kind === "observation" ? "observation_id" : "proposal_id";
+    const row = db
+      .prepare(
+        `
+        SELECT artifact.payload_json, closure.closure_hash,
+               closure.base_state_revision
+        FROM ${table} AS artifact
+        LEFT JOIN derived_input_closures AS closure
+          ON closure.artifact_kind = ?
+         AND closure.artifact_id = artifact.${idColumn}
+        WHERE artifact.${idColumn} = ?
+        `,
+      )
+      .get(kind, artifactId) as {
+        payload_json: string;
+        closure_hash: string | null;
+        base_state_revision: number | null;
+      } | undefined;
+    return row
+      ? {
+          payloadJson: row.payload_json,
+          closureHash: row.closure_hash,
+          baseRevision: row.base_state_revision === null
+            ? null
+            : Number(row.base_state_revision),
+        }
+      : undefined;
+  }
+
+  private insertObservation(db: DatabaseSync, observation: ObservationV1): void {
+    db.prepare(
+      `
+      INSERT INTO observations(
+        observation_id, schema_version, actor_id, summary, sensing_basis,
+        location_id, privacy_scope, observed_at, projection_version,
+        base_state_revision, input_closure_hash, payload_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      observation.observation_id,
+      observation.schema_version,
+      observation.actor_id,
+      observation.summary,
+      observation.sensing_basis,
+      observation.location_id ?? null,
+      observation.privacy_scope ?? null,
+      observation.observed_at,
+      observation.projection_version,
+      observation.base_state_revision,
+      observation.input_closure_hash,
+      canonicalJson(observation),
+    );
+    const insertSource = db.prepare(
+      `
+      INSERT INTO observation_sources(
+        observation_id, source_type, source_id, quote_hash, observed_at
+      ) VALUES (?, ?, ?, ?, ?)
+      `,
+    );
+    for (const source of normalizeSourceRefs(observation.source_refs)) {
+      insertSource.run(
+        observation.observation_id,
+        source.source_type,
+        source.source_id,
+        source.quote_hash ?? null,
+        source.observed_at ?? null,
+      );
+    }
+  }
+
+  private insertBeliefProposal(db: DatabaseSync, belief: BeliefProposalV1): void {
+    db.prepare(
+      `
+      INSERT INTO belief_proposals(
+        proposal_id, actor_id, content, status, epistemic_status,
+        base_state_revision, input_closure_hash, proposal_version,
+        payload_json, proposed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      belief.proposal_id,
+      belief.actor_id,
+      belief.content,
+      belief.status,
+      belief.epistemic_status,
+      belief.base_state_revision,
+      belief.input_closure_hash,
+      belief.proposal_version,
+      canonicalJson(belief),
+      belief.proposed_at,
+    );
+    const insertSource = db.prepare(
+      `
+      INSERT INTO belief_proposal_sources(
+        proposal_id, source_type, source_id, quote_hash, observed_at
+      ) VALUES (?, ?, ?, ?, ?)
+      `,
+    );
+    for (const source of normalizeSourceRefs(belief.source_refs)) {
+      insertSource.run(
+        belief.proposal_id,
+        source.source_type,
+        source.source_id,
+        source.quote_hash ?? null,
+        source.observed_at ?? null,
+      );
+    }
+  }
+
+  private insertDerivedInputClosure(
+    db: DatabaseSync,
+    options: {
+      artifactKind: "observation" | "belief_proposal";
+      artifactId: string;
+      closureHash: string;
+      baseRevision: number;
+      createdAt: string;
+      inputSources: readonly SourceRef[];
+    },
+  ): void {
+    db.prepare(
+      `
+      INSERT INTO derived_input_closures(
+        artifact_kind, artifact_id, closure_hash, base_state_revision, created_at
+      ) VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(
+      options.artifactKind,
+      options.artifactId,
+      options.closureHash,
+      options.baseRevision,
+      options.createdAt,
+    );
+    const insertSource = db.prepare(
+      `
+      INSERT INTO derived_input_sources(
+        artifact_kind, artifact_id, source_type, source_id,
+        quote_hash, observed_at, ordinal
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+    );
+    options.inputSources.forEach((source, ordinal) => {
+      insertSource.run(
+        options.artifactKind,
+        options.artifactId,
+        source.source_type,
+        source.source_id,
+        source.quote_hash ?? null,
+        source.observed_at ?? null,
+        ordinal,
+      );
+    });
   }
 
   private insertPatches(

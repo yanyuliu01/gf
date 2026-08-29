@@ -50,6 +50,32 @@
         "input_closure_hash": { "$ref": "#/$defs/hash" }
       }
     },
+    "BeliefProposalV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "proposal_id", "actor_id", "content", "status",
+        "epistemic_status", "source_refs", "proposal_version",
+        "base_state_revision", "input_closure_hash", "proposed_at"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "proposal_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "content": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "status": {
+          "enum": ["proposed", "accepted", "rejected", "superseded"]
+        },
+        "epistemic_status": {
+          "enum": ["reported", "inferred", "disputed"]
+        },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "proposal_version": { "$ref": "common.schema.json#/$defs/id" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "input_closure_hash": { "$ref": "#/$defs/hash" },
+        "proposed_at": { "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    },
     "MemoryEvidenceV1": {
       "type": "object",
       "additionalProperties": false,

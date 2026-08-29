@@ -222,6 +222,7 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
     pipeline = load_json(FIXTURES / "agent-pipeline.valid.json")
     pipeline_contracts = {
         "observation": "observation.schema.json",
+        "belief_proposal": "belief-proposal.schema.json",
         "memory_bundle": "memory-bundle.schema.json",
         "working_self": "working-self.schema.json",
         "open_action_proposal": "open-action-proposal.schema.json",
@@ -237,6 +238,14 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         all_validators["observation.schema.json"],
         omniscient_observation,
         "observation contains hidden world snapshot",
+    )
+
+    objective_belief = copy.deepcopy(pipeline["belief_proposal"])
+    objective_belief["epistemic_status"] = "verified"
+    expect_invalid(
+        all_validators["belief-proposal.schema.json"],
+        objective_belief,
+        "subjective belief proposal claims verified world truth",
     )
 
     ungrounded_memory = copy.deepcopy(pipeline["memory_bundle"])
@@ -1061,8 +1070,8 @@ def main() -> int:
     validate_cross_field_contracts()
     validate_migration()
     print(
-        f"OK: {len(all_validators)} schemas, 27 positive contract samples, "
-        "29 negative contracts, migrations 001-003 invariants"
+        f"OK: {len(all_validators)} schemas, 28 positive contract samples, "
+        "30 negative contracts, migrations 001-003 invariants"
     )
     return 0
 

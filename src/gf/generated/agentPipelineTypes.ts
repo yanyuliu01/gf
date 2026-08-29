@@ -44,6 +44,20 @@ export interface ObservationV1 {
   "input_closure_hash": Sha256Hash;
 }
 
+export interface BeliefProposalV1 {
+  "schema_version": "1.0";
+  "proposal_id": Id;
+  "actor_id": Id;
+  "content": string;
+  "status": "proposed" | "accepted" | "rejected" | "superseded";
+  "epistemic_status": "reported" | "inferred" | "disputed";
+  "source_refs": SourceRefs;
+  "proposal_version": Id;
+  "base_state_revision": number;
+  "input_closure_hash": Sha256Hash;
+  "proposed_at": Timestamp;
+}
+
 export interface MemoryEvidenceV1 {
   "memory_id": Id;
   "kind": "episodic" | "belief" | "relationship_evidence" | "open_loop" | "self_statement" | "cognitive_episode";

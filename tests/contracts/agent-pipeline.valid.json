@@ -14,6 +14,22 @@
     "base_state_revision": 20,
     "input_closure_hash": "1000000000000000000000000000000000000000000000000000000000000001"
   },
+  "belief_proposal": {
+    "schema_version": "1.0",
+    "proposal_id": "belief_s4_hydration_0001",
+    "actor_id": "terra",
+    "content": "S-4 当前可能存在根区供水不足，但终端刷新延迟仍是反证。",
+    "status": "proposed",
+    "epistemic_status": "inferred",
+    "source_refs": [
+      { "source_type": "event", "source_id": "evt_s4_reading_0001" },
+      { "source_type": "event", "source_id": "evt_terminal_delay_0001" }
+    ],
+    "proposal_version": "belief_proposal.v1",
+    "base_state_revision": 20,
+    "input_closure_hash": "1000000000000000000000000000000000000000000000000000000000000001",
+    "proposed_at": "2026-08-29T09:00:01+08:00"
+  },
   "memory_bundle": {
     "schema_version": "1.0",
     "bundle_id": "memory_bundle_0001",

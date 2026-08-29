@@ -361,7 +361,7 @@ Owner decision still needed: None.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M20-010` | `DONE` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. Completed 2026-08-29. |
-| `M20-011` | `READY` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
+| `M20-011` | `DONE` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. Completed 2026-08-29. |
 | `M20-012` | `READY` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, epistemic status, and **action-to-adjudication-outcome**; then SQLite FTS5 reranking. No vector database. The outcome dimension persists `what was proposed -> what the adjudicator returned -> which hard-constraint class caused a rejection`, reusing the `M20-022` classes (location / time / resource / capability / knowledge / permission / world rule). Tests prove that episodes sharing an outcome shape but no lexical overlap are retrievable together. |
 | `M20-013` | `BLOCKED` | ENG | `M20-012` | Retrieve supporting and counter-evidence under a fixed context budget. Tests prevent mood/current hypothesis from suppressing relevant contradiction. |
 | `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only Working Self from current facts, recent cognitive episodes, activity, sleep/physiology, commitments, memories, beliefs, open loops, persona, and optional contributors. It contains lived evidence but no energy counters, capacity envelope, fatigue labels, suggested behavior, provider, or price fields, **and no affect state label**. Affect reaches the model only by biasing which lived evidence is retrieved (`docs/invariants/19` D2–D3); the events that moved her state enter as ordinary facts and she interprets them herself. |
@@ -383,6 +383,21 @@ Files changed: TODO.md; src/gf/cognition/perception/perceptionProjector.ts; src/
 Checks: pnpm test (86/86); contract validation (32 schemas, 27 positive samples, 29 negative contracts, migrations 001-003); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
 Known residual risk: This task deliberately keeps projection pure and trusts its repository caller to assemble candidates from one committed snapshot. M20-011 adds StateManager-owned subjective persistence; M20-015 binds the projector to ChangeAggregator and proves hidden facts cannot affect WakeDecision.
 Rollback: Revert the M20-010 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M20-011 Evidence (2026-08-29)
+
+```text
+Task: M20-011
+Assignee: Codex
+Started / completed: 2026-08-29 / 2026-08-29
+Outcome: Added an additive BeliefProposalV1 machine contract and a StateManager-only cognitive artifact transaction. Legal ObservationV1 and new proposed beliefs are schema-validated, revision-checked, checked against the exact call-scoped source closure, and atomically stored with both their direct sources and the normalized input roots/hash used to derive them. Identical batches replay idempotently; mixed, stale, forged-hash, accepted-on-entry, or hidden-source batches fail closed. Subjective writes neither create WorldEvents/claims/operations nor advance authoritative reducer revision.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 A1-A4, B1, C1; docs/cognition/13 Agent Memory, Working Self, belief proposals, and StateManager boundary; schemas/agent-pipeline.schema.json; migrations/002_agent_pipeline.sql; src/gf/validation/sourceClosure.ts; M20-010 PerceptionProjector.
+Files changed: TODO.md; schemas/agent-pipeline.schema.json; schemas/belief-proposal.schema.json; src/gf/generated/agentPipelineTypes.ts; src/gf/cognition/perception/perceptionProjector.ts; src/gf/state/stateManager.ts; src/gf/validation/derivedInputClosure.ts; src/gf/validation/sourceClosure.ts; src/gf/tests/agentPipelineContracts.test.ts; src/gf/tests/cognitiveArtifactPersistence.test.ts; tests/contracts/agent-pipeline.valid.json; tests/validate_contracts.py.
+Checks: pnpm test (89/89); contract validation (33 schemas, 28 positive samples, 30 negative contracts, migrations 001-003); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: This task persists only initial belief proposals; later accepted/rejected/superseded belief history and retrieval semantics remain M20-012 through M20-014. Repository assembly must still supply one committed snapshot and the exact Perception roots; M20-015 binds that path to cognitive admission.
+Rollback: Revert the M20-011 commit; migration 002 remains harmlessly unused and all subjective tables can be deleted without affecting ledger, reducer state, messages, speech, or outbox.
 Owner decision still needed: None.
 ```
 

@@ -6,6 +6,10 @@ import type {
   SourceRef,
 } from "../../generated/agentPipelineTypes.js";
 import type { PerceptionPort } from "../ports.js";
+import {
+  computeInputClosureHash,
+  normalizeSourceRefs,
+} from "../../validation/derivedInputClosure.js";
 
 export type PerceptionTrust =
   | "authenticated"
@@ -96,17 +100,16 @@ export class PerceptionProjector
       .filter((candidate): candidate is VisibleCandidate => candidate !== null)
       .sort(compareVisibleCandidates);
 
-    const closureSources = uniqueSortedSourceRefs(
+    const closureSources = normalizeSourceRefs(
       visible.flatMap(({ candidate }) => candidate.source_refs),
     );
-    const closureHash = hashJson({
-      contract: "gf.perception.input-closure.v1",
-      base_state_revision: input.base_state_revision,
-      source_refs: closureSources,
-    });
+    const closureHash = computeInputClosureHash(
+      input.base_state_revision,
+      closureSources,
+    );
 
     const observations = visible.map(({ candidate, sensingBasis, locationId }) => {
-      const sourceRefs = uniqueSortedSourceRefs(candidate.source_refs);
+      const sourceRefs = normalizeSourceRefs(candidate.source_refs);
       const observationId = `obs:${hashJson({
         contract: "gf.perception.observation-id.v1",
         actor_id: input.actor_id,
@@ -242,23 +245,6 @@ function compareVisibleCandidates(
 
 function uniqueSortedStrings(values: readonly string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
-}
-
-function uniqueSortedSourceRefs(values: readonly SourceRef[]): SourceRef[] {
-  const refs = new Map<string, SourceRef>();
-  for (const value of values) {
-    const normalized: SourceRef = {
-      source_type: value.source_type,
-      source_id: value.source_id,
-      ...(value.quote_hash === undefined ? {} : { quote_hash: value.quote_hash }),
-      ...(value.observed_at === undefined ? {} : { observed_at: value.observed_at }),
-    };
-    refs.set(JSON.stringify(normalized), normalized);
-  }
-  return [...refs.values()].sort((left, right) =>
-    sourceKey(left).localeCompare(sourceKey(right))
-    || JSON.stringify(left).localeCompare(JSON.stringify(right)),
-  );
 }
 
 function sourceKey(source: SourceRef): string {
