@@ -18,6 +18,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { newId, parseIso, utcnowIso } from "../domain/ids.js";
 import type {
   BeliefProposalV1,
+  MemoryIndexDocumentV1,
   ObservationV1,
 } from "../generated/agentPipelineTypes.js";
 import { Policy } from "../validation/policy.js";
@@ -71,6 +72,13 @@ export interface CognitiveArtifactCommitResult {
   baseRevision: number;
   observationIds: string[];
   beliefProposalIds: string[];
+}
+
+export interface MemoryIndexCommitResult {
+  committed: boolean;
+  replay: boolean;
+  baseRevision: number;
+  documentIds: string[];
 }
 
 export interface WorldEvent {
@@ -520,6 +528,100 @@ export class StateManager {
         baseRevision,
         observationIds: observations.map((item) => item.observation_id),
         beliefProposalIds: beliefProposals.map((item) => item.proposal_id),
+      };
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Write a rebuildable structured/FTS memory index through the single writer. */
+  submitMemoryIndexDocuments(
+    documents: readonly MemoryIndexDocumentV1[],
+    options: { inputSources: readonly SourceRef[] },
+  ): MemoryIndexCommitResult {
+    if (documents.length === 0) {
+      throw new CommitRejected("memory index batch is empty");
+    }
+    for (const document of documents) {
+      this.schemas.validate("memory-index-document.schema.json", document);
+    }
+
+    let inputSources: SourceRef[];
+    try {
+      inputSources = normalizeSourceRefs(options.inputSources);
+    } catch (error) {
+      throw new CommitRejected(String(error));
+    }
+    if (inputSources.length === 0) {
+      throw new CommitRejected("memory index documents require input sources");
+    }
+    const revisions = new Set(documents.map((item) => item.base_state_revision));
+    if (revisions.size !== 1) {
+      throw new CommitRejected("memory index batch mixes state revisions");
+    }
+    const baseRevision = [...revisions][0];
+    const expectedClosureHash = computeInputClosureHash(baseRevision, inputSources);
+    if (documents.some((item) => item.input_closure_hash !== expectedClosureHash)) {
+      throw new CommitRejected(
+        "memory index input_closure_hash does not match exact call inputs",
+      );
+    }
+
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const currentRevision = new StateStore(db).currentRevision();
+      if (baseRevision !== currentRevision) {
+        throw new CommitRejected(
+          `stale base_state_revision ${baseRevision} != current ${currentRevision}`,
+        );
+      }
+      const closure = closureFromInputs(db, inputSources);
+      for (const document of documents) {
+        closure.checkRefs(document.source_refs);
+        this.validateMemoryIndexSource(db, document);
+      }
+
+      const existing = documents.map((document) =>
+        db.prepare(
+          "SELECT payload_json FROM memory_index_documents WHERE document_id = ?",
+        ).get(document.document_id) as { payload_json: string } | undefined,
+      );
+      if (existing.some((row) => row !== undefined)) {
+        if (
+          existing.some((row) => row === undefined)
+          || existing.some((row, index) =>
+            row?.payload_json !== canonicalJson(documents[index])
+          )
+        ) {
+          throw new CommitRejected(
+            "memory index document id already exists with a different batch",
+          );
+        }
+        db.exec("COMMIT");
+        return {
+          committed: false,
+          replay: true,
+          baseRevision,
+          documentIds: documents.map((item) => item.document_id),
+        };
+      }
+
+      for (const document of documents) {
+        this.insertMemoryIndexDocument(db, document, inputSources);
+      }
+      db.exec("COMMIT");
+      return {
+        committed: true,
+        replay: false,
+        baseRevision,
+        documentIds: documents.map((item) => item.document_id),
       };
     } catch (error) {
       db.exec("ROLLBACK");
@@ -1163,6 +1265,191 @@ export class StateManager {
     });
   }
 
+  private validateMemoryIndexSource(
+    db: DatabaseSync,
+    document: MemoryIndexDocumentV1,
+  ): void {
+    const sourceTables = {
+      observation: ["observations", "observation_id", "actor_id"],
+      belief_proposal: ["belief_proposals", "proposal_id", "actor_id"],
+      memory_record: ["memory_records", "memory_id", null],
+      open_loop: ["open_loop_records", "record_id", "actor_id"],
+      world_outcome: ["world_outcome_audit", "outcome_id", "actor_id"],
+    } as const;
+    const expectedKinds = {
+      observation: "episodic",
+      belief_proposal: "belief",
+      open_loop: "open_loop",
+      world_outcome: "action_outcome",
+    } as const;
+    const expectedKind = expectedKinds[
+      document.source_artifact_kind as keyof typeof expectedKinds
+    ];
+    if (expectedKind && document.memory_kind !== expectedKind) {
+      throw new CommitRejected(
+        `${document.source_artifact_kind} cannot index as ${document.memory_kind}`,
+      );
+    }
+
+    const [table, idColumn, actorColumn] = sourceTables[document.source_artifact_kind];
+    const row = db.prepare(
+      `SELECT ${actorColumn ?? "1"} AS actor_id FROM ${table} WHERE ${idColumn} = ?`,
+    ).get(document.source_artifact_id) as { actor_id: string | number } | undefined;
+    if (!row) {
+      throw new CommitRejected(
+        `memory source artifact ${document.source_artifact_kind}:${document.source_artifact_id} is not stored`,
+      );
+    }
+    if (actorColumn && row.actor_id !== document.actor_id) {
+      throw new CommitRejected("memory index actor differs from source artifact actor");
+    }
+
+    if (document.memory_kind !== "action_outcome") {
+      return;
+    }
+    const shape = document.action_outcome;
+    if (!shape || document.source_artifact_id !== shape.outcome_id) {
+      throw new CommitRejected("action-outcome memory must index its source outcome");
+    }
+    const audit = db.prepare(
+      `
+      SELECT action.intent, outcome.action_proposal_id, outcome.status,
+             outcome.summary, outcome.hard_constraint_classes_json
+      FROM world_outcome_audit AS outcome
+      JOIN action_proposal_audit AS action
+        ON action.proposal_id = outcome.action_proposal_id
+      WHERE outcome.outcome_id = ?
+      `,
+    ).get(shape.outcome_id) as {
+      intent: string;
+      action_proposal_id: string;
+      status: string;
+      summary: string;
+      hard_constraint_classes_json: string;
+    } | undefined;
+    const storedConstraints = audit
+      ? (JSON.parse(audit.hard_constraint_classes_json) as string[]).sort()
+      : [];
+    const proposedConstraints = [...shape.hard_constraint_classes].sort();
+    if (
+      !audit
+      || audit.intent !== shape.action_intent
+      || audit.action_proposal_id !== shape.action_proposal_id
+      || audit.status !== shape.outcome_status
+      || audit.summary !== shape.outcome_summary
+      || canonicalJson(storedConstraints) !== canonicalJson(proposedConstraints)
+    ) {
+      throw new CommitRejected("action-outcome memory differs from adjudication audit");
+    }
+  }
+
+  private insertMemoryIndexDocument(
+    db: DatabaseSync,
+    document: MemoryIndexDocumentV1,
+    inputSources: readonly SourceRef[],
+  ): void {
+    const shape = document.action_outcome;
+    db.prepare(
+      `
+      INSERT INTO memory_index_documents(
+        document_id, schema_version, actor_id, memory_kind, content,
+        visibility_scope, epistemic_status, source_artifact_kind,
+        source_artifact_id, action_proposal_id, outcome_id, action_intent,
+        outcome_status, outcome_summary, occurred_at, index_version,
+        base_state_revision, input_closure_hash, payload_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      document.document_id,
+      document.schema_version,
+      document.actor_id,
+      document.memory_kind,
+      document.content,
+      document.visibility_scope,
+      document.epistemic_status,
+      document.source_artifact_kind,
+      document.source_artifact_id,
+      shape?.action_proposal_id ?? null,
+      shape?.outcome_id ?? null,
+      shape?.action_intent ?? null,
+      shape?.outcome_status ?? null,
+      shape?.outcome_summary ?? null,
+      document.occurred_at,
+      document.index_version,
+      document.base_state_revision,
+      document.input_closure_hash,
+      canonicalJson(document),
+    );
+    insertStringSet(db, "memory_index_entities", "entity_id", document.document_id, document.entity_ids);
+    insertStringSet(
+      db,
+      "memory_index_relationships",
+      "relationship_id",
+      document.document_id,
+      document.relationship_ids,
+    );
+    insertStringSet(
+      db,
+      "memory_index_commitments",
+      "commitment_id",
+      document.document_id,
+      document.commitment_ids,
+    );
+    insertStringSet(
+      db,
+      "memory_index_outcome_constraints",
+      "hard_constraint_class",
+      document.document_id,
+      shape?.hard_constraint_classes ?? [],
+    );
+
+    const insertSource = db.prepare(
+      `
+      INSERT INTO memory_index_sources(
+        document_id, source_type, source_id, quote_hash, observed_at
+      ) VALUES (?, ?, ?, ?, ?)
+      `,
+    );
+    for (const source of normalizeSourceRefs(document.source_refs)) {
+      insertSource.run(
+        document.document_id,
+        source.source_type,
+        source.source_id,
+        source.quote_hash ?? null,
+        source.observed_at ?? null,
+      );
+    }
+    const insertInput = db.prepare(
+      `
+      INSERT INTO memory_index_input_sources(
+        document_id, source_type, source_id, quote_hash, observed_at, ordinal
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      `,
+    );
+    inputSources.forEach((source, ordinal) => {
+      insertInput.run(
+        document.document_id,
+        source.source_type,
+        source.source_id,
+        source.quote_hash ?? null,
+        source.observed_at ?? null,
+        ordinal,
+      );
+    });
+    db.prepare(
+      `
+      INSERT INTO memory_index_fts(
+        document_id, content, action_intent, outcome_summary
+      ) VALUES (?, ?, ?, ?)
+      `,
+    ).run(
+      document.document_id,
+      document.content,
+      shape?.action_intent ?? "",
+      shape?.outcome_summary ?? "",
+    );
+  }
+
   private insertPatches(
     db: DatabaseSync,
     operationId: string,
@@ -1302,6 +1589,21 @@ function emptyResult(operationId: string, replay: boolean): CommitResult {
     outboxIds: [],
     claimIds: [],
   };
+}
+
+function insertStringSet(
+  db: DatabaseSync,
+  table: string,
+  valueColumn: string,
+  documentId: string,
+  values: readonly string[],
+): void {
+  const insert = db.prepare(
+    `INSERT INTO ${table}(document_id, ${valueColumn}) VALUES (?, ?)`,
+  );
+  for (const value of [...values].sort()) {
+    insert.run(documentId, value);
+  }
 }
 
 export { randomUUID };

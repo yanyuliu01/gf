@@ -223,6 +223,7 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
     pipeline_contracts = {
         "observation": "observation.schema.json",
         "belief_proposal": "belief-proposal.schema.json",
+        "memory_index_document": "memory-index-document.schema.json",
         "memory_bundle": "memory-bundle.schema.json",
         "working_self": "working-self.schema.json",
         "open_action_proposal": "open-action-proposal.schema.json",
@@ -246,6 +247,14 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         all_validators["belief-proposal.schema.json"],
         objective_belief,
         "subjective belief proposal claims verified world truth",
+    )
+
+    unshaped_outcome_memory = copy.deepcopy(pipeline["memory_index_document"])
+    unshaped_outcome_memory["action_outcome"] = None
+    expect_invalid(
+        all_validators["memory-index-document.schema.json"],
+        unshaped_outcome_memory,
+        "action-outcome memory omits adjudication shape",
     )
 
     ungrounded_memory = copy.deepcopy(pipeline["memory_bundle"])
@@ -607,8 +616,8 @@ def validate_migration() -> None:
         version = connection.execute(
             "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1"
         ).fetchone()
-        if version != ("003",):
-            raise AssertionError("migration chain did not register version 003")
+        if version != ("004",):
+            raise AssertionError("migration chain did not register version 004")
         required = {
             "world_events",
             "operation_commits",
@@ -654,6 +663,14 @@ def validate_migration() -> None:
             "cognitive_episode_sources",
             "subjective_experience_records",
             "subjective_experience_sources",
+            "memory_index_documents",
+            "memory_index_entities",
+            "memory_index_relationships",
+            "memory_index_commitments",
+            "memory_index_outcome_constraints",
+            "memory_index_sources",
+            "memory_index_input_sources",
+            "memory_index_fts",
         }
         actual = {
             row[0]
@@ -1070,8 +1087,8 @@ def main() -> int:
     validate_cross_field_contracts()
     validate_migration()
     print(
-        f"OK: {len(all_validators)} schemas, 28 positive contract samples, "
-        "30 negative contracts, migrations 001-003 invariants"
+        f"OK: {len(all_validators)} schemas, 29 positive contract samples, "
+        "31 negative contracts, migrations 001-004 invariants"
     )
     return 0
 

@@ -8,6 +8,7 @@ import type {
   BeliefProposalV1,
   CommitmentV1,
   MemoryBundleV1,
+  MemoryIndexDocumentV1,
   ObservationV1,
   OpenActionProposalV1,
   SourceRef,
@@ -27,6 +28,7 @@ const fixture = JSON.parse(
 const contracts = {
   observation: "observation.schema.json",
   belief_proposal: "belief-proposal.schema.json",
+  memory_index_document: "memory-index-document.schema.json",
   memory_bundle: "memory-bundle.schema.json",
   working_self: "working-self.schema.json",
   open_action_proposal: "open-action-proposal.schema.json",
@@ -46,6 +48,7 @@ test("final agent pipeline fixtures satisfy versioned schemas", () => {
 
   const observation = fixture.observation as ObservationV1;
   const belief = fixture.belief_proposal as BeliefProposalV1;
+  const memoryIndex = fixture.memory_index_document as MemoryIndexDocumentV1;
   const memory = fixture.memory_bundle as MemoryBundleV1;
   const workingSelf = fixture.working_self as WorkingSelfV1;
   const action = fixture.open_action_proposal as OpenActionProposalV1;
@@ -54,6 +57,8 @@ test("final agent pipeline fixtures satisfy versioned schemas", () => {
   assert.equal(observation.actor_id, memory.actor_id);
   assert.equal(observation.actor_id, belief.actor_id);
   assert.equal(belief.status, "proposed");
+  assert.equal(memoryIndex.actor_id, observation.actor_id);
+  assert.equal(memoryIndex.action_outcome?.outcome_id, outcome.outcome_id);
   assert.equal(memory.actor_id, workingSelf.actor_id);
   assert.equal(workingSelf.actor_id, action.actor_id);
   assert.equal(action.proposal_id, outcome.action_proposal_id);

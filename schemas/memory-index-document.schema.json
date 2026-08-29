@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/memory-index-document.schema.json",
+  "title": "Memory Index Document v1",
+  "$ref": "agent-pipeline.schema.json#/$defs/MemoryIndexDocumentV1"
+}

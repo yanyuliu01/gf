@@ -30,6 +30,33 @@
     "input_closure_hash": "1000000000000000000000000000000000000000000000000000000000000001",
     "proposed_at": "2026-08-29T09:00:01+08:00"
   },
+  "memory_index_document": {
+    "schema_version": "1.0",
+    "document_id": "memory_index_outcome_0001",
+    "actor_id": "terra",
+    "memory_kind": "action_outcome",
+    "content": "我提出先现场复核 S-4，裁决允许开始检查终端与根区。",
+    "visibility_scope": "internal",
+    "epistemic_status": "verified",
+    "entity_ids": ["s4_terminal", "s4_root_zone"],
+    "relationship_ids": [],
+    "commitment_ids": ["commitment_s4_followup_0001"],
+    "action_outcome": {
+      "action_proposal_id": "open_action_0001",
+      "outcome_id": "world_outcome_0001",
+      "action_intent": "先在现场复核 S-4 的实际含水状态。",
+      "outcome_status": "accepted",
+      "outcome_summary": "现场复核动作合法，可开始检查终端与根区。",
+      "hard_constraint_classes": []
+    },
+    "source_artifact_kind": "world_outcome",
+    "source_artifact_id": "world_outcome_0001",
+    "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+    "occurred_at": "2026-08-29T09:00:06+08:00",
+    "index_version": "memory_index.v1",
+    "base_state_revision": 20,
+    "input_closure_hash": "4000000000000000000000000000000000000000000000000000000000000004"
+  },
   "memory_bundle": {
     "schema_version": "1.0",
     "bundle_id": "memory_bundle_0001",

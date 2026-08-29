@@ -58,6 +58,34 @@ export interface BeliefProposalV1 {
   "proposed_at": Timestamp;
 }
 
+export interface MemoryIndexDocumentV1 {
+  "schema_version": "1.0";
+  "document_id": Id;
+  "actor_id": Id;
+  "memory_kind": "episodic" | "belief" | "relationship_evidence" | "open_loop" | "action_outcome";
+  "content": string;
+  "visibility_scope": PrivacyScope;
+  "epistemic_status": "reported" | "attested" | "verified" | "inferred" | "generated" | "disputed";
+  "entity_ids": Id[];
+  "relationship_ids": Id[];
+  "commitment_ids": Id[];
+  "action_outcome": {
+    "action_proposal_id": Id;
+    "outcome_id": Id;
+    "action_intent": string;
+    "outcome_status": "accepted" | "partial" | "rejected" | "deferred" | "interrupted";
+    "outcome_summary": string;
+    "hard_constraint_classes": ("location" | "time" | "resource" | "capability" | "knowledge" | "permission" | "world_rule")[];
+  } | null;
+  "source_artifact_kind": "observation" | "belief_proposal" | "memory_record" | "open_loop" | "world_outcome";
+  "source_artifact_id": Id;
+  "source_refs": SourceRefs;
+  "occurred_at": Timestamp;
+  "index_version": Id;
+  "base_state_revision": number;
+  "input_closure_hash": Sha256Hash;
+}
+
 export interface MemoryEvidenceV1 {
   "memory_id": Id;
   "kind": "episodic" | "belief" | "relationship_evidence" | "open_loop" | "self_statement" | "cognitive_episode";

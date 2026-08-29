@@ -76,6 +76,101 @@
         "proposed_at": { "$ref": "common.schema.json#/$defs/timestamp" }
       }
     },
+    "MemoryIndexDocumentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "document_id", "actor_id", "memory_kind", "content",
+        "visibility_scope", "epistemic_status", "entity_ids", "relationship_ids",
+        "commitment_ids", "action_outcome", "source_artifact_kind",
+        "source_artifact_id", "source_refs", "occurred_at", "index_version",
+        "base_state_revision", "input_closure_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "document_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "memory_kind": {
+          "enum": [
+            "episodic", "belief", "relationship_evidence", "open_loop",
+            "action_outcome"
+          ]
+        },
+        "content": { "type": "string", "minLength": 1, "maxLength": 8000 },
+        "visibility_scope": { "$ref": "common.schema.json#/$defs/privacyScope" },
+        "epistemic_status": {
+          "enum": [
+            "reported", "attested", "verified", "inferred", "generated",
+            "disputed"
+          ]
+        },
+        "entity_ids": {
+          "type": "array", "maxItems": 128, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "relationship_ids": {
+          "type": "array", "maxItems": 64, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "commitment_ids": {
+          "type": "array", "maxItems": 64, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "action_outcome": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action_proposal_id", "outcome_id", "action_intent",
+                "outcome_status", "outcome_summary", "hard_constraint_classes"
+              ],
+              "properties": {
+                "action_proposal_id": { "$ref": "common.schema.json#/$defs/id" },
+                "outcome_id": { "$ref": "common.schema.json#/$defs/id" },
+                "action_intent": { "type": "string", "minLength": 1, "maxLength": 8000 },
+                "outcome_status": {
+                  "enum": ["accepted", "partial", "rejected", "deferred", "interrupted"]
+                },
+                "outcome_summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+                "hard_constraint_classes": {
+                  "type": "array", "maxItems": 7, "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      "location", "time", "resource", "capability",
+                      "knowledge", "permission", "world_rule"
+                    ]
+                  }
+                }
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "source_artifact_kind": {
+          "enum": [
+            "observation", "belief_proposal", "memory_record", "open_loop",
+            "world_outcome"
+          ]
+        },
+        "source_artifact_id": { "$ref": "common.schema.json#/$defs/id" },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "occurred_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "index_version": { "$ref": "common.schema.json#/$defs/id" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "input_closure_hash": { "$ref": "#/$defs/hash" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "memory_kind": { "const": "action_outcome" } },
+            "required": ["memory_kind"]
+          },
+          "then": { "properties": { "action_outcome": { "type": "object" } } },
+          "else": { "properties": { "action_outcome": { "type": "null" } } }
+        }
+      ]
+    },
     "MemoryEvidenceV1": {
       "type": "object",
       "additionalProperties": false,

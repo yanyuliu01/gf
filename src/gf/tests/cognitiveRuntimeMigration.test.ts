@@ -7,7 +7,7 @@ test("migration 003 adds cognitive runtime tables outside WorldEvent", () => {
   const rt = setupRuntime();
   try {
     const latest = rt.db
-      .prepare("SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
+      .prepare("SELECT version FROM schema_migrations WHERE version = '003'")
       .get() as { version: string };
     assert.equal(latest.version, "003");
     const names = new Set(
