@@ -360,13 +360,31 @@ Owner decision still needed: None.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-010` | `READY` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. |
-| `M20-011` | `BLOCKED` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
+| `M20-010` | `DONE` | ENG | `M20-001`, `M11-003` | Implement `PerceptionProjector`: agent sees only events/entities allowed by location, channel, visibility, and provenance. Tests prove stored-but-unseen events do not enter observation or source closure. Completed 2026-08-29. |
+| `M20-011` | `READY` | ENG | `M20-003`, `M20-010` | Persist subjective episodic observations and belief proposals with sources. Objective ledger rows are never copied as a new source of truth. |
 | `M20-012` | `READY` | ENG | `M20-003` | Implement structured memory filters for entity, visibility, time, relationship, commitment, epistemic status, and **action-to-adjudication-outcome**; then SQLite FTS5 reranking. No vector database. The outcome dimension persists `what was proposed -> what the adjudicator returned -> which hard-constraint class caused a rejection`, reusing the `M20-022` classes (location / time / resource / capability / knowledge / permission / world rule). Tests prove that episodes sharing an outcome shape but no lexical overlap are retrievable together. |
 | `M20-013` | `BLOCKED` | ENG | `M20-012` | Retrieve supporting and counter-evidence under a fixed context budget. Tests prevent mood/current hypothesis from suppressing relevant contradiction. |
 | `M20-014` | `BLOCKED` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only Working Self from current facts, recent cognitive episodes, activity, sleep/physiology, commitments, memories, beliefs, open loops, persona, and optional contributors. It contains lived evidence but no energy counters, capacity envelope, fatigue labels, suggested behavior, provider, or price fields, **and no affect state label**. Affect reaches the model only by biasing which lived evidence is retrieved (`docs/invariants/19` D2–D3); the events that moved her state enter as ordinary facts and she interprets them herself. |
-| `M20-015` | `BLOCKED` | ENG | `M20-007`, `M20-008`, `M20-010` | Implement `ChangeAggregator -> PerceptionProjector -> CognitiveGate` before full Working Self construction, following `docs/20`. Gate inputs are legal Perception, current Activity, runtime hard interrupts, active AttentionSubscriptions, and accumulated weak signals. Every meaningful candidate deterministically produces `ignore / accumulate / wake`, priority, reason codes, input hash, and versioned audit, including non-wake outcomes. Tests prove hidden world facts cannot alter WakeDecision through Attention. |
+| `M20-015` | `READY` | ENG | `M20-007`, `M20-008`, `M20-010` | Implement `ChangeAggregator -> PerceptionProjector -> CognitiveGate` before full Working Self construction, following `docs/20`. Gate inputs are legal Perception, current Activity, runtime hard interrupts, active AttentionSubscriptions, and accumulated weak signals. Every meaningful candidate deterministically produces `ignore / accumulate / wake`, priority, reason codes, input hash, and versioned audit, including non-wake outcomes. Tests prove hidden world facts cannot alter WakeDecision through Attention. |
 | `M20-016` | `DONE` | ENG | `M20-007`, `M20-008` | Implement pure TypeScript recovery, pre-reservation, protected reply reserve, and engine-only CognitiveCapacityEnvelope. Capacity reduction removes optional breadth before current message, safety, commitments, or counter-evidence. No projection from account ranges to subjective prose or behavior. Completed 2026-08-29. |
+| `M20-017` | `BLOCKED` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
+| `M20-018` | `BLOCKED` | ENG | `M20-015..017` | Implement the call lifecycle: StateManager reserves before inference; an engine-only CapacityEnvelope constrains assembly/provider capabilities; model execution runs outside database transactions; StateManager then validates source closure and settles actual usage or releases the lease. Autonomous cognition cannot consume the protected reply reserve. |
+| `M20-019` | `BLOCKED` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter/envelope non-leakage, mandatory-source preservation, absence of fatigue enums/mappings, optional source-linked self-experience, complete non-wake audit, AttentionIntent expiry/cancel/dedup, no hidden-fact wake side channel, no recursive wake from gate bookkeeping, and identical Wake/energy results in Affect `off` versus `shadow`. |
+
+### M20-010 Evidence (2026-08-29)
+
+```text
+Task: M20-010
+Assignee: Codex
+Started / completed: 2026-08-29 / 2026-08-29
+Outcome: Implemented a pure deterministic PerceptionProjector over caller-supplied committed candidates. Location, direct/private channel membership, public-channel membership, device-feed authorization, NPC-report recipient, record authorization, and provenance/source-path compatibility are checked before content or source refs cross the boundary. Output ObservationV1 records and the batch source closure are deterministically ordered and hashed. Hidden, unauthorized, empty, and provenance-mismatched candidates produce no placeholder or side-channel artifact.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 section 3 C1; docs/cognition/13 Agent Memory and Working Self boundaries; docs/world/16 perception/cognition integration; docs/product/03 interaction channels; docs/product/04 inbound provenance and privacy boundary; schemas/observation.schema.json; schemas/agent-pipeline.schema.json; src/gf/validation/sourceClosure.ts; M20-004 PerceptionPort.
+Files changed: TODO.md; src/gf/cognition/perception/perceptionProjector.ts; src/gf/tests/perceptionProjector.test.ts.
+Checks: pnpm test (86/86); contract validation (32 schemas, 27 positive samples, 29 negative contracts, migrations 001-003); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: This task deliberately keeps projection pure and trusts its repository caller to assemble candidates from one committed snapshot. M20-011 adds StateManager-owned subjective persistence; M20-015 binds the projector to ChangeAggregator and proves hidden facts cannot affect WakeDecision.
+Rollback: Revert the M20-010 commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
 
 ### M20-016 Evidence (2026-08-29)
 
@@ -379,9 +397,6 @@ Known residual risk: The current accounting version treats one reserved normaliz
 Rollback: Revert the M20-016 commit; no schema, migration, database row, provider call, committed world fact, or outbound message changes.
 Owner decision still needed: None.
 ```
-| `M20-017` | `BLOCKED` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
-| `M20-018` | `BLOCKED` | ENG | `M20-015..017` | Implement the call lifecycle: StateManager reserves before inference; an engine-only CapacityEnvelope constrains assembly/provider capabilities; model execution runs outside database transactions; StateManager then validates source closure and settles actual usage or releases the lease. Autonomous cognition cannot consume the protected reply reserve. |
-| `M20-019` | `BLOCKED` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter/envelope non-leakage, mandatory-source preservation, absence of fatigue enums/mappings, optional source-linked self-experience, complete non-wake audit, AttentionIntent expiry/cancel/dedup, no hidden-fact wake side channel, no recursive wake from gate bookkeeping, and identical Wake/energy results in Affect `off` versus `shadow`. |
 
 ### Open Policy And World Adjudication
 
