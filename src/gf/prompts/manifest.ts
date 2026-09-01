@@ -56,4 +56,17 @@ export class Manifest {
       return null;
     }
   }
+
+  callContractId(callPoint: string): string {
+    const calls = (this.raw.calls ?? {}) as Record<string, unknown>;
+    const call = calls[callPoint];
+    if (typeof call !== "object" || call === null) {
+      throw new Error(`unknown prompt call point ${callPoint}`);
+    }
+    const contractId = (call as Record<string, unknown>).contract_id;
+    if (typeof contractId !== "string" || contractId.length === 0) {
+      throw new Error(`prompt call point ${callPoint} has no contract_id`);
+    }
+    return contractId;
+  }
 }

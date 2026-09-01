@@ -171,8 +171,8 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | `M11-003` | `DONE` | ENG | none | Replace database-global `closureFromDb()` legality with the exact sources assembled for the call plus recursively legal referenced sources. Add negative tests for unseen but stored events/messages/claims. |
 | `M11-004` | `DONE` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `DONE` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
-| `M11-006` | `WAITING_OWNER` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. Waiting since 2026-08-30 for Owner to choose provider, exact pinned model ID, and credential environment-variable name; record the decision in `docs/owner/14` §H. |
-| `M11-007` | `READY` | ENG | `M11-001..005` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
+| `M11-006` | `DONE` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. DeepSeek request model `deepseek-v4-flash` and `DEEPSEEK_API_KEY` were approved, implemented, and verified by a synthetic live smoke on 2026-09-01. |
+| `M11-007` | `READY` | ENG | `M11-001..006` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
 
 ```text
 Task: M11-001
@@ -237,6 +237,19 @@ Checks: pnpm test (62/62); contract validation; full project audit including 275
 Known residual risk: SurfaceMessage v1 has no base-state revision, so reply model calls must remain engine-serialized until the M2 call lifecycle adds an explicit reservation/CAS contract. Outbox Adapter is still synchronous; a real network delivery port belongs to the Feishu adapter task.
 Rollback: Revert the M11-005 task commit; inference and Engine return to synchronous StubClient coupling.
 Owner decision still needed: Provider choice and credential source for M11-006.
+```
+
+```text
+Task: M11-006
+Assignee: Codex
+Started / completed: 2026-08-31 / 2026-09-01
+Outcome: Added a provider-neutral DeepSeek Responses API client pinned to request model `deepseek-v4-flash`, with an explicit opt-in CLI switch, local credential loading, timeout and bounded retry, plain-text fast replies, self-contained JSON Schema output for tick/settlement, local validation, and StateManager-owned prompt-run audit. The default CLI provider remains Stub. A synthetic live request returned one valid bubble and a validated prompt-run record without reading real conversation, world, or memory data.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19-architecture-invariants-v1.md section 3; CONTEXT.md; docs/owner/14-owner-input-workbook-v1.md section H; prompts/manifest.yaml; official DeepSeek Responses API documentation.
+Files changed: .gitignore; TODO.md; docs/owner/14-owner-input-workbook-v1.md; src/gf/cli.ts; src/gf/inference/base.ts; src/gf/inference/deepseekResponses.ts; src/gf/orchestration/engine.ts; src/gf/prompts/assembler.ts; src/gf/prompts/manifest.ts; src/gf/state/stateManager.ts; src/gf/validation/schemas.ts; src/gf/tests/deepseekResponses.test.ts.
+Checks: pnpm test (115/115); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; synthetic DeepSeek live smoke (one bubble, validated audit, output hash present); git diff --check.
+Known residual risk: `deepseek-v4-flash` is a provider rolling request alias rather than an immutable model snapshot. Prompt runs stop at `validated` and remain operation-unlinked until M20-018 completes the reserve/infer/commit/settle lifecycle; provider usage receipts are M20-017.
+Rollback: Revert the M11-006 task commit; CLI defaults to Stub and no migration or committed world fact depends on the provider adapter.
+Owner decision still needed: None.
 ```
 
 ---
@@ -367,7 +380,7 @@ Owner decision still needed: None.
 | `M20-014` | `DONE` | ENG | `M20-002`, `M20-013`, `M20-016` | Build read-only Working Self from current facts, recent cognitive episodes, activity, sleep/physiology, commitments, memories, beliefs, open loops, persona, and optional contributors. It contains lived evidence but no energy counters, capacity envelope, fatigue labels, suggested behavior, provider, or price fields, **and no affect state label**. Affect reaches the model only by biasing which lived evidence is retrieved (`docs/invariants/19` D2–D3); the events that moved her state enter as ordinary facts and she interprets them herself. Completed 2026-08-30. |
 | `M20-015` | `DONE` | ENG | `M20-007`, `M20-008`, `M20-010` | Implement `ChangeAggregator -> PerceptionProjector -> CognitiveGate` before full Working Self construction, following `docs/20`. Gate inputs are legal Perception, current Activity, runtime hard interrupts, active AttentionSubscriptions, and accumulated weak signals. Every meaningful candidate deterministically produces `ignore / accumulate / wake`, priority, reason codes, input hash, and versioned audit, including non-wake outcomes. Tests prove hidden world facts cannot alter WakeDecision through Attention. Completed 2026-08-30. |
 | `M20-016` | `DONE` | ENG | `M20-007`, `M20-008` | Implement pure TypeScript recovery, pre-reservation, protected reply reserve, and engine-only CognitiveCapacityEnvelope. Capacity reduction removes optional breadth before current message, safety, commitments, or counter-evidence. No projection from account ranges to subjective prose or behavior. Completed 2026-08-29. |
-| `M20-017` | `BLOCKED` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
+| `M20-017` | `READY` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. |
 | `M20-018` | `BLOCKED` | ENG | `M20-015..017` | Implement the call lifecycle: StateManager reserves before inference; an engine-only CapacityEnvelope constrains assembly/provider capabilities; model execution runs outside database transactions; StateManager then validates source closure and settles actual usage or releases the lease. Autonomous cognition cannot consume the protected reply reserve. |
 | `M20-019` | `BLOCKED` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter/envelope non-leakage, mandatory-source preservation, absence of fatigue enums/mappings, optional source-linked self-experience, complete non-wake audit, AttentionIntent expiry/cancel/dedup, no hidden-fact wake side channel, no recursive wake from gate bookkeeping, and identical Wake/energy results in Affect `off` versus `shadow`. |
 

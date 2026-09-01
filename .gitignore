@@ -9,6 +9,10 @@ runtime/
 *.db
 *.sqlite
 *.sqlite3
+api key.txt
+.env
+.env.*
+!.env.example
 
 # Node.js / TypeScript build outputs and dependencies
 node_modules/

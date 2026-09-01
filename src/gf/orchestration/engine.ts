@@ -231,6 +231,7 @@ export class Engine {
     );
     const context = {
       callPoint: "scene_settle",
+      promptVersion: this.manifest.callContractId("scene_settle"),
       messages: [
         {
           role: "user" as const,

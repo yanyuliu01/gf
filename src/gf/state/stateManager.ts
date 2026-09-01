@@ -21,6 +21,10 @@ import type {
   MemoryIndexDocumentV1,
   ObservationV1,
 } from "../generated/agentPipelineTypes.js";
+import type {
+  PromptRunFinished,
+  PromptRunStarted,
+} from "../inference/base.js";
 import { Policy } from "../validation/policy.js";
 import { SchemaRegistry, ValidationError } from "../validation/schemas.js";
 import {
@@ -169,6 +173,115 @@ export class StateManager {
     policy?: Policy,
   ) {
     this.policy = policy ?? new Policy();
+  }
+
+  recordPromptRunStarted(run: PromptRunStarted): void {
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const existing = db.prepare(
+        `SELECT * FROM prompt_runs WHERE run_id = ?`,
+      ).get(run.runId) as Record<string, unknown> | undefined;
+      if (existing) {
+        const matches =
+          existing.prompt_name === run.promptName
+          && existing.prompt_version === run.promptVersion
+          && existing.prompt_manifest_hash === run.promptManifestHash
+          && existing.input_hash === run.inputHash
+          && existing.model_id === run.modelId
+          && existing.started_at === run.startedAt;
+        if (!matches) {
+          throw new CommitRejected(
+            `prompt run ${run.runId} already exists with different inputs`,
+          );
+        }
+        db.exec("COMMIT");
+        return;
+      }
+      db.prepare(
+        `
+        INSERT INTO prompt_runs(
+          run_id, operation_id, prompt_name, prompt_version,
+          prompt_manifest_hash, input_hash, output_hash, model_id,
+          status, error_code, started_at, finished_at
+        ) VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, 'started', NULL, ?, NULL)
+        `,
+      ).run(
+        run.runId,
+        run.promptName,
+        run.promptVersion,
+        run.promptManifestHash,
+        run.inputHash,
+        run.modelId,
+        run.startedAt,
+      );
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  recordPromptRunFinished(run: PromptRunFinished): void {
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const existing = db.prepare(
+        `SELECT status, output_hash, error_code, finished_at
+         FROM prompt_runs WHERE run_id = ?`,
+      ).get(run.runId) as {
+        status: string;
+        output_hash: string | null;
+        error_code: string | null;
+        finished_at: string | null;
+      } | undefined;
+      if (!existing) {
+        throw new CommitRejected(`unknown prompt run ${run.runId}`);
+      }
+      const outputHash = run.outputHash ?? null;
+      const errorCode = run.errorCode ?? null;
+      if (existing.status !== "started") {
+        const matches =
+          existing.status === run.status
+          && existing.output_hash === outputHash
+          && existing.error_code === errorCode
+          && existing.finished_at === run.finishedAt;
+        if (!matches) {
+          throw new CommitRejected(
+            `prompt run ${run.runId} already has a different result`,
+          );
+        }
+        db.exec("COMMIT");
+        return;
+      }
+      db.prepare(
+        `
+        UPDATE prompt_runs
+        SET status = ?, output_hash = ?, error_code = ?, finished_at = ?
+        WHERE run_id = ? AND status = 'started'
+        `,
+      ).run(
+        run.status,
+        outputHash,
+        errorCode,
+        run.finishedAt,
+        run.runId,
+      );
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
   }
 
   // ------------------------------------------------------------------ ingest

@@ -64,6 +64,97 @@ export class SchemaRegistry {
     return [...this.documents.keys()].sort();
   }
 
+  document(schemaName: string): Record<string, unknown> {
+    const document = this.documents.get(schemaName);
+    if (!document) {
+      throw new Error(`unknown schema ${schemaName}`);
+    }
+    return structuredClone(document) as Record<string, unknown>;
+  }
+
+  inlineDocument(schemaName: string): Record<string, unknown> {
+    const root = this.document(schemaName);
+    return this.resolveReferences(root, schemaName, []) as Record<
+      string,
+      unknown
+    >;
+  }
+
+  private resolveReferences(
+    value: unknown,
+    currentDocumentName: string,
+    stack: string[],
+  ): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) =>
+        this.resolveReferences(item, currentDocumentName, stack));
+    }
+    if (typeof value !== "object" || value === null) {
+      return value;
+    }
+    const record = value as Record<string, unknown>;
+    const reference = record.$ref;
+    if (typeof reference === "string") {
+      const [documentName, fragment = ""] = reference.split("#", 2);
+      const targetName = documentName || currentDocumentName;
+      const qualifiedReference = `${targetName}#${fragment}`;
+      if (stack.includes(qualifiedReference)) {
+        throw new Error(`cyclic schema reference ${reference}`);
+      }
+      const targetDocument = this.documents.get(targetName);
+      if (!targetDocument) {
+        throw new Error(`unknown schema reference ${reference}`);
+      }
+      let target: unknown = targetDocument;
+      if (fragment) {
+        if (!fragment.startsWith("/")) {
+          throw new Error(`unsupported schema fragment ${reference}`);
+        }
+        for (const token of fragment.slice(1).split("/")) {
+          const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
+          if (typeof target !== "object" || target === null || !(key in target)) {
+            throw new Error(`unknown schema fragment ${reference}`);
+          }
+          target = (target as Record<string, unknown>)[key];
+        }
+      }
+      const siblings = Object.fromEntries(
+        Object.entries(record).filter(([key]) => key !== "$ref"),
+      );
+      const resolved = this.resolveReferences(
+        structuredClone(target),
+        targetName,
+        [...stack, qualifiedReference],
+      );
+      if (Object.keys(siblings).length === 0) {
+        return resolved;
+      }
+      if (
+        typeof resolved !== "object"
+        || resolved === null
+        || Array.isArray(resolved)
+      ) {
+        throw new Error(
+          `cannot merge schema reference siblings for ${reference}`,
+        );
+      }
+      return {
+        ...(resolved as Record<string, unknown>),
+        ...(this.resolveReferences(
+          siblings,
+          currentDocumentName,
+          stack,
+        ) as Record<string, unknown>),
+      };
+    }
+    return Object.fromEntries(
+      Object.entries(record).map(([key, item]) => [
+        key,
+        this.resolveReferences(item, currentDocumentName, stack),
+      ]),
+    );
+  }
+
   validate(schemaName: string, value: unknown): void {
     let validator = this.validators.get(schemaName);
     if (!validator) {

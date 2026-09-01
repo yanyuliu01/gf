@@ -4,6 +4,7 @@
  *
  * Interactive REPL:
  *   node dist/gf/cli.js [--db runtime/gf.db] [--debounce 10]
+ *     [--provider stub|deepseek]
  *
  * Meta commands (never enter the world):
  *   /status /world [n] /budget /mute [minutes] /snapshot /exit
@@ -16,6 +17,10 @@ import { createInterface } from "node:readline";
 import { CliAdapter } from "./adapters/cli.js";
 import { OutboxWorker } from "./delivery/outbox.js";
 import { Gateway } from "./gateway/gateway.js";
+import {
+  DeepSeekResponsesClient,
+  loadDeepSeekApiKey,
+} from "./inference/deepseekResponses.js";
 import { StubClient } from "./inference/stub.js";
 import { Metrics } from "./observability/metrics.js";
 import { Engine } from "./orchestration/engine.js";
@@ -46,6 +51,7 @@ interface CliOptions {
   worldTimeZone: string;
   worldEpochDate: string;
   migrateOnly: boolean;
+  provider: "stub" | "deepseek";
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -64,6 +70,7 @@ function parseArgs(argv: string[]): CliOptions {
     worldEpochDate:
       process.env.GF_WORLD_EPOCH_DATE ?? DEFAULT_WORLD_TIME_CONFIG.epochDate,
     migrateOnly: false,
+    provider: "stub",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -105,6 +112,16 @@ function parseArgs(argv: string[]): CliOptions {
       case "--migrate-only":
         options.migrateOnly = true;
         break;
+      case "--provider": {
+        const provider = next();
+        if (provider !== "stub" && provider !== "deepseek") {
+          throw new Error(
+            `--provider must be stub or deepseek, got ${provider}`,
+          );
+        }
+        options.provider = provider;
+        break;
+      }
       default:
         console.error(`unknown argument: ${arg}`);
         process.exit(2);
@@ -138,7 +155,20 @@ function buildRuntime(options: CliOptions) {
       epochDate: options.worldEpochDate,
     },
   });
-  const inference = new StubClient();
+  const inference =
+    options.provider === "deepseek"
+      ? new DeepSeekResponsesClient({
+          apiKey:
+            loadDeepSeekApiKey()
+            ?? (() => {
+              throw new Error(
+                "DeepSeek selected but DEEPSEEK_API_KEY or the configured key file is unavailable",
+              );
+            })(),
+          schemas,
+          audit: stateManager,
+        })
+      : new StubClient();
   const engine = new Engine(
     db,
     stateManager,

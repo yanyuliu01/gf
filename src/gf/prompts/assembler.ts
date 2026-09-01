@@ -21,6 +21,7 @@ export class AssemblyError extends Error {
 
 export interface PromptContext {
   callPoint: string;
+  promptVersion?: string;
   messages: { role: "system" | "user" | "assistant"; content: string }[];
   promptHash: string;
   manifestHash: string;
@@ -373,6 +374,7 @@ export class FastReplyAssembler {
       .digest("hex");
     return {
       callPoint: "fast_reply",
+      promptVersion: this.manifest.callContractId("fast_reply"),
       messages,
       promptHash,
       manifestHash: this.manifest.manifestHash,
@@ -423,6 +425,7 @@ export class TickAssembler {
       .digest("hex");
     return {
       callPoint: "tick",
+      promptVersion: this.manifest.callContractId("tick"),
       messages,
       promptHash,
       manifestHash: this.manifest.manifestHash,
