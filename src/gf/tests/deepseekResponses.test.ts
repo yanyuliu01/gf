@@ -42,6 +42,12 @@ function response(outputText: string, status = 200): Response {
     JSON.stringify({
       id: "resp_test",
       model: "deepseek-v4-flash",
+      usage: {
+        input_tokens: 40,
+        input_tokens_details: { cached_tokens: 12 },
+        output_tokens: 9,
+        output_tokens_details: { reasoning_tokens: 3 },
+      },
       output: [
         {
           type: "message",
@@ -70,6 +76,7 @@ function createClient(
     apiKey: "test-secret-never-persist",
     schemas,
     audit: rt.stateManager,
+    usage: rt.stateManager,
     fetchImpl,
     sleep: async () => undefined,
     ...overrides,
@@ -161,6 +168,24 @@ test("fast reply uses pinned model and records a validated prompt run", async ()
     assert.equal(run.input_hash.includes("test-secret"), false);
     assert.equal(run.output_hash.length, 64);
     assert.equal(run.status, "validated");
+    const usage = rt.db.prepare(
+      "SELECT * FROM inference_usage_receipts",
+    ).get() as {
+      provider_request_id: string;
+      input_tokens: number;
+      cached_input_tokens: number;
+      output_tokens: number;
+      reasoning_tokens: number;
+      completion_status: string;
+      usage_source: string;
+    };
+    assert.equal(usage.provider_request_id, "resp_test");
+    assert.equal(usage.input_tokens, 40);
+    assert.equal(usage.cached_input_tokens, 12);
+    assert.equal(usage.output_tokens, 9);
+    assert.equal(usage.reasoning_tokens, 3);
+    assert.equal(usage.completion_status, "completed");
+    assert.equal(usage.usage_source, "provider");
   } finally {
     rt.cleanup();
   }
@@ -218,6 +243,41 @@ test("scene settlement uses its own structured contract", async () => {
   }
 });
 
+test("missing provider counters fall back to a versioned local estimate", async () => {
+  const { rt, client } = createClient(async () => new Response(
+    JSON.stringify({
+      id: "resp_without_usage",
+      model: "deepseek-v4-flash",
+      output: [{
+        type: "message",
+        content: [{ type: "output_text", text: "本地估算。" }],
+      }],
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  ));
+  try {
+    assert.deepEqual(
+      await client.fastReply(context("fast_reply", "fast_reply.v0.2")),
+      { bubbles: ["本地估算。"] },
+    );
+    const receipt = rt.db.prepare(
+      `SELECT usage_source, tokenizer_version, input_tokens, output_tokens
+       FROM inference_usage_receipts`,
+    ).get() as {
+      usage_source: string;
+      tokenizer_version: string;
+      input_tokens: number;
+      output_tokens: number;
+    };
+    assert.equal(receipt.usage_source, "versioned_estimate");
+    assert.equal(receipt.tokenizer_version, "gf.char-estimate.v1");
+    assert.ok(receipt.input_tokens > 0);
+    assert.ok(receipt.output_tokens > 0);
+  } finally {
+    rt.cleanup();
+  }
+});
+
 test("429 and server failures consume only the bounded retry budget", async () => {
   let calls = 0;
   const delays: number[] = [];
@@ -247,6 +307,35 @@ test("429 and server failures consume only the bounded retry budget", async () =
     );
     assert.equal(calls, 3);
     assert.deepEqual(delays, [100, 200]);
+    const receipts = rt.db.prepare(
+      `SELECT attempt_ordinal, completion_status, input_tokens, output_tokens
+       FROM inference_usage_receipts ORDER BY attempt_ordinal`,
+    ).all() as {
+      attempt_ordinal: number;
+      completion_status: string;
+      input_tokens: number;
+      output_tokens: number;
+    }[];
+    assert.deepEqual(receipts.map((receipt) => ({ ...receipt })), [
+      {
+        attempt_ordinal: 1,
+        completion_status: "transport_error",
+        input_tokens: 0,
+        output_tokens: 0,
+      },
+      {
+        attempt_ordinal: 2,
+        completion_status: "transport_error",
+        input_tokens: 0,
+        output_tokens: 0,
+      },
+      {
+        attempt_ordinal: 3,
+        completion_status: "completed",
+        input_tokens: 40,
+        output_tokens: 9,
+      },
+    ]);
   } finally {
     rt.cleanup();
   }
@@ -273,6 +362,11 @@ test("non-retryable HTTP failure is audited without exposing response body", asy
     };
     assert.equal(run.status, "failed");
     assert.equal(run.error_code, "http_rejected");
+    const receipt = rt.db.prepare(
+      "SELECT completion_status, input_tokens FROM inference_usage_receipts",
+    ).get() as { completion_status: string; input_tokens: number };
+    assert.equal(receipt.completion_status, "transport_error");
+    assert.equal(receipt.input_tokens, 0);
   } finally {
     rt.cleanup();
   }
@@ -324,6 +418,10 @@ test("timeout aborts the request and records one failed run", async () => {
     };
     assert.equal(run.status, "failed");
     assert.equal(run.error_code, "timeout");
+    const receipt = rt.db.prepare(
+      "SELECT completion_status FROM inference_usage_receipts",
+    ).get() as { completion_status: string };
+    assert.equal(receipt.completion_status, "cancelled");
   } finally {
     rt.cleanup();
   }

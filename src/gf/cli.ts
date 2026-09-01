@@ -167,6 +167,7 @@ function buildRuntime(options: CliOptions) {
             })(),
           schemas,
           audit: stateManager,
+          usage: stateManager,
         })
       : new StubClient();
   const engine = new Engine(

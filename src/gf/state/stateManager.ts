@@ -22,6 +22,10 @@ import type {
   ObservationV1,
 } from "../generated/agentPipelineTypes.js";
 import type {
+  ExperiencedUsageBreakdownV1,
+  InferenceUsageReceiptV1,
+} from "../generated/cognitiveRuntimeTypes.js";
+import type {
   PromptRunFinished,
   PromptRunStarted,
 } from "../inference/base.js";
@@ -276,6 +280,260 @@ export class StateManager {
     } catch (error) {
       db.exec("ROLLBACK");
       if (error instanceof CommitRejected) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Commit an immutable raw provider/local usage proposal. */
+  recordInferenceUsageReceipt(receipt: InferenceUsageReceiptV1): void {
+    this.schemas.validate("inference-usage-receipt.schema.json", receipt);
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const promptRun = db.prepare(
+        "SELECT run_id FROM prompt_runs WHERE run_id = ?",
+      ).get(receipt.prompt_run_id);
+      if (!promptRun) {
+        throw new CommitRejected(
+          `unknown prompt run ${receipt.prompt_run_id} for usage receipt`,
+        );
+      }
+      const existing = db.prepare(
+        `SELECT payload_json FROM inference_usage_receipts
+         WHERE receipt_id = ? OR (prompt_run_id = ? AND attempt_ordinal = ?)`,
+      ).get(
+        receipt.receipt_id,
+        receipt.prompt_run_id,
+        receipt.attempt_ordinal,
+      ) as { payload_json: string } | undefined;
+      const payload = canonicalJson(receipt);
+      if (existing) {
+        if (existing.payload_json !== payload) {
+          throw new CommitRejected(
+            "usage receipt id or attempt already exists with different counters",
+          );
+        }
+        db.exec("COMMIT");
+        return;
+      }
+      db.prepare(
+        `INSERT INTO inference_usage_receipts(
+          receipt_id, schema_version, prompt_run_id, provider_request_id,
+          model_id, tokenizer_version, input_tokens, cached_input_tokens,
+          output_tokens, reasoning_tokens, attempt_ordinal,
+          completion_status, usage_source, payload_json, received_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        receipt.receipt_id,
+        receipt.schema_version,
+        receipt.prompt_run_id,
+        receipt.provider_request_id,
+        receipt.model_id,
+        receipt.tokenizer_version,
+        receipt.input_tokens,
+        receipt.cached_input_tokens ?? null,
+        receipt.output_tokens,
+        receipt.reasoning_tokens ?? null,
+        receipt.attempt_ordinal,
+        receipt.completion_status,
+        receipt.usage_source,
+        payload,
+        receipt.received_at,
+      );
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /**
+   * Commit a source-closed experienced-usage classification. This does not
+   * reserve or settle cognitive energy; M20-018 owns that lifecycle.
+   */
+  recordExperiencedUsageBreakdown(
+    breakdown: ExperiencedUsageBreakdownV1,
+    options: {
+      baseStateRevision: number;
+      inputSources: readonly SourceRef[];
+      classifiedAt?: string;
+    },
+  ): void {
+    this.schemas.validate("experienced-usage-breakdown.schema.json", breakdown);
+    let inputSources: SourceRef[];
+    try {
+      inputSources = normalizeSourceRefs(options.inputSources);
+    } catch (error) {
+      throw new CommitRejected(String(error));
+    }
+    const expectedClosureHash = computeInputClosureHash(
+      options.baseStateRevision,
+      inputSources,
+    );
+    if (breakdown.input_closure_hash !== expectedClosureHash) {
+      throw new CommitRejected(
+        "usage breakdown input_closure_hash does not match exact call inputs",
+      );
+    }
+    const segmentIds = new Set<string>();
+    for (const segment of breakdown.segments) {
+      if (segmentIds.has(segment.segment_id)) {
+        throw new CommitRejected(
+          `duplicate usage segment ${segment.segment_id}`,
+        );
+      }
+      segmentIds.add(segment.segment_id);
+      const shouldBeExperienced = segment.purpose !== "runtime_overhead";
+      if (segment.experienced !== shouldBeExperienced) {
+        throw new CommitRejected(
+          `usage segment ${segment.segment_id} has an invalid experienced flag`,
+        );
+      }
+      if (segment.experienced && segment.source_refs.length === 0) {
+        throw new CommitRejected(
+          `experienced usage segment ${segment.segment_id} has no source refs`,
+        );
+      }
+    }
+
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const receipt = db.prepare(
+        `SELECT prompt_run_id, input_tokens, output_tokens, completion_status
+         FROM inference_usage_receipts WHERE receipt_id = ?`,
+      ).get(breakdown.usage_receipt_id) as {
+        prompt_run_id: string;
+        input_tokens: number;
+        output_tokens: number;
+        completion_status: string;
+      } | undefined;
+      if (!receipt) {
+        throw new CommitRejected(
+          `unknown usage receipt ${breakdown.usage_receipt_id}`,
+        );
+      }
+      if (receipt.prompt_run_id !== breakdown.prompt_run_id) {
+        throw new CommitRejected(
+          "usage breakdown and receipt reference different prompt runs",
+        );
+      }
+      const classifiedTotal = breakdown.segments.reduce(
+        (sum, segment) => sum + segment.token_count,
+        0,
+      );
+      if (classifiedTotal !== receipt.input_tokens + receipt.output_tokens) {
+        throw new CommitRejected(
+          "usage segment total does not match raw input plus output counters",
+        );
+      }
+      if (
+        breakdown.attempt_class === "accepted_semantic"
+        && receipt.completion_status !== "completed"
+      ) {
+        throw new CommitRejected(
+          "accepted semantic breakdown requires a completed receipt",
+        );
+      }
+      if (
+        breakdown.attempt_class !== "accepted_semantic"
+        && breakdown.segments.some((segment) => segment.experienced)
+      ) {
+        throw new CommitRejected(
+          "retry and repair breakdowns cannot contain experienced usage",
+        );
+      }
+      if (
+        breakdown.attempt_class === "transport_retry"
+        && receipt.completion_status === "completed"
+      ) {
+        throw new CommitRejected(
+          "transport retry breakdown requires a failed or cancelled receipt",
+        );
+      }
+
+      const closure = closureFromInputs(db, inputSources);
+      for (const segment of breakdown.segments) {
+        closure.checkRefs(segment.source_refs);
+      }
+      const existing = db.prepare(
+        `SELECT payload_json FROM experienced_usage_breakdowns
+         WHERE breakdown_id = ? OR usage_receipt_id = ?`,
+      ).get(
+        breakdown.breakdown_id,
+        breakdown.usage_receipt_id,
+      ) as { payload_json: string } | undefined;
+      const payload = canonicalJson(breakdown);
+      if (existing) {
+        if (existing.payload_json !== payload) {
+          throw new CommitRejected(
+            "usage breakdown id or receipt already has a different classification",
+          );
+        }
+        db.exec("COMMIT");
+        return;
+      }
+
+      db.prepare(
+        `INSERT INTO experienced_usage_breakdowns(
+          breakdown_id, schema_version, usage_receipt_id, prompt_run_id,
+          attempt_class, classification_version, input_closure_hash,
+          payload_json, classified_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        breakdown.breakdown_id,
+        breakdown.schema_version,
+        breakdown.usage_receipt_id,
+        breakdown.prompt_run_id,
+        breakdown.attempt_class,
+        breakdown.classification_version,
+        breakdown.input_closure_hash,
+        payload,
+        options.classifiedAt ?? utcnowIso(),
+      );
+      const insertSegment = db.prepare(
+        `INSERT INTO experienced_usage_segments(
+          breakdown_id, segment_id, purpose, token_count, experienced, ordinal
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+      );
+      const insertSource = db.prepare(
+        `INSERT INTO experienced_usage_segment_sources(
+          breakdown_id, segment_id, source_type, source_id, quote_hash, observed_at
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+      );
+      breakdown.segments.forEach((segment, ordinal) => {
+        insertSegment.run(
+          breakdown.breakdown_id,
+          segment.segment_id,
+          segment.purpose,
+          segment.token_count,
+          segment.experienced ? 1 : 0,
+          ordinal,
+        );
+        for (const source of normalizeSourceRefs(segment.source_refs)) {
+          insertSource.run(
+            breakdown.breakdown_id,
+            segment.segment_id,
+            source.source_type,
+            source.source_id,
+            source.quote_hash ?? null,
+            source.observed_at ?? null,
+          );
+        }
+      });
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
         throw error;
       }
       throw new CommitRejected(String(error));

@@ -7,6 +7,7 @@
  */
 
 import type { PromptContext } from "../prompts/assembler.js";
+import type { InferenceUsageReceiptV1 } from "../generated/cognitiveRuntimeTypes.js";
 
 export interface FastReplyOutput {
   bubbles: string[];
@@ -33,6 +34,11 @@ export interface PromptRunFinished {
 export interface PromptRunAuditSink {
   recordPromptRunStarted(run: PromptRunStarted): void;
   recordPromptRunFinished(run: PromptRunFinished): void;
+}
+
+/** Raw provider/local counters only; implementations must not settle energy. */
+export interface InferenceUsageReceiptSink {
+  recordInferenceUsageReceipt(receipt: InferenceUsageReceiptV1): void;
 }
 
 export interface InferenceClient {

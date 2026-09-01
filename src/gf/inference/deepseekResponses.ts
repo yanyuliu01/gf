@@ -8,11 +8,13 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { newId, utcnowIso } from "../domain/ids.js";
+import type { InferenceUsageReceiptV1 } from "../generated/cognitiveRuntimeTypes.js";
 import type { PromptContext } from "../prompts/assembler.js";
 import type { SchemaRegistry } from "../validation/schemas.js";
 import type {
   FastReplyOutput,
   InferenceClient,
+  InferenceUsageReceiptSink,
   PromptRunAuditSink,
 } from "./base.js";
 
@@ -28,6 +30,7 @@ export interface DeepSeekResponsesClientOptions {
   apiKey: string;
   schemas: SchemaRegistry;
   audit: PromptRunAuditSink;
+  usage: InferenceUsageReceiptSink;
   fetchImpl?: FetchLike;
   sleep?: (milliseconds: number) => Promise<void>;
   baseUrl?: string;
@@ -64,8 +67,11 @@ export class DeepSeekInferenceError extends Error {
 }
 
 interface ResponseEnvelope {
+  id?: unknown;
+  model?: unknown;
   output_text?: unknown;
   output?: unknown;
+  usage?: unknown;
 }
 
 interface InvocationSpec<T> {
@@ -144,6 +150,18 @@ function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function estimatedTokens(value: string): number {
+  return value.length === 0 ? 0 : Math.ceil(value.length / 4);
+}
+
+function usageCounter(value: unknown): number | null {
+  return typeof value === "number"
+    && Number.isSafeInteger(value)
+    && value >= 0
+    ? value
+    : null;
+}
+
 function extractOutputText(envelope: ResponseEnvelope): string {
   if (
     typeof envelope.output_text === "string"
@@ -208,6 +226,7 @@ export class DeepSeekResponsesClient implements InferenceClient {
   private readonly apiKey: string;
   private readonly schemas: SchemaRegistry;
   private readonly audit: PromptRunAuditSink;
+  private readonly usage: InferenceUsageReceiptSink;
   private readonly fetchImpl: FetchLike;
   private readonly sleep: (milliseconds: number) => Promise<void>;
   private readonly baseUrl: string;
@@ -223,6 +242,7 @@ export class DeepSeekResponsesClient implements InferenceClient {
     this.apiKey = options.apiKey.trim();
     this.schemas = options.schemas;
     this.audit = options.audit;
+    this.usage = options.usage;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.sleep =
       options.sleep
@@ -357,7 +377,7 @@ export class DeepSeekResponsesClient implements InferenceClient {
 
     let rawOutputHash: string | undefined;
     try {
-      const envelope = await this.request(body);
+      const envelope = await this.request(body, runId);
       const text = extractOutputText(envelope);
       rawOutputHash = sha256(text);
       const parsed = spec.parse(text);
@@ -386,10 +406,12 @@ export class DeepSeekResponsesClient implements InferenceClient {
 
   private async request(
     body: Record<string, unknown>,
+    runId: string,
   ): Promise<ResponseEnvelope> {
     for (let attempt = 1; attempt <= this.maxAttempts; attempt += 1) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+      let usageRecorded = false;
       try {
         const response = await this.fetchImpl(
           `${this.baseUrl}/responses`,
@@ -408,6 +430,12 @@ export class DeepSeekResponsesClient implements InferenceClient {
             response.status === 408
             || response.status === 429
             || response.status >= 500;
+          this.recordUsage(this.transportReceipt(
+            runId,
+            attempt,
+            "transport_error",
+          ));
+          usageRecorded = true;
           if (retryable && attempt < this.maxAttempts) {
             await this.sleep(100 * 2 ** (attempt - 1));
             continue;
@@ -422,6 +450,12 @@ export class DeepSeekResponsesClient implements InferenceClient {
         try {
           parsed = await response.json();
         } catch {
+          this.recordUsage(this.estimatedCompletedReceipt(
+            runId,
+            attempt,
+            body,
+          ));
+          usageRecorded = true;
           throw new DeepSeekInferenceError(
             "invalid_response_json",
             "DeepSeek response envelope was not valid JSON",
@@ -429,18 +463,40 @@ export class DeepSeekResponsesClient implements InferenceClient {
           );
         }
         if (typeof parsed !== "object" || parsed === null) {
+          this.recordUsage(this.estimatedCompletedReceipt(
+            runId,
+            attempt,
+            body,
+          ));
+          usageRecorded = true;
           throw new DeepSeekInferenceError(
             "invalid_response_json",
             "DeepSeek response envelope was not an object",
             response.status,
           );
         }
-        return parsed as ResponseEnvelope;
+        const envelope = parsed as ResponseEnvelope;
+        this.recordUsage(this.completedReceipt(
+          envelope,
+          runId,
+          attempt,
+          body,
+        ));
+        usageRecorded = true;
+        return envelope;
       } catch (error) {
         const aborted = controller.signal.aborted;
         const retryableTransport =
           aborted
           || !(error instanceof DeepSeekInferenceError);
+        if (!usageRecorded && retryableTransport) {
+          this.recordUsage(this.transportReceipt(
+            runId,
+            attempt,
+            aborted ? "cancelled" : "transport_error",
+          ));
+          usageRecorded = true;
+        }
         if (retryableTransport && attempt < this.maxAttempts) {
           await this.sleep(100 * 2 ** (attempt - 1));
           continue;
@@ -466,5 +522,138 @@ export class DeepSeekResponsesClient implements InferenceClient {
       "retry_exhausted",
       "DeepSeek retry budget exhausted",
     );
+  }
+
+  private recordUsage(receipt: InferenceUsageReceiptV1): void {
+    try {
+      this.usage.recordInferenceUsageReceipt(receipt);
+    } catch {
+      throw new DeepSeekInferenceError(
+        "usage_audit_failed",
+        "DeepSeek usage receipt could not be committed",
+      );
+    }
+  }
+
+  private transportReceipt(
+    runId: string,
+    attempt: number,
+    completionStatus: "transport_error" | "cancelled",
+  ): InferenceUsageReceiptV1 {
+    return {
+      schema_version: "1.0",
+      receipt_id: newId("usage"),
+      prompt_run_id: runId,
+      provider_request_id: `deepseek:${runId}:attempt:${attempt}`,
+      model_id: this.modelId,
+      tokenizer_version: "gf.no-provider-usage.v1",
+      input_tokens: 0,
+      cached_input_tokens: 0,
+      output_tokens: 0,
+      reasoning_tokens: 0,
+      attempt_ordinal: attempt,
+      completion_status: completionStatus,
+      usage_source: "versioned_estimate",
+      received_at: utcnowIso(),
+    };
+  }
+
+  private estimatedCompletedReceipt(
+    runId: string,
+    attempt: number,
+    body: Record<string, unknown>,
+    envelope?: ResponseEnvelope,
+  ): InferenceUsageReceiptV1 {
+    let outputText = "";
+    if (envelope) {
+      try {
+        outputText = extractOutputText(envelope);
+      } catch {
+        outputText = "";
+      }
+    }
+    return {
+      schema_version: "1.0",
+      receipt_id: newId("usage"),
+      prompt_run_id: runId,
+      provider_request_id:
+        typeof envelope?.id === "string" && envelope.id.trim()
+          ? envelope.id
+          : `deepseek:${runId}:attempt:${attempt}`,
+      model_id:
+        typeof envelope?.model === "string" && envelope.model.trim()
+          ? envelope.model
+          : this.modelId,
+      tokenizer_version: "gf.char-estimate.v1",
+      input_tokens: estimatedTokens(stableJson(body)),
+      cached_input_tokens: 0,
+      output_tokens: estimatedTokens(outputText),
+      reasoning_tokens: 0,
+      attempt_ordinal: attempt,
+      completion_status: "completed",
+      usage_source: "versioned_estimate",
+      received_at: utcnowIso(),
+    };
+  }
+
+  private completedReceipt(
+    envelope: ResponseEnvelope,
+    runId: string,
+    attempt: number,
+    body: Record<string, unknown>,
+  ): InferenceUsageReceiptV1 {
+    const usage =
+      typeof envelope.usage === "object" && envelope.usage !== null
+        ? envelope.usage as Record<string, unknown>
+        : null;
+    const inputTokens = usageCounter(usage?.input_tokens);
+    const outputTokens = usageCounter(usage?.output_tokens);
+    const inputDetails =
+      typeof usage?.input_tokens_details === "object"
+      && usage.input_tokens_details !== null
+        ? usage.input_tokens_details as Record<string, unknown>
+        : null;
+    const outputDetails =
+      typeof usage?.output_tokens_details === "object"
+      && usage.output_tokens_details !== null
+        ? usage.output_tokens_details as Record<string, unknown>
+        : null;
+    const cachedTokens = usageCounter(inputDetails?.cached_tokens) ?? 0;
+    const reasoningTokens = usageCounter(outputDetails?.reasoning_tokens) ?? 0;
+    if (
+      inputTokens === null
+      || outputTokens === null
+      || cachedTokens > inputTokens
+      || reasoningTokens > outputTokens
+    ) {
+      return this.estimatedCompletedReceipt(
+        runId,
+        attempt,
+        body,
+        envelope,
+      );
+    }
+    return {
+      schema_version: "1.0",
+      receipt_id: newId("usage"),
+      prompt_run_id: runId,
+      provider_request_id:
+        typeof envelope.id === "string" && envelope.id.trim()
+          ? envelope.id
+          : `deepseek:${runId}:attempt:${attempt}`,
+      model_id:
+        typeof envelope.model === "string" && envelope.model.trim()
+          ? envelope.model
+          : this.modelId,
+      tokenizer_version: "deepseek.responses.usage.v1",
+      input_tokens: inputTokens,
+      cached_input_tokens: cachedTokens,
+      output_tokens: outputTokens,
+      reasoning_tokens: reasoningTokens,
+      attempt_ordinal: attempt,
+      completion_status: "completed",
+      usage_source: "provider",
+      received_at: utcnowIso(),
+    };
   }
 }
