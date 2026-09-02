@@ -5,6 +5,8 @@ import type {
   CognitiveEnergyAccountV1,
   CognitiveEnergyReservationV1,
   CognitiveEnergySettlementV1,
+  ExperiencedUsageBreakdownV1,
+  InferenceUsageReceiptV1,
   SourceRef,
   WakeDecisionV1,
 } from "../../generated/cognitiveRuntimeTypes.js";
@@ -12,6 +14,7 @@ import type {
   CognitiveBudgetPlannerPort,
   CognitiveCapacityLimiterPort,
   CognitiveEnergyEnginePort,
+  UsageSettlementPort,
 } from "../runtimePorts.js";
 
 const EPSILON = 1e-9;
@@ -57,6 +60,21 @@ export interface CapacityLimitContext {
   requestedExtraExpressionUnits: number;
   requestedToolRounds: number;
   deliberationUnitsPerToolRound: number;
+}
+
+export interface UsageNormalizationProfileV1 {
+  version: string;
+  modelId: string;
+  tokenizerVersion: string;
+  semanticInputWeight: number;
+  deliberationWeight: number;
+  expressionWeight: number;
+}
+
+export interface UsageSettlementContextV1 {
+  accountingVersion: string;
+  settledAt: string;
+  normalization: UsageNormalizationProfileV1;
 }
 
 function finiteNonnegative(value: number, label: string): number {
@@ -337,6 +355,102 @@ export class CognitiveCapacityLimiter
       mandatory_source_refs: sources,
       accounting_version: reservation.accounting_version,
       base_state_revision: reservation.base_state_revision,
+    };
+  }
+}
+
+/** Pure, price-independent normalization and settlement proposal. */
+export class VersionedUsageSettlement
+  implements UsageSettlementPort<UsageSettlementContextV1>
+{
+  propose(
+    account: Readonly<CognitiveEnergyAccountV1>,
+    reservation: Readonly<CognitiveEnergyReservationV1>,
+    receipt: Readonly<InferenceUsageReceiptV1>,
+    breakdown: Readonly<ExperiencedUsageBreakdownV1>,
+    context: Readonly<UsageSettlementContextV1>,
+  ): CognitiveEnergySettlementV1 {
+    if (reservation.actor_id !== account.actor_id) {
+      throw new CognitiveCapacityError("reservation actor does not own account");
+    }
+    if (reservation.accounting_version !== context.accountingVersion) {
+      throw new CognitiveCapacityError("settlement accounting version mismatch");
+    }
+    if (
+      receipt.model_id !== context.normalization.modelId
+      || receipt.tokenizer_version !== context.normalization.tokenizerVersion
+    ) {
+      throw new CognitiveCapacityError(
+        "receipt has no matching model/tokenizer normalization profile",
+      );
+    }
+    const semanticWeight = finiteNonnegative(
+      context.normalization.semanticInputWeight,
+      "semanticInputWeight",
+    );
+    const deliberationWeight = finiteNonnegative(
+      context.normalization.deliberationWeight,
+      "deliberationWeight",
+    );
+    const expressionWeight = finiteNonnegative(
+      context.normalization.expressionWeight,
+      "expressionWeight",
+    );
+    let normalized = 0;
+    for (const segment of breakdown.segments) {
+      if (!segment.experienced) {
+        continue;
+      }
+      const weight = segment.purpose === "deliberation"
+        ? deliberationWeight
+        : segment.purpose === "expression"
+          || segment.purpose === "self_experience"
+          ? expressionWeight
+          : semanticWeight;
+      normalized += segment.token_count * weight;
+    }
+    normalized = round(normalized);
+    if (normalized > reservation.max_normalized_token_units + EPSILON) {
+      throw new CognitiveCapacityError(
+        "experienced usage exceeds the committed reservation",
+      );
+    }
+    if (normalized > account.reserved + EPSILON) {
+      throw new CognitiveCapacityError(
+        "experienced usage exceeds currently reserved energy",
+      );
+    }
+    const sources = uniqueSources(
+      breakdown.segments
+        .filter((segment) => segment.experienced)
+        .flatMap((segment) => segment.source_refs),
+    );
+    const released = round(
+      reservation.max_normalized_token_units - normalized,
+    );
+    const identity = JSON.stringify({
+      reservationId: reservation.reservation_id,
+      receiptId: receipt.receipt_id,
+      breakdownId: breakdown.breakdown_id,
+      accountingVersion: context.accountingVersion,
+      normalizationVersion: context.normalization.version,
+      normalized,
+      released,
+      sources,
+    });
+    const digest = createHash("sha256").update(identity).digest("hex");
+    return {
+      schema_version: "1.0",
+      settlement_id: `energy_settlement:${digest.slice(0, 32)}`,
+      reservation_id: reservation.reservation_id,
+      usage_receipt_id: receipt.receipt_id,
+      experienced_breakdown_id: breakdown.breakdown_id,
+      normalized_token_units: normalized,
+      energy_spent: normalized,
+      released_reservation: released,
+      accounting_version: context.accountingVersion,
+      source_refs: sources,
+      settled_at: context.settledAt,
     };
   }
 }

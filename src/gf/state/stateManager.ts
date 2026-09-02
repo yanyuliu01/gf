@@ -22,6 +22,9 @@ import type {
   ObservationV1,
 } from "../generated/agentPipelineTypes.js";
 import type {
+  CognitiveEnergyAccountV1,
+  CognitiveEnergyReservationV1,
+  CognitiveEnergySettlementV1,
   ExperiencedUsageBreakdownV1,
   InferenceUsageReceiptV1,
 } from "../generated/cognitiveRuntimeTypes.js";
@@ -87,6 +90,12 @@ export interface MemoryIndexCommitResult {
   replay: boolean;
   baseRevision: number;
   documentIds: string[];
+}
+
+export interface CognitiveLeaseCommitResult {
+  committed: boolean;
+  replay: boolean;
+  account: CognitiveEnergyAccountV1;
 }
 
 export interface WorldEvent {
@@ -531,6 +540,380 @@ export class StateManager {
         }
       });
       db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  getCognitiveEnergyAccount(actorId: string): CognitiveEnergyAccountV1 | null {
+    const db = this.connFactory();
+    try {
+      const row = db.prepare(
+        "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+      ).get(actorId) as Record<string, unknown> | undefined;
+      return row ? this.cognitiveAccountFromRow(row) : null;
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Atomically commit an energy lease and its prompt-run shell. */
+  reserveCognitiveCall(
+    reservation: CognitiveEnergyReservationV1,
+    proposedAccount: CognitiveEnergyAccountV1,
+    promptRun: PromptRunStarted,
+  ): CognitiveLeaseCommitResult {
+    this.schemas.validate("cognitive-energy-reservation.schema.json", reservation);
+    this.schemas.validate("cognitive-energy-account.schema.json", proposedAccount);
+    if (reservation.prompt_run_id !== promptRun.runId) {
+      throw new CommitRejected("reservation and prompt shell use different run ids");
+    }
+    if (reservation.actor_id !== proposedAccount.actor_id) {
+      throw new CommitRejected("reservation and account use different actors");
+    }
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const existing = db.prepare(
+        `SELECT payload_json, status FROM cognitive_energy_reservations
+         WHERE reservation_id = ? OR idempotency_key = ?`,
+      ).get(
+        reservation.reservation_id,
+        reservation.idempotency_key,
+      ) as { payload_json: string; status: string } | undefined;
+      if (existing) {
+        if (
+          existing.payload_json !== canonicalJson(reservation)
+          || existing.status !== "active"
+        ) {
+          throw new CommitRejected(
+            "reservation id or idempotency key already has a different lifecycle",
+          );
+        }
+        const accountRow = db.prepare(
+          "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+        ).get(reservation.actor_id) as Record<string, unknown>;
+        const account = this.cognitiveAccountFromRow(accountRow);
+        if (canonicalJson(account) !== canonicalJson(proposedAccount)) {
+          throw new CommitRejected("reservation replay account does not match");
+        }
+        db.exec("COMMIT");
+        return { committed: false, replay: true, account };
+      }
+
+      const currentRow = db.prepare(
+        "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+      ).get(reservation.actor_id) as Record<string, unknown> | undefined;
+      if (!currentRow) {
+        throw new CommitRejected(
+          `unknown cognitive energy account ${reservation.actor_id}`,
+        );
+      }
+      const current = this.cognitiveAccountFromRow(currentRow);
+      const held = reservation.max_normalized_token_units;
+      const approximately = (left: number, right: number) =>
+        Math.abs(left - right) <= 1e-6;
+      if (
+        proposedAccount.revision !== current.revision + 1
+        || !approximately(proposedAccount.available, current.available - held)
+        || !approximately(proposedAccount.reserved, current.reserved + held)
+        || proposedAccount.capacity !== current.capacity
+        || !approximately(
+          proposedAccount.protected_reply_reserve,
+          Math.min(current.protected_reply_reserve, proposedAccount.available),
+        )
+        || proposedAccount.recovered_at !== current.recovered_at
+        || proposedAccount.recovery_model_version !== current.recovery_model_version
+      ) {
+        throw new CommitRejected("invalid cognitive reservation account transition");
+      }
+      if (
+        reservation.access_class === "autonomous"
+        && held > current.available - current.protected_reply_reserve + 1e-6
+      ) {
+        throw new CommitRejected("autonomous reservation enters protected reply reserve");
+      }
+      const wake = db.prepare(
+        `SELECT actor_id, wake, base_state_revision FROM wake_decision_audit
+         WHERE decision_id = ?`,
+      ).get(reservation.wake_decision_id) as {
+        actor_id: string;
+        wake: number;
+        base_state_revision: number;
+      } | undefined;
+      if (
+        !wake
+        || wake.actor_id !== reservation.actor_id
+        || wake.wake !== 1
+        || wake.base_state_revision !== reservation.base_state_revision
+      ) {
+        throw new CommitRejected("reservation requires its matching wake decision");
+      }
+      const currentWorldRevision = new StateStore(db).currentRevision();
+      if (currentWorldRevision !== reservation.base_state_revision) {
+        throw new CommitRejected("reservation base world revision is stale");
+      }
+      const priorPrompt = db.prepare(
+        "SELECT run_id FROM prompt_runs WHERE run_id = ?",
+      ).get(promptRun.runId);
+      if (priorPrompt) {
+        throw new CommitRejected("prompt run shell already exists without reservation");
+      }
+      db.prepare(
+        `INSERT INTO prompt_runs(
+          run_id, operation_id, prompt_name, prompt_version,
+          prompt_manifest_hash, input_hash, output_hash, model_id,
+          status, error_code, started_at, finished_at
+        ) VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, 'started', NULL, ?, NULL)`,
+      ).run(
+        promptRun.runId,
+        promptRun.promptName,
+        promptRun.promptVersion,
+        promptRun.promptManifestHash,
+        promptRun.inputHash,
+        promptRun.modelId,
+        promptRun.startedAt,
+      );
+      db.prepare(
+        `INSERT INTO cognitive_energy_reservations(
+          reservation_id, schema_version, actor_id, wake_decision_id,
+          prompt_run_id, purpose, max_normalized_token_units, access_class,
+          status, base_state_revision, accounting_version, expires_at,
+          idempotency_key, payload_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        reservation.reservation_id,
+        reservation.schema_version,
+        reservation.actor_id,
+        reservation.wake_decision_id,
+        reservation.prompt_run_id,
+        reservation.purpose,
+        reservation.max_normalized_token_units,
+        reservation.access_class,
+        reservation.base_state_revision,
+        reservation.accounting_version,
+        reservation.expires_at,
+        reservation.idempotency_key,
+        canonicalJson(reservation),
+        promptRun.startedAt,
+      );
+      this.updateCognitiveAccount(db, current, proposedAccount);
+      db.exec("COMMIT");
+      return { committed: true, replay: false, account: proposedAccount };
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Atomically settle a classified accepted call and release unused lease. */
+  settleCognitiveCall(
+    settlement: CognitiveEnergySettlementV1,
+    proposedAccount: CognitiveEnergyAccountV1,
+  ): CognitiveLeaseCommitResult {
+    this.schemas.validate("cognitive-energy-settlement.schema.json", settlement);
+    this.schemas.validate("cognitive-energy-account.schema.json", proposedAccount);
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const existing = db.prepare(
+        "SELECT payload_json FROM cognitive_energy_settlements WHERE settlement_id = ? OR reservation_id = ?",
+      ).get(
+        settlement.settlement_id,
+        settlement.reservation_id,
+      ) as { payload_json: string } | undefined;
+      if (existing) {
+        if (existing.payload_json !== canonicalJson(settlement)) {
+          throw new CommitRejected("reservation already has a different settlement");
+        }
+        const row = db.prepare(
+          "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+        ).get(proposedAccount.actor_id) as Record<string, unknown>;
+        const account = this.cognitiveAccountFromRow(row);
+        if (canonicalJson(account) !== canonicalJson(proposedAccount)) {
+          throw new CommitRejected("settlement replay account does not match");
+        }
+        db.exec("COMMIT");
+        return { committed: false, replay: true, account };
+      }
+      const reservation = db.prepare(
+        "SELECT * FROM cognitive_energy_reservations WHERE reservation_id = ?",
+      ).get(settlement.reservation_id) as Record<string, unknown> | undefined;
+      if (!reservation || reservation.status !== "active") {
+        throw new CommitRejected("settlement requires an active reservation");
+      }
+      if (
+        reservation.accounting_version !== settlement.accounting_version
+        || Math.abs(
+          Number(reservation.max_normalized_token_units)
+          - settlement.energy_spent
+          - settlement.released_reservation
+        ) > 1e-6
+      ) {
+        throw new CommitRejected("settlement does not conserve its reservation");
+      }
+      const receipt = db.prepare(
+        "SELECT prompt_run_id FROM inference_usage_receipts WHERE receipt_id = ?",
+      ).get(settlement.usage_receipt_id) as { prompt_run_id: string } | undefined;
+      const breakdown = db.prepare(
+        `SELECT prompt_run_id, usage_receipt_id, payload_json
+         FROM experienced_usage_breakdowns
+         WHERE breakdown_id = ?`,
+      ).get(settlement.experienced_breakdown_id) as {
+        prompt_run_id: string;
+        usage_receipt_id: string;
+        payload_json: string;
+      } | undefined;
+      if (
+        !receipt
+        || !breakdown
+        || receipt.prompt_run_id !== reservation.prompt_run_id
+        || breakdown.prompt_run_id !== reservation.prompt_run_id
+        || breakdown.usage_receipt_id !== settlement.usage_receipt_id
+      ) {
+        throw new CommitRejected("settlement receipt chain is inconsistent");
+      }
+      const currentRow = db.prepare(
+        "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+      ).get(String(reservation.actor_id)) as Record<string, unknown>;
+      const current = this.cognitiveAccountFromRow(currentRow);
+      if (proposedAccount.actor_id !== current.actor_id) {
+        throw new CommitRejected("settlement account actor mismatch");
+      }
+      const expectedAvailable = current.available + settlement.released_reservation;
+      const expectedReserved = current.reserved
+        - settlement.energy_spent
+        - settlement.released_reservation;
+      if (
+        proposedAccount.revision !== current.revision + 1
+        || Math.abs(proposedAccount.available - expectedAvailable) > 1e-6
+        || Math.abs(proposedAccount.reserved - expectedReserved) > 1e-6
+        || proposedAccount.capacity !== current.capacity
+        || Math.abs(
+          proposedAccount.protected_reply_reserve
+          - Math.min(current.protected_reply_reserve, expectedAvailable)
+        ) > 1e-6
+        || proposedAccount.recovered_at !== current.recovered_at
+        || proposedAccount.recovery_model_version
+          !== current.recovery_model_version
+      ) {
+        throw new CommitRejected("invalid cognitive settlement account transition");
+      }
+      const storedBreakdown = JSON.parse(
+        breakdown.payload_json,
+      ) as ExperiencedUsageBreakdownV1;
+      const expectedSources = normalizeSourceRefs(
+        storedBreakdown.segments
+          .filter((segment) => segment.experienced)
+          .flatMap((segment) => segment.source_refs),
+      );
+      if (
+        canonicalJson(normalizeSourceRefs(settlement.source_refs))
+        !== canonicalJson(expectedSources)
+      ) {
+        throw new CommitRejected(
+          "settlement sources do not match experienced breakdown sources",
+        );
+      }
+      const closure = closureFromInputs(db, expectedSources);
+      closure.checkRefs(expectedSources);
+      db.prepare(
+        `INSERT INTO cognitive_energy_settlements(
+          settlement_id, schema_version, reservation_id, usage_receipt_id,
+          experienced_breakdown_id, normalized_token_units, energy_spent,
+          released_reservation, accounting_version, payload_json, settled_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        settlement.settlement_id,
+        settlement.schema_version,
+        settlement.reservation_id,
+        settlement.usage_receipt_id,
+        settlement.experienced_breakdown_id,
+        settlement.normalized_token_units,
+        settlement.energy_spent,
+        settlement.released_reservation,
+        settlement.accounting_version,
+        canonicalJson(settlement),
+        settlement.settled_at,
+      );
+      const insertSource = db.prepare(
+        `INSERT INTO cognitive_energy_settlement_sources(
+          settlement_id, source_type, source_id, quote_hash, observed_at
+        ) VALUES (?, ?, ?, ?, ?)`,
+      );
+      for (const source of normalizeSourceRefs(settlement.source_refs)) {
+        insertSource.run(
+          settlement.settlement_id,
+          source.source_type,
+          source.source_id,
+          source.quote_hash ?? null,
+          source.observed_at ?? null,
+        );
+      }
+      this.updateCognitiveAccount(db, current, proposedAccount);
+      db.prepare(
+        "UPDATE cognitive_energy_reservations SET status = 'settled' WHERE reservation_id = ? AND status = 'active'",
+      ).run(settlement.reservation_id);
+      db.exec("COMMIT");
+      return { committed: true, replay: false, account: proposedAccount };
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  releaseCognitiveReservation(reservationId: string): boolean {
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const reservation = db.prepare(
+        "SELECT * FROM cognitive_energy_reservations WHERE reservation_id = ?",
+      ).get(reservationId) as Record<string, unknown> | undefined;
+      if (!reservation) {
+        throw new CommitRejected(`unknown reservation ${reservationId}`);
+      }
+      if (reservation.status !== "active") {
+        db.exec("COMMIT");
+        return false;
+      }
+      const currentRow = db.prepare(
+        "SELECT * FROM cognitive_energy_accounts WHERE actor_id = ?",
+      ).get(String(reservation.actor_id)) as Record<string, unknown>;
+      const current = this.cognitiveAccountFromRow(currentRow);
+      const held = Number(reservation.max_normalized_token_units);
+      const released: CognitiveEnergyAccountV1 = {
+        ...current,
+        available: Math.round((current.available + held) * 1e6) / 1e6,
+        reserved: Math.round((current.reserved - held) * 1e6) / 1e6,
+        protected_reply_reserve: Math.min(
+          current.protected_reply_reserve,
+          current.available + held,
+        ),
+        revision: current.revision + 1,
+      };
+      this.schemas.validate("cognitive-energy-account.schema.json", released);
+      this.updateCognitiveAccount(db, current, released);
+      db.prepare(
+        "UPDATE cognitive_energy_reservations SET status = 'released' WHERE reservation_id = ? AND status = 'active'",
+      ).run(reservationId);
+      db.exec("COMMIT");
+      return true;
     } catch (error) {
       db.exec("ROLLBACK");
       if (error instanceof CommitRejected || error instanceof ValidationError) {
@@ -1946,6 +2329,49 @@ export class StateManager {
     db.prepare(
       "UPDATE scenes SET summary = ?, status = 'closed', closed_at = ? WHERE scene_id = ?",
     ).run(proposal.scene_summary as string, utcnowIso(), sceneId);
+  }
+
+  private cognitiveAccountFromRow(
+    row: Record<string, unknown>,
+  ): CognitiveEnergyAccountV1 {
+    return {
+      schema_version: "1.0",
+      actor_id: String(row.actor_id),
+      available: Number(row.available),
+      reserved: Number(row.reserved),
+      capacity: Number(row.capacity),
+      protected_reply_reserve: Number(row.protected_reply_reserve),
+      recovered_at: String(row.recovered_at),
+      recovery_model_version: String(row.recovery_model_version),
+      revision: Number(row.revision),
+    };
+  }
+
+  private updateCognitiveAccount(
+    db: DatabaseSync,
+    current: CognitiveEnergyAccountV1,
+    proposed: CognitiveEnergyAccountV1,
+  ): void {
+    const result = db.prepare(
+      `UPDATE cognitive_energy_accounts
+       SET available = ?, reserved = ?, capacity = ?,
+           protected_reply_reserve = ?, recovered_at = ?,
+           recovery_model_version = ?, revision = ?
+       WHERE actor_id = ? AND revision = ?`,
+    ).run(
+      proposed.available,
+      proposed.reserved,
+      proposed.capacity,
+      proposed.protected_reply_reserve,
+      proposed.recovered_at,
+      proposed.recovery_model_version,
+      proposed.revision,
+      current.actor_id,
+      current.revision,
+    );
+    if (result.changes !== 1) {
+      throw new CommitRejected("cognitive energy account CAS failed");
+    }
   }
 }
 
