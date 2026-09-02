@@ -27,6 +27,9 @@ import type {
   CognitiveEnergySettlementV1,
   ExperiencedUsageBreakdownV1,
   InferenceUsageReceiptV1,
+  SelfExperienceProposalV2,
+  WakeCandidateV1,
+  WakeDecisionV1,
 } from "../generated/cognitiveRuntimeTypes.js";
 import type {
   PromptRunFinished,
@@ -914,6 +917,227 @@ export class StateManager {
       ).run(reservationId);
       db.exec("COMMIT");
       return true;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Persist every Gate result, including ignore and accumulate. */
+  recordWakeDecision(
+    candidate: WakeCandidateV1,
+    decision: WakeDecisionV1,
+    options: {
+      inputSources: readonly SourceRef[];
+      affectMode: "off" | "shadow" | "active";
+      affectContributed: boolean;
+      energySnapshotHash?: string | null;
+    },
+  ): void {
+    this.schemas.validate("wake-candidate.schema.json", candidate);
+    this.schemas.validate("wake-decision.schema.json", decision);
+    const inputSources = normalizeSourceRefs(options.inputSources);
+    const expectedHash = computeInputClosureHash(
+      candidate.committed_revision,
+      inputSources,
+    );
+    if (
+      candidate.input_closure_hash !== expectedHash
+      || decision.input_closure_hash !== expectedHash
+      || decision.candidate_id !== candidate.candidate_id
+      || decision.actor_id !== candidate.actor_id
+      || decision.base_state_revision !== candidate.committed_revision
+    ) {
+      throw new CommitRejected("wake audit boundary or input closure mismatch");
+    }
+    if (options.affectMode !== "active" && options.affectContributed) {
+      throw new CommitRejected("off/shadow Affect cannot contribute to Wake");
+    }
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const closure = closureFromInputs(db, inputSources);
+      closure.checkRefs(candidate.observation_refs);
+      closure.checkRefs(decision.observation_refs);
+      const existing = db.prepare(
+        `SELECT c.payload_json AS candidate_json, d.payload_json AS decision_json,
+                d.affect_mode, d.affect_contributed
+         FROM wake_candidates c JOIN wake_decision_audit d
+           ON d.candidate_id = c.candidate_id
+         WHERE c.candidate_id = ? OR d.decision_id = ?`,
+      ).get(candidate.candidate_id, decision.decision_id) as {
+        candidate_json: string;
+        decision_json: string;
+        affect_mode: string;
+        affect_contributed: number;
+      } | undefined;
+      if (existing) {
+        if (
+          existing.candidate_json !== canonicalJson(candidate)
+          || existing.decision_json !== canonicalJson(decision)
+          || existing.affect_mode !== options.affectMode
+          || existing.affect_contributed !== (options.affectContributed ? 1 : 0)
+        ) {
+          throw new CommitRejected("wake audit id already has different evidence");
+        }
+        db.exec("COMMIT");
+        return;
+      }
+      db.prepare(
+        `INSERT INTO wake_candidates(
+          candidate_id, schema_version, actor_id, committed_revision,
+          boundary_kind, input_closure_hash, payload_json, occurred_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        candidate.candidate_id,
+        candidate.schema_version,
+        candidate.actor_id,
+        candidate.committed_revision,
+        candidate.boundary_kind,
+        candidate.input_closure_hash,
+        canonicalJson(candidate),
+        candidate.occurred_at,
+      );
+      const insertCandidateSource = db.prepare(
+        `INSERT INTO wake_candidate_sources(
+          candidate_id, source_type, source_id, quote_hash, observed_at
+        ) VALUES (?, ?, ?, ?, ?)`,
+      );
+      for (const source of normalizeSourceRefs(candidate.observation_refs)) {
+        insertCandidateSource.run(
+          candidate.candidate_id,
+          source.source_type,
+          source.source_id,
+          source.quote_hash ?? null,
+          source.observed_at ?? null,
+        );
+      }
+      db.prepare(
+        `INSERT INTO wake_decision_audit(
+          decision_id, schema_version, candidate_id, actor_id, disposition,
+          wake, queue_lane, reason_codes_json, matched_rule_ids_json,
+          gate_version, parameter_version, energy_snapshot_hash, affect_mode,
+          affect_contributed, base_state_revision, input_closure_hash,
+          payload_json, decided_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        decision.decision_id,
+        decision.schema_version,
+        decision.candidate_id,
+        decision.actor_id,
+        decision.disposition,
+        decision.disposition === "wake" ? 1 : 0,
+        decision.queue_lane,
+        canonicalJson(decision.reason_codes),
+        canonicalJson(decision.matched_rule_ids),
+        decision.gate_version,
+        decision.parameter_version,
+        options.energySnapshotHash ?? null,
+        options.affectMode,
+        options.affectContributed ? 1 : 0,
+        decision.base_state_revision,
+        decision.input_closure_hash,
+        canonicalJson(decision),
+        decision.decided_at,
+      );
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      if (error instanceof CommitRejected || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new CommitRejected(String(error));
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Persist an optional, source-linked subjective interpretation. */
+  recordSubjectiveExperience(
+    recordId: string,
+    proposal: SelfExperienceProposalV2,
+    options: { inputSources: readonly SourceRef[] },
+  ): void {
+    this.schemas.validate("self-experience-proposal.schema.json", proposal);
+    const inputSources = normalizeSourceRefs(options.inputSources);
+    const expectedHash = computeInputClosureHash(
+      proposal.base_state_revision,
+      inputSources,
+    );
+    if (proposal.source_closure_hash !== expectedHash) {
+      throw new CommitRejected("self-experience input closure mismatch");
+    }
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const prompt = db.prepare(
+        "SELECT status FROM prompt_runs WHERE run_id = ?",
+      ).get(proposal.policy_run_id) as { status: string } | undefined;
+      if (!prompt || prompt.status !== "validated") {
+        throw new CommitRejected(
+          "self-experience requires an accepted policy prompt run",
+        );
+      }
+      const closure = closureFromInputs(db, inputSources);
+      closure.checkRefs(proposal.evidence_refs);
+      const existing = db.prepare(
+        `SELECT record_id, payload_json FROM subjective_experience_records
+         WHERE record_id = ? OR proposal_id = ?`,
+      ).get(recordId, proposal.proposal_id) as {
+        record_id: string;
+        payload_json: string;
+      } | undefined;
+      if (existing) {
+        if (
+          existing.record_id !== recordId
+          || existing.payload_json !== canonicalJson(proposal)
+        ) {
+          throw new CommitRejected(
+            "self-experience id already has different evidence",
+          );
+        }
+        db.exec("COMMIT");
+        return;
+      }
+      db.prepare(
+        `INSERT INTO subjective_experience_records(
+          record_id, proposal_id, schema_version, actor_id, narrative,
+          uncertainty_narrative, policy_run_id, source_closure_hash,
+          base_state_revision, payload_json, as_of
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        recordId,
+        proposal.proposal_id,
+        proposal.schema_version,
+        proposal.actor_id,
+        proposal.narrative,
+        proposal.uncertainty_narrative ?? null,
+        proposal.policy_run_id,
+        proposal.source_closure_hash,
+        proposal.base_state_revision,
+        canonicalJson(proposal),
+        proposal.as_of,
+      );
+      const insertSource = db.prepare(
+        `INSERT INTO subjective_experience_sources(
+          record_id, source_type, source_id, quote_hash, observed_at
+        ) VALUES (?, ?, ?, ?, ?)`,
+      );
+      for (const source of normalizeSourceRefs(proposal.evidence_refs)) {
+        insertSource.run(
+          recordId,
+          source.source_type,
+          source.source_id,
+          source.quote_hash ?? null,
+          source.observed_at ?? null,
+        );
+      }
+      db.exec("COMMIT");
     } catch (error) {
       db.exec("ROLLBACK");
       if (error instanceof CommitRejected || error instanceof ValidationError) {

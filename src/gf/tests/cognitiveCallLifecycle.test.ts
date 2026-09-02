@@ -247,6 +247,13 @@ test("call lifecycle reserves before an unlocked model await and settles accepte
       "SELECT status FROM prompt_runs WHERE run_id = ?",
     ).get(reservation.prompt_run_id) as { status: string };
     assert.equal(prompt.status, "validated");
+    const settlementReplay = rt.stateManager.settleCognitiveCall(
+      result.settlement,
+      result.account,
+    );
+    assert.equal(settlementReplay.committed, false);
+    assert.equal(settlementReplay.replay, true);
+    assert.equal(result.account.available + result.account.reserved, 75);
   } finally {
     rt.cleanup();
   }

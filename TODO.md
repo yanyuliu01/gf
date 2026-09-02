@@ -382,7 +382,7 @@ Owner decision still needed: None.
 | `M20-016` | `DONE` | ENG | `M20-007`, `M20-008` | Implement pure TypeScript recovery, pre-reservation, protected reply reserve, and engine-only CognitiveCapacityEnvelope. Capacity reduction removes optional breadth before current message, safety, commitments, or counter-evidence. No projection from account ranges to subjective prose or behavior. Completed 2026-08-29. |
 | `M20-017` | `DONE` | ENG | `M11-006`, `M20-007`, `M20-008` | Integrate provider/local usage receipts and versioned segment classification. Accepted semantic input, deliberation, and expression consume energy; runtime/schema/tooling tokens, infrastructure retries, price, and cache discounts do not. Cached semantic input still counts as experienced load. Completed 2026-09-02. |
 | `M20-018` | `DONE` | ENG | `M20-015..017` | Implement the call lifecycle: StateManager reserves before inference; an engine-only CapacityEnvelope constrains assembly/provider capabilities; model execution runs outside database transactions; StateManager then validates source closure and settles actual usage or releases the lease. Autonomous cognition cannot consume the protected reply reserve. Completed 2026-09-02. |
-| `M20-019` | `READY` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter/envelope non-leakage, mandatory-source preservation, absence of fatigue enums/mappings, optional source-linked self-experience, complete non-wake audit, AttentionIntent expiry/cancel/dedup, no hidden-fact wake side channel, no recursive wake from gate bookkeeping, and identical Wake/energy results in Affect `off` versus `shadow`. |
+| `M20-019` | `DONE` | ENG | `M20-018` | Add replay/property tests for conservation, idempotent settlement, failure/retry semantics, model-tokenizer normalization, raw-counter/envelope non-leakage, mandatory-source preservation, absence of fatigue enums/mappings, optional source-linked self-experience, complete non-wake audit, AttentionIntent expiry/cancel/dedup, no hidden-fact wake side channel, no recursive wake from gate bookkeeping, and identical Wake/energy results in Affect `off` versus `shadow`. Completed 2026-09-02. |
 
 ### M20-010 Evidence (2026-08-29)
 
@@ -514,6 +514,21 @@ Checks: npm test (121/121, including generated-type check); contract validation 
 Known residual risk: The lifecycle is the M2 orchestration seam and is not spliced into the legacy M1 Engine paths; M20-025 performs that unified user/non-user routing after Open Policy and world outcome commit exist. M20-019 still owns crash-resume/idempotency/property expansion and off-versus-shadow ablation. Normalization weights remain injected calibration data; a model/tokenizer pair without a matching profile fails closed. Atomic commit of semantic world outcomes together with energy settlement waits for M20-024.
 Rollback: Revert the M20-018 task commit. M20-017 receipts/classification and M20-016 pure planning remain usable; no existing M1 Engine path or deployed migration depends on the new lifecycle.
 Owner decision still needed: None.
+```
+
+### M20-019 Evidence (2026-09-02)
+
+```text
+Task: M20-019
+Assignee: Codex
+Started / completed: 2026-09-02 / 2026-09-02
+Outcome: Added deterministic AttentionIntent compilation from an already adjudicated observable filter plus latest-record lifecycle selection with semantic deduplication, cancellation, suspension, and expiry. StateManager now atomically and idempotently persists every source-closed Wake candidate/decision, including explicit ignore/accumulate wake=0 audits, and rejects Affect contribution in off/shadow. Optional open-text SelfExperience is persisted only from a validated Policy run with exact evidence closure and cannot mutate the world or energy ledgers. Property coverage proves settlement replay idempotency, price-independent monotonic model/tokenizer normalization, off/shadow Wake and energy equality, raw counter/envelope non-leakage, no fatigue mapping, mandatory-source preservation, retry/failure semantics, hidden-fact exclusion, and non-recursive gate bookkeeping.
+Authority read: AGENTS.md; TODO.md; docs/invariants/19 section 3; docs/cognition/18 sections 1-7; docs/cognition/20 sections 2-12; M20-006 generated contracts; migration 003; M20-015 admission; M20-016 energy engine; M20-017 usage accounting; M20-018 call lifecycle.
+Files changed: TODO.md; src/gf/cognition/attention/attentionLifecycle.ts; src/gf/state/stateManager.ts; src/gf/tests/cognitiveCallLifecycle.test.ts; src/gf/tests/cognitiveRuntimeProperties.test.ts.
+Checks: pnpm test (126/126, including generated-type check); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
+Known residual risk: Attention intent/subscription database binding belongs with M20-020 Policy output orchestration; this task freezes and tests compilation/lifecycle semantics without inventing Policy content. The M2 lifecycle is still not spliced into legacy M1 Engine paths; M20-025 owns unified routing. Normalization coefficients remain versioned calibration inputs, and unknown model/tokenizer pairs fail closed. M20-020 remains blocked on Owner task OWN-003 Seed A7 approval.
+Rollback: Revert the M20-019 task commit. Migration 003, M20-015 admission, M20-016 energy, M20-017 accounting, and M20-018 lifecycle remain independently usable; no deployed migration, provider request, world fact, or outbound message is changed.
+Owner decision still needed: None for M20-019. OWN-003 remains the explicit gate for M20-020.
 ```
 
 ### Open Policy And World Adjudication
