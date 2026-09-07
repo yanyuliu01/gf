@@ -13,6 +13,16 @@ const FAST_REPLY_TEMPLATE = readFileSync(
   "utf-8",
 ).replaceAll("\r\n", "\n");
 
+test("runtime prompt has no dialogue-example or role-play dependency", () => {
+  const manifestText = readFileSync(
+    join(ROOT, "prompts", "manifest.yaml"),
+    "utf-8",
+  );
+  assert.doesNotMatch(manifestText, /S3_dialogue_samples|dialogue_samples/);
+  assert.doesNotMatch(FAST_REPLY_TEMPLATE, /S3_dialogue_samples|Seed A7|扮演一个真实/);
+  assert.match(FAST_REPLY_TEMPLATE, /持续世界中生活的自主 Agent/);
+});
+
 for (const fixture of [
   { label: "LF", eol: "\n" },
   { label: "CRLF", eol: "\r\n" },
@@ -37,7 +47,7 @@ for (const fixture of [
       ]);
 
       assert.equal(context.messages[0].role, "system");
-      assert.match(context.messages[0].content, /你在扮演一个真实存在的人/);
+      assert.match(context.messages[0].content, /持续世界中生活的自主 Agent/);
       assert.match(context.messages[0].content, /现在，写她准备打出去的字/);
       assert.doesNotMatch(context.messages[0].content, /Role-based 输入槽位/);
       assert.doesNotMatch(context.messages[0].content, /\{\{S3_dialogue_samples\}\}/);

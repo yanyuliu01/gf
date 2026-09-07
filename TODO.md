@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-08-28**
+Snapshot: **2026-09-07**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -64,10 +64,11 @@ M2.0 / M20 contracts -> Wake/energy baseline -> final off pipeline -> M2.1 / M21
 M2.2 / M22 shadow Affect -> M2.3 / M23 active Affect -> M3 / M30 longitudinal proof
 ```
 
-Owner work and M1.1 engineering can proceed in parallel. `OWN-003` Seed A7 can
-also proceed in parallel, but active character-facing evaluation cannot finish
-without it. `OWN-008` lived sequences proceed in parallel and gate M3 / M30
-blind evaluation, not the v2 account, envelope, or Policy contracts.
+Owner work and engineering can proceed in parallel. The `OWN-003` decision
+reserves Seed A7 and Prompt S3 for possible future SFT/offline evaluation; they
+are not runtime assets, release gates, or Policy dependencies. `OWN-008` lived
+sequences proceed in parallel and gate M3 / M30 blind evaluation, not the v2
+account, envelope, or Policy contracts.
 
 ## Recommended Next Ten Tasks
 
@@ -81,7 +82,7 @@ blind evaluation, not the v2 account, envelope, or Policy contracts.
 | 6 | `M11-005` | Engineering | Makes real and replaceable LLM clients possible |
 | 7 | `PM-001` | Engineering + Owner review | Removes finite-candidate ambiguity from active M2 instructions |
 | 8 | `OWN-002` | Owner | Supplies open concern meanings without numeric weights |
-| 9 | `OWN-003` | Owner | Freezes Doctor/Muelsyse chat voice examples |
+| 9 | `M20-020` | Engineering | Implements the now-unblocked open generative Policy |
 | 10 | `OWN-008` | Owner | Supplies lived sequences and blind judgments without defining fatigue states |
 
 ---
@@ -122,9 +123,9 @@ Owner decision still needed: None for this sync. The user directed continuation 
 |---|---|---|---|---|
 | `OWN-001` | `DONE` | OWNER | none | Accepted the computable world kernel v1 direction: resource/process world stepping, committed-change -> Perception -> Cognitive Admission -> open action -> adjudication -> commit, WorldX-informed execution seams, Activity/Process continuity, and the S-4-to-first-Feishu acceptance trace. A0/A1 accepted; A2-A5 and S-4 seed use docs/16 engineering defaults for the first versioned trial. Signed 2026-08-29 in docs/14. |
 | `OWN-002` | `WAITING_OWNER` | OWNER | none | Approve/edit 5-8 open natural-language concerns and 3-5 genuine tension pairs. Each has a source and supporting/harming examples, but no numeric weight or behavior rule. |
-| `OWN-003` | `WAITING_OWNER` | OWNER | none | Finalize Seed A7: fill Doctor placeholders, rewrite spoken/canon lines into believable typing, approve disagreement/debt/proactive examples, remove editor annotations, and sign off runtime Prompt S3 text. |
+| `OWN-003` | `DONE` | OWNER | none | Decided that Seed A7 and Prompt S3 dialogue examples are not runtime assets or current release gates. Dialogue corpus work is deferred until a separately approved SFT/offline-evaluation phase; the current product prioritizes world-grounded agency over heavy role-play. Completed 2026-09-03. |
 | `OWN-004` | `WAITING_OWNER` | OWNER | `OWN-002` | Label 15-20 calibration events by affected concern, direction, small/medium/large impact, persistence expectation, and unacceptable interpretation. No decimal Utility values. |
-| `OWN-005` | `WAITING_OWNER` | OWNER | `OWN-001`, `OWN-002`, `OWN-003` | Approve 8-10 longitudinal golden scenarios with initial state, event sequence, expected continuity after hours/days, and prohibited outcomes. |
+| `OWN-005` | `WAITING_OWNER` | OWNER | `OWN-001`, `OWN-002` | Approve 8-10 longitudinal golden scenarios with initial state, event sequence, expected continuity after hours/days, and prohibited outcomes. |
 | `OWN-006` | `READY` | OWNER | none | Confirm or replace the PRD north-star metric. It must remain an audit measure and must never feed character strategy or contact frequency. |
 | `OWN-007` | `LATER` | OWNER | M30 results | Review 7-day logs and decide whether active Affect creates meaningful continuity, only more dramatic language, or harmful behavioral pressure. |
 | `OWN-008` | `WAITING_OWNER` | OWNER | none | Provide 6-10 lived cognitive sequences and blind evaluation notes in [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md). Do not define fatigue levels, account-to-feeling mappings, capability prose, token counts, or conversion coefficients. Judge whether the open self-experience/action is source-grounded, character-consistent, and free of system-cost excuses. |
@@ -154,7 +155,19 @@ Files changed: docs/owner/14-owner-input-workbook-v1.md; docs/world/16-computabl
 Checks: full project audit including contract validation, 2758 canon entries, and 10 diagrams; git diff --check.
 Known residual risk: Numerical endowments, production recipes, timings, and S-4 calibration have not yet earned runtime evidence. M21-007 through M21-011 must version them and demonstrate deterministic replay; ordinary Policy silence remains valid.
 Rollback: Revert the OWN-001 sign-off commit and restore dependent tasks to BLOCKED; no schema, migration, runtime behavior, provider call, world fact, or outbound message changes.
-Owner decision still needed: None for OWN-001. OWN-003 remains a separate gate for M20-020.
+Owner decision still needed: None for OWN-001. At this completion point OWN-003 was still a separate gate; the 2026-09-03 OWN-003 decision below removes that gate.
+```
+
+### OWN-003 Completion Evidence (2026-09-03)
+
+```text
+Outcome: Owner explicitly chose not to build or inject a dialogue-example corpus for the current runtime and does not want the product optimized as heavy role-play. Seed A7 and Prompt S3 remain stable reserved identifiers, but their content is deferred to a separately approved future SFT/offline-evaluation phase. Runtime Policy and Surface must derive behavior and wording from legal lived evidence, current context, compact identity boundaries, and active conversation history rather than a dialogue imitation set.
+Authority read: AGENTS.md; CONTEXT.md; docs/README.md; docs/invariants/19 section 3; docs/product/01; docs/cognition/02; docs/character/05-07 and 09; docs/owner/14; prompts/README.md; prompts/manifest.yaml; prompts/10-fast-reply.md; PROJECT-HANDOFF.md.
+Files changed: TODO.md; PROJECT-HANDOFF.md; docs/README.md; docs/product/01-prd-v0.1.md; docs/cognition/02-framework-v3.5.md; docs/character/05-seed-config-v1.md; docs/character/06-muelsyse-seed-draft-v1.md; docs/character/07-muelsyse-scenario-patch-v2.md; docs/character/09-a7-dialogue-samples-scaffold.md; docs/owner/14-owner-input-workbook-v1.md; prompts/README.md; prompts/manifest.yaml; prompts/10-fast-reply.md; prompts/RESEARCH-alice.md; prompts/RESEARCH-benchmark.md; prompts/generated/README.md; prompts/slots/S2-world-v2.md; prompts/slots/S9-role-bottom-anchor-muelsyse-v1.md; src/gf/prompts/assembler.ts; src/gf/tests/promptsAssembler.test.ts.
+Checks: pnpm test (127/127, including generated-type and no-dialogue-example runtime regression); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; targeted runtime scan finds no Prompt S3/dialogue-sample assembly path or role-play header; git diff --check.
+Known residual risk: A future SFT phase still needs a separate task for dataset provenance, licensing/privacy, train/eval separation, versioning, rollback, and evidence that tuning improves natural continuity without turning the agent into scripted imitation. No such training work is authorized by this decision.
+Rollback: Revert the OWN-003 decision commit and restore the prior Prompt S3 runtime slot and task dependencies. No schema, migration, world fact, model call, or outbound message is changed by this decision.
+Owner decision still needed: None for OWN-003. Future SFT activation requires a new explicit Owner decision.
 ```
 
 ---
@@ -526,16 +539,16 @@ Outcome: Added deterministic AttentionIntent compilation from an already adjudic
 Authority read: AGENTS.md; TODO.md; docs/invariants/19 section 3; docs/cognition/18 sections 1-7; docs/cognition/20 sections 2-12; M20-006 generated contracts; migration 003; M20-015 admission; M20-016 energy engine; M20-017 usage accounting; M20-018 call lifecycle.
 Files changed: TODO.md; src/gf/cognition/attention/attentionLifecycle.ts; src/gf/state/stateManager.ts; src/gf/tests/cognitiveCallLifecycle.test.ts; src/gf/tests/cognitiveRuntimeProperties.test.ts.
 Checks: pnpm test (126/126, including generated-type check); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; git diff --check.
-Known residual risk: Attention intent/subscription database binding belongs with M20-020 Policy output orchestration; this task freezes and tests compilation/lifecycle semantics without inventing Policy content. The M2 lifecycle is still not spliced into legacy M1 Engine paths; M20-025 owns unified routing. Normalization coefficients remain versioned calibration inputs, and unknown model/tokenizer pairs fail closed. M20-020 remains blocked on Owner task OWN-003 Seed A7 approval.
+Known residual risk: Attention intent/subscription database binding belongs with M20-020 Policy output orchestration; this task freezes and tests compilation/lifecycle semantics without inventing Policy content. The M2 lifecycle is still not spliced into legacy M1 Engine paths; M20-025 owns unified routing. Normalization coefficients remain versioned calibration inputs, and unknown model/tokenizer pairs fail closed. The 2026-09-03 OWN-003 decision removed the Seed A7 dependency from M20-020.
 Rollback: Revert the M20-019 task commit. Migration 003, M20-015 admission, M20-016 energy, M20-017 accounting, and M20-018 lifecycle remain independently usable; no deployed migration, provider request, world fact, or outbound message is changed.
-Owner decision still needed: None for M20-019. OWN-003 remains the explicit gate for M20-020.
+Owner decision still needed: None for M20-019.
 ```
 
 ### Open Policy And World Adjudication
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-020` | `BLOCKED` | ENG | `M20-001`, `M20-014`, `M20-018`, `OWN-003` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, or finite action list. |
+| `M20-020` | `READY` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. |
 | `M20-021` | `BLOCKED` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
 | `M20-022` | `BLOCKED` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
 | `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |

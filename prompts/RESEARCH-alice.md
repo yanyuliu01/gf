@@ -1,5 +1,9 @@
 # Alice（米羊科技）方法论对照 — 兼修正上一轮结论
 
+> **历史研究说明**：本文记录旧方案的比较过程，不是现役 Prompt 权威。
+> 关于 A7 的运行时优先级已被 2026-09-03 `OWN-003` 决定取代：Prompt S3
+> 当前禁用，语料仅可在未来另行批准的 SFT/离线评测中使用。
+
 来源：[Alice 工程方法论](https://alice.miyang.cn/methodology/)（洛小山，MIT License，[GitHub: itshen/Alice_methodology](https://github.com/itshen/Alice_methodology)）。已读第一章（五大哲学）、第十四章（Prompt 工程）、特别章（活人感设计）。
 
 Alice 与本项目的定位最近：长期共处的搭档、有作息、会在凌晨说"还不睡？"、人设当工程文档管。docs/05 §4 已引用过它。

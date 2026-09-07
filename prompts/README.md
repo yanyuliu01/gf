@@ -1,4 +1,4 @@
-# Prompt 运行契约 v0.2
+# Prompt 运行契约 v0.3
 
 本目录定义五个模型调用点。核心原则是：**通用契约只负责输入边界、消息角色、证据与输出形状；人格住在角色资产中；模型输出先是 proposal，不是已经发生的状态或已经发送的消息。**
 
@@ -21,7 +21,7 @@ L4 出口与代码可判定的硬约束不另调用模型。tick 的 `communicat
 ```text
 system
   通用调用契约
-  S1 / S2 / S3 角色与世界资产
+  S1 / S2 身份边界与世界资产
   S4 / S5 可信当前状态
   S6 / S7 有来源的检索数据
   S9 角色末尾锚
@@ -48,7 +48,7 @@ data payload user message（结算 / 压缩 / 判官）
 |---|---|---|---|
 | S1 | `slots/S1-immutable-v2.md` | 极低 | 内核锚，永不按轮截断 |
 | S2 | `slots/S2-world-v2.md` | 低 | §A 为硬边界；§B 为世界事实。不得把制作说明装进正文 |
-| S3 | 人工批准的 A7 | 低 | 语言表演资产；发布前必填，未定稿时 fail closed |
+| S3 | 保留编号，当前禁用 | — | 仅供未来另行批准的 SFT/离线评测；不得注入运行时或作为发布门 |
 | S4 | persona statements | 周级 | 带稳定 id；结算/推演修改必须有证据 op |
 | S5 | world state snapshot | 每轮 | 带 `base_state_revision`；能力只读当前可信状态 |
 | S6 | canon hits | 按需 | 0–2 片；只读 `runtime_safe=true` 的稳定 id 与 `role_safe_text`，原始 `text` 禁止装配 |
@@ -56,7 +56,11 @@ data payload user message（结算 / 压缩 / 判官）
 | S8 | trigger / message / situation | 每轮 | 按调用点使用原生 role 或结构化数据，不再统一拼成字符串 |
 | S9 | `slots/S9-role-bottom-anchor-muelsyse-v1.md` | 低 | 角色资产，最长 80 中文字符；模板不硬编码角色名与性格 |
 
-`S1 + S2` 的字符基线只用于发现意外膨胀，不能代替目标模型 tokenizer。发布前装配器必须对每个调用记录真实 token 数、静态前缀命中和截断结果。一般截断优先级为 S7 > S6 > S5 非关键细节 > S2 §B；S1、S2 §A 与经过批准的 S3 不截断。
+Prompt S3 的稳定编号继续保留，但现役 manifest 与模板均不消费它。未来若启动
+SFT 或独立离线表达评测，必须另立数据版本与训练/评测切分；不能把数据集重新
+塞回运行时上下文来模拟训练效果。
+
+`S1 + S2` 的字符基线只用于发现意外膨胀，不能代替目标模型 tokenizer。发布前装配器必须对每个调用记录真实 token 数、静态前缀命中和截断结果。一般截断优先级为 S7 > S6 > S5 非关键细节 > S2 §B；S1 与 S2 §A 不截断。
 
 ## S5 渲染规范
 
@@ -163,7 +167,6 @@ claim 记录“凭什么相信什么”，patch op 记录“因此修改哪一�
 
 ## 仍未解除的发布门
 
-- A7 需要由用户最终批准；当前不得用未经清洗的 canon 原文代替 dialogue samples。
 - v1 统一文本 communication surface renderer 尚需实现；M1 用于被动回复，M2 接入 tick 主动意图。在它及 outbox 恢复测试完成前禁止发送 tick 产生的主动消息；这不等于等待 M4 多模态。
 - memory-compress、probe-judge 与 communication surface 已有独立 JSON Schema；进入自动化任务前仍须补 source-closure、顺序/集合互斥及 A/B aspect 次序等确定性交叉字段校验。
 - 所有现役模板必须经过真实装配、strict schema、注入、多轮连续性、重试与崩溃恢复测试。

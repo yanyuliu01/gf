@@ -1,5 +1,5 @@
 manifest_version: "1.0"
-prompt_contract_version: "0.2"
+prompt_contract_version: "0.3"
 status: "active"
 
 authority:
@@ -29,9 +29,6 @@ role_assets:
   world_rules:
     path: "prompts/slots/S2-world-v2.md"
     section: "送进 prompt 的正文"
-  dialogue_samples:
-    status: "required_before_release"
-    source: "A7 human-approved asset"
   bottom_anchor:
     path: "prompts/slots/S9-role-bottom-anchor-muelsyse-v1.md"
     section: "送进 prompt 的正文"
@@ -92,7 +89,6 @@ communication_surface:
     - "speech_seed"
     - "S1_immutable"
     - "S2_world_rules"
-    - "S3_dialogue_samples"
     - "S4_persona"
     - "S5_world_state"
     - "active_scene_tail"
@@ -116,7 +112,7 @@ communication_surface:
 
 calls:
   fast_reply:
-    contract_id: "fast_reply.v0.2"
+    contract_id: "fast_reply.v0.3"
     template: "prompts/10-fast-reply.md"
     trigger:
       event_origin: "user"
@@ -132,7 +128,6 @@ calls:
         slots_in_order:
           - "S1_immutable"
           - "S2_world_rules"
-          - "S3_dialogue_samples"
           - "S4_persona"
           - "S5_world_state"
           - "S6_canon_hits"

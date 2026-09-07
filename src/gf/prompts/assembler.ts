@@ -34,8 +34,6 @@ const PLACEHOLDER_RE = /\{\{[^}]+\}\}/;
 const IF_BLOCK_RE = /\{\{IF_[^}]+\}\}[\s\S]*?\{\{\/IF_[^}]+\}\}/g;
 const SYSTEM_TEMPLATE_RE =
   /^## System message 模板[^\S\r\n]*\r?\n(?:[^\S\r\n]*\r?\n)*```[^\S\r\n]*\r?\n([\s\S]*?)\r?\n```[^\S\r\n]*\r?$/m;
-const EMPTY_DIALOGUE_SAMPLES_LINE_RE =
-  /(\r?\n)\{\{S3_dialogue_samples\}\}\r?\n/;
 const SOURCE_TYPES = new Set<SourceRef["source_type"]>([
   "message",
   "event",
@@ -273,19 +271,9 @@ export class FastReplyAssembler {
     const slots: Record<string, string> = {
       S1_immutable: this.manifest.readSlot("immutable") ?? "",
       S2_world_rules: this.manifest.readSlot("world_rules") ?? "",
-      S3_dialogue_samples: this.manifest.readSlot("dialogue_samples") ?? "",
       S9_role_bottom_anchor: this.manifest.readSlot("bottom_anchor") ?? "",
     };
-    if (!slots.S3_dialogue_samples) {
-      template = template.replace(
-        EMPTY_DIALOGUE_SAMPLES_LINE_RE,
-        (_match, leadingEol: string) => leadingEol,
-      );
-    }
     for (const [name, content] of Object.entries(slots)) {
-      if (name === "S3_dialogue_samples" && !content) {
-        continue;
-      }
       template = template.replaceAll(`{{${name}}}`, content);
       this.slotCharCounts[name] = content.length;
     }

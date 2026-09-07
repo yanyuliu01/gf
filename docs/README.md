@@ -63,15 +63,15 @@ docs/
 | # | 文档 | 回答什么 | 状态 |
 |---|---|---|---|
 | 05 | `character/05-seed-config-v1.md` | 种子资产怎么写（通用规范） | 现役 |
-| 06 | `character/06-muelsyse-seed-draft-v1.md` | 缪尔赛思实例种子 | Draft，缺 A7 |
+| 06 | `character/06-muelsyse-seed-draft-v1.md` | 缪尔赛思实例种子 | Draft；当前运行时不依赖 Seed A7 |
 | 07 | `character/07-muelsyse-scenario-patch-v2.md` | 三个目标场景的实例增量 | 现役提案；不得覆盖 02/06 |
-| 09 | `character/09-a7-dialogue-samples-scaffold.md` | A7 语料骨架 | **待 Owner 定稿（`OWN-003`）** |
+| 09 | `character/09-a7-dialogue-samples-scaffold.md` | 未来 SFT/离线评测语料草稿 | **已延期；不得进入当前运行时** |
 
 ### Owner 输入
 
 | # | 文档 | 回答什么 | 状态 |
 |---|---|---|---|
-| 14 | `owner/14-owner-input-workbook-v1.md` | 需要 Owner 补的世界规则、Concern、A7、校准与评测 | 待填写；不持有运行字段权威 |
+| 14 | `owner/14-owner-input-workbook-v1.md` | Owner 的世界规则、Concern、校准、评测与延期决策 | 部分待填写；不持有运行字段权威 |
 
 **docs 之外**：`../PROJECT-HANDOFF.md`（交接入口）、`../TODO.md`（任务板）、`../AGENTS.md`（工程纪律）、`../corpus/`（A9 正史语料与 fail-closed 构建）、`../prompts/`（调用点与 manifest）、`../schemas/`（唯一机器输出契约）、`../migrations/`（SQLite DDL）。
 
@@ -151,7 +151,7 @@ docs/
 | QE3 | 表情包收藏的判断权归属 | FR-E5 立项 |
 | QE4 | express 与 speech 同轮组合的预算核算 | FR-E1 实现 |
 | QE5 | 静音期被弃的表达，解除后是否向你提及 | FR-E1 实现 |
-| — | A7 语料 Owner 定稿 | M2.0 开放 Policy 前，对应 `OWN-003` |
+| — | 是否启动 Seed A7 语料工作 | 仅在未来 SFT/独立离线评测立项时重新决策；当前运行时禁用 |
 | — | Concern/张力与纵向评测样例 | M2.0 前，见 14 |
 | — | 精力经济是否纳入冻结 | 需先补一条与 `13 §10.3` 对等的删除标准 |
 

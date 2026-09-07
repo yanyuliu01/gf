@@ -418,7 +418,7 @@ The Owner should decide semantic truth and desired experience:
 
 - world runtime rules and acceptable kinds of ordinary life;
 - character concerns and genuine internal tensions;
-- Doctor voice and final A7 dialogue examples;
+- whether a future SFT/offline-evaluation corpus should be activated; the current runtime has no Seed A7 / Prompt S3 dependency;
 - event calibration examples and longitudinal acceptance scenarios;
 - product ethics, boundaries, and final subjective evaluation.
 

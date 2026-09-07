@@ -9,5 +9,4 @@
 - 目标模型、tokenizer、token 数与截断记录；
 - unresolved-slot、source-closure、JSON Schema 与消息角色校验结果。
 
-未带这些元数据的文件不是 golden，不得用于运行或回归。当前目录没有已批准 fixture；应在装配器和 A7 就绪后生成。
-
+未带这些元数据的文件不是 golden，不得用于运行或回归。当前目录没有已批准 fixture；应在装配器、来源闭包和现役无 Prompt S3 合同就绪后生成。
