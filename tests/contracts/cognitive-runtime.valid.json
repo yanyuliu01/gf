@@ -170,6 +170,27 @@
     "prompt_run_id": "prompt_run_policy_0001",
     "source_closure_hash": "0000000000000000000000000000000000000000000000000000000000000002"
   },
+  "open_policy_draft": {
+    "action": {
+      "intent": "去 S-4 终端查看刚才异常的可见读数",
+      "plan": ["走到生态园终端", "读取当前读数"],
+      "source_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }]
+    },
+    "self_experience": {
+      "narrative": "这次变化值得我亲自确认。",
+      "evidence_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }]
+    },
+    "attention_intent": {
+      "concern": "S-4 样本的稳定性",
+      "future_change": "如果后续可见读数继续偏离，就重新注意它",
+      "scope": {
+        "kind": "object",
+        "subject_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }],
+        "valid_until": "2026-08-29T18:00:00+08:00"
+      },
+      "evidence_refs": [{ "source_type": "event", "source_id": "evt_s4_reading_0001" }]
+    }
+  },
   "self_experience_proposal": {
     "schema_version": "2.0",
     "proposal_id": "self_experience_0001",

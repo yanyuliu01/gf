@@ -355,6 +355,53 @@
         "source_closure_hash": { "$ref": "#/$defs/hash" }
       }
     },
+    "OpenPolicyDraftV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["intent", "source_refs"],
+          "properties": {
+            "intent": { "type": "string", "minLength": 1, "maxLength": 8000 },
+            "plan": {
+              "type": "array", "maxItems": 32,
+              "items": { "type": "string", "minLength": 1, "maxLength": 2000 }
+            },
+            "source_refs": { "$ref": "#/$defs/sourceRefs" }
+          }
+        },
+        "self_experience": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["narrative", "evidence_refs"],
+          "properties": {
+            "narrative": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "uncertainty_narrative": { "type": "string", "minLength": 1, "maxLength": 2000 },
+            "evidence_refs": { "$ref": "#/$defs/sourceRefs" }
+          }
+        },
+        "attention_intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["concern", "future_change", "scope", "evidence_refs"],
+          "properties": {
+            "concern": { "type": "string", "minLength": 1, "maxLength": 1000 },
+            "future_change": { "type": "string", "minLength": 1, "maxLength": 1000 },
+            "scope": { "$ref": "#/$defs/AttentionScopeV1" },
+            "evidence_refs": { "$ref": "#/$defs/sourceRefs" },
+            "supersedes_intent_id": {
+              "anyOf": [
+                { "$ref": "common.schema.json#/$defs/id" },
+                { "type": "null" }
+              ]
+            }
+          }
+        }
+      }
+    },
     "SelfExperienceProposalV2": {
       "type": "object",
       "additionalProperties": false,

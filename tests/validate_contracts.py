@@ -214,10 +214,27 @@ def validate_fixtures(all_validators: dict[str, ContractValidator]) -> None:
         "cognitive_energy_settlement": "cognitive-energy-settlement.schema.json",
         "cognitive_capacity_envelope": "cognitive-capacity-envelope.schema.json",
         "cognitive_episode_evidence": "cognitive-episode-evidence.schema.json",
+        "open_policy_draft": "open-policy-draft.schema.json",
         "self_experience_proposal": "self-experience-proposal.schema.json",
     }
     for fixture_key, schema_name in cognitive_contracts.items():
         all_validators[schema_name].validate(cognitive[fixture_key])
+
+    finite_policy = copy.deepcopy(cognitive["open_policy_draft"])
+    finite_policy["action_candidates"] = ["observe", "wait"]
+    expect_invalid(
+        all_validators["open-policy-draft.schema.json"],
+        finite_policy,
+        "open policy draft exposes a finite action candidate list",
+    )
+
+    metered_policy = copy.deepcopy(cognitive["open_policy_draft"])
+    metered_policy["energy_balance"] = 42
+    expect_invalid(
+        all_validators["open-policy-draft.schema.json"],
+        metered_policy,
+        "open policy draft exposes engine-only accounting",
+    )
 
     pipeline = load_json(FIXTURES / "agent-pipeline.valid.json")
     pipeline_contracts = {

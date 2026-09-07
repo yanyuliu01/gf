@@ -211,6 +211,26 @@ export interface CognitiveEpisodeEvidenceV2 {
   "source_closure_hash": Sha256Hash;
 }
 
+export interface OpenPolicyDraftV1 {
+  "action": {
+    "intent": string;
+    "plan"?: string[];
+    "source_refs": SourceRefs;
+  };
+  "self_experience"?: {
+    "narrative": string;
+    "uncertainty_narrative"?: string;
+    "evidence_refs": SourceRefs;
+  };
+  "attention_intent"?: {
+    "concern": string;
+    "future_change": string;
+    "scope": AttentionScopeV1;
+    "evidence_refs": SourceRefs;
+    "supersedes_intent_id"?: Id | null;
+  };
+}
+
 export interface SelfExperienceProposalV2 {
   "schema_version": "2.0";
   "proposal_id": Id;

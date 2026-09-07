@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/open-policy-draft.schema.json",
+  "title": "Open policy model draft v1",
+  "$ref": "cognitive-runtime.schema.json#/$defs/OpenPolicyDraftV1"
+}

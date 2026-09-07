@@ -548,13 +548,28 @@ Owner decision still needed: None for M20-019.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M20-020` | `READY` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. |
-| `M20-021` | `BLOCKED` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
+| `M20-020` | `DONE` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. Completed 2026-09-07. |
+| `M20-021` | `READY` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
 | `M20-022` | `BLOCKED` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
 | `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
 | `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
 | `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
 | `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
+
+### M20-020 Evidence (2026-09-07)
+
+```text
+Task: M20-020
+Assignee: Codex
+Started / completed: 2026-09-07 / 2026-09-07
+Outcome: Added a strict OpenPolicyDraftV1 model-output contract and a provider-neutral OpenGenerativePolicy. The asynchronous model sees only the already capacity-bounded, source-closed WorkingSelfV1 plus one versioned instruction; it never receives the engine envelope, counters, provider/price fields, fatigue labels, action primitives, finite candidates, or dialogue examples. The draft contains exactly one open semantic action and may omit or include free-form SelfExperience and source-linked AttentionIntent. After the model returns, deterministic code verifies every evidence and Attention scope reference against the Working Self closure, stamps actor/revision/run/time and stable replay IDs, and validates the three existing proposal contracts. Attention remains open future-change semantics with lifecycle active; it contains no watcher implementation.
+Authority read: AGENTS.md; CONTEXT.md; TODO.md; docs/README.md; docs/invariants/19 B1-B3, C1-C5, D1-D6, E1-E4, F1-F3, G1-G2; docs/cognition/02 Open Policy; docs/cognition/18 sections 1-3; docs/cognition/20 sections 2-12; M20-001 contracts; M20-014 Working Self; M20-018 lifecycle; OpenActionProposalV1, SelfExperienceProposalV2, AttentionIntentV1, and WorkingSelfV1 schemas; M20-005 and M20-008 ports.
+Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/open-policy-draft.schema.json; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/cognition/policy/openGenerativePolicy.ts; src/gf/tests/openGenerativePolicy.test.ts; tests/contracts/cognitive-runtime.valid.json; tests/validate_contracts.py.
+Checks: pnpm test (130/130, including generated-type drift, deterministic replay, optional-output omission, source-closure rejection, and model-input non-leakage); contract validation and full project audit (35 schemas, 29 positive samples, 31 negative contracts, migrations 001-004, 2758 canon entries, 10 diagrams); explicit negative contracts reject finite action candidates and engine accounting; git diff --check.
+Known residual risk: This task stops at the injectable model boundary and validated proposals. M20-021 compiles the open plan, M20-024 commits adjudicated outcomes, and M20-025 binds the real provider call to the M20-018 reserve/settle lifecycle and StateManager persistence. The prompt is versioned in code for this seam; provider request/audit integration must preserve that version and exact Working Self input hash.
+Rollback: Revert the M20-020 task commit. The prior Working Self, energy lifecycle, Attention compiler, schemas, migrations, provider adapter, and M1 paths remain independently usable; no world fact, model request, or outbound message is changed by this task.
+Owner decision still needed: None.
+```
 
 ---
 
