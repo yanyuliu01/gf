@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-09-07**
+Snapshot: **2026-09-15**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -574,6 +574,40 @@ Owner decision still needed: None.
 ---
 
 ## M2.1 (M21): Independent World Life
+
+### M21-013: Owner-directed closed S-4 / Feishu pilot
+
+Status: **WAITING_OWNER** (live configuration only). Assignee: Codex. Started: 2026-09-15.
+Owner requested a short-path usable world and Feishu conversation on this date.
+Deliver a scoped persistent S-4 kernel, open Policy with downstream execution,
+shared inbound/autonomous cognition and one recoverable private-text outlet.
+Reuse completed M20 modules; this pilot does not mark general M20-021..026 or
+M21 world/NPC milestones complete. Affect remains off. Live acceptance requires
+Owner Feishu credentials, exact recipient identity, and an always-on host.
+
+Implementation evidence (2026-09-15): closed kernel and persistent activity/resource
+transitions; existing Perception/Gate/WorkingSelf/OpenPolicy/cognitive lifecycle;
+provider-backed downstream compiler; StateManager atomic world/speech/outbox;
+Feishu SDK long-connection private-text ingress and UUID-based egress; durable
+mute, owner binding, delivery leases, bounded retries and dead-letter handling;
+process lock, environment checks, Docker/Compose startup files.
+
+Checks: npm test **151/151**; 38 schemas, 29 positive and 31 negative legacy
+contract fixtures; full audit (2758 canon entries, 10 diagrams); new migration
+005 exercised in the TypeScript runtime tests; git diff --check; offline fixture
+smoke. Mock HTTP verifies the real provider adapter path, not model quality or
+live Feishu delivery. Docker is unavailable in the development environment.
+
+Runbook and remaining boundaries: [S-4 / Feishu pilot](docs/operations/feishu-life-pilot.md).
+Recent source-only memory is used here; general retrieval/commitment cognition,
+arbitrary AttentionIntent watcher compilation, NPC autonomy and Affect remain
+unfinished. These limitations are not masked by marking the larger milestones done.
+The model, recipient and channel have not been exercised live. No external
+message has been sent. Configuration check reports the four required environment
+names missing. Rollback: use the prior entrypoint and database; preserve the
+pilot database for later migration instead of deleting its history.
+
+
 
 Exit gate: a deterministic resource/process kernel advances an ordinary closed
 life loop without a user message or LLM-authored world event. Obligations,

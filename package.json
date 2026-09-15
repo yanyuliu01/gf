@@ -24,15 +24,21 @@
     "vs05:affect-batch": "npm run build && node dist/gf/vertical-slices/runAffectBatchEvalV1.js",
     "vs06:b0": "npm run build && node dist/gf/vertical-slices/runAffectResponseSurfaceV1.js",
     "vs06:attribution:v1": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV1.js",
-    "vs06:attribution": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV2.js"
+    "vs06:attribution": "npm run build && node dist/gf/vertical-slices/runAffectAttributionEvalV2.js",
+    "life:start": "node dist/gf/lifeCli.js",
+    "life:check": "node dist/gf/lifeCli.js --check-config",
+    "life:smoke": "node dist/gf/lifeCli.js --dry-run"
   },
   "dependencies": {
+    "@larksuiteoapi/node-sdk": "1.74.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "proper-lockfile": "4.1.2",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/proper-lockfile": "4.1.4",
     "typescript": "^5.6.3"
   }
 }

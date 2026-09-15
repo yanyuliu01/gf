@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+node_modules
+dist
+runtime
+artifacts
+api key.txt
+*.db
+*.sqlite*

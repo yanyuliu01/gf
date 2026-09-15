@@ -11,6 +11,7 @@ const root = rootFlag >= 0
 const commonPath = join(root, "schemas", "common.schema.json");
 const common = JSON.parse(readFileSync(commonPath, "utf8"));
 const targets = [
+  { schemaName: "life-runtime.schema.json", outputName: "lifeRuntimeTypes.ts" },
   {
     schemaName: "cognitive-runtime.schema.json",
     outputName: "cognitiveRuntimeTypes.ts",

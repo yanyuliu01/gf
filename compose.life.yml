@@ -1,0 +1,14 @@
+services:
+  gf:
+    build:
+      context: .
+      dockerfile: Dockerfile.life
+    env_file: .env
+    environment:
+      GF_LIFE_DB: /data/life.db
+    volumes:
+      - gf-life:/data
+    restart: unless-stopped
+    stop_grace_period: 150s
+volumes:
+  gf-life:

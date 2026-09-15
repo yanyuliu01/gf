@@ -1,3 +1,18 @@
+import type {
+  LifeStateV1,
+  LifeCommandV1,
+} from "../generated/lifeRuntimeTypes.js";
+import type { WorkingSelfV1 } from "../generated/agentPipelineTypes.js";
+import type { OpenPolicyResultV1 } from "../cognition/policy/openGenerativePolicy.js";
+import {
+  seedLife,
+  stepLife,
+  adjudicateLife,
+  change as lifeChange,
+  lifeId,
+  type LifeChange,
+  type LifeTransition,
+} from "../world/life/kernel.js";
 /**
  * Single-writer StateManager.
  *
@@ -189,6 +204,571 @@ export class StateManager {
     policy?: Policy,
   ) {
     this.policy = policy ?? new Policy();
+  }
+
+  /** Single-owner pilot state. All world/inbox/outbox writes stay at this boundary. */
+  lifeSnapshot(): {
+    state: LifeStateV1;
+    revision: number;
+    muted: boolean;
+  } | null {
+    const db = this.connFactory();
+    try {
+      const row = db
+        .prepare("SELECT * FROM life_runtime WHERE singleton_id=1")
+        .get() as { state_json: string; muted: number } | undefined;
+      return row
+        ? {
+            state: JSON.parse(row.state_json),
+            revision: new StateStore(db).currentRevision(),
+            muted: !!row.muted,
+          }
+        : null;
+    } finally {
+      db.close();
+    }
+  }
+
+  private lifeTransaction<T>(run: (db: DatabaseSync) => T): T {
+    const db = this.connFactory();
+    try {
+      db.exec("BEGIN IMMEDIATE");
+      const result = run(db);
+      db.exec("COMMIT");
+      return result;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    } finally {
+      db.close();
+    }
+  }
+
+  initializeLife(at: string): void {
+    this.lifeTransaction((db) => {
+      if (db.prepare("SELECT 1 FROM life_runtime").get()) return;
+      const state = seedLife(at);
+      this.schemas.validate("life-state.schema.json", state);
+      db.prepare(
+        "INSERT INTO life_runtime(singleton_id,state_json) VALUES(1,?)",
+      ).run(canonicalJson(state));
+      const seed = lifeChange(
+        at,
+        "life.seed",
+        "你是缪尔赛思，莱茵生命生态科主任。这份初始记录发生在生态园，当时 S-4 培养正在进行。你与博士通过跨界文字终端联系；博士的普通生活不会直接改变泰拉。日常经历由已发生的事件记录，尚未执行的计划不是事实。",
+        1,
+        { location: "garden" },
+      );
+      this.insertLifeChange(db, seed);
+      db.prepare(
+        `INSERT INTO cognitive_energy_accounts(actor_id,schema_version,available,reserved,capacity,protected_reply_reserve,recovered_at,recovery_model_version,revision) VALUES('muelsyse','1.0',100000,0,100000,12000,?,'life-recovery.v1',0)`,
+      ).run(at);
+    });
+  }
+
+  private insertLifeChange(
+    db: DatabaseSync,
+    c: LifeChange,
+    cause?: string,
+  ): void {
+    const event: WorldEvent = {
+      schema_version: "1.0",
+      event_id: c.id,
+      origin: "system",
+      kind: c.kind,
+      occurred_at: c.at,
+      received_at: c.at,
+      provenance: {
+        principal_id: "muelsyse",
+        connector_id: "world:s4",
+        trust: "verified",
+      },
+      privacy_scope: "internal",
+      idempotency_key: c.id,
+      ...(cause ? { causation_event_id: cause } : {}),
+      payload: { ...c },
+    };
+    this.schemas.validate("world-event.schema.json", event);
+    this.insertEventRows(db, event);
+    db.prepare("INSERT INTO life_event_queue(event_id) VALUES(?)").run(
+      event.event_id,
+    );
+  }
+
+  advanceLife(until: string): number {
+    return this.lifeTransaction((db) => {
+      const row = db
+        .prepare("SELECT state_json FROM life_runtime WHERE singleton_id=1")
+        .get() as { state_json: string };
+      const initial = JSON.parse(row.state_json) as LifeStateV1;
+      const transition = stepLife(initial, until);
+      if (!transition.changes.length) return 0;
+      this.commitLifeWorld(
+        db,
+        transition,
+        lifeId("world-step", { from: initial.at, to: transition.state.at }),
+        null,
+      );
+      return transition.changes.length;
+    });
+  }
+
+  private commitLifeWorld(
+    db: DatabaseSync,
+    transition: LifeTransition,
+    operationId: string,
+    trigger: string | null,
+    proposal: unknown = transition,
+  ): void {
+    this.schemas.validate("life-state.schema.json", transition.state);
+    const s = transition.state;
+    if (
+      Math.abs(s.water + s.waterUsed - s.waterSupplied) > 0.0001 ||
+      Math.abs(s.energy + s.energyUsed - s.energySupplied) > 0.0001
+    )
+      throw new CommitRejected("world_resource_conservation");
+    const revision = new StateStore(db).currentRevision();
+    const serialized = canonicalJson(proposal);
+    db.prepare(
+      `INSERT INTO operation_commits(operation_id,operation_kind,trigger_event_id,base_state_revision,committed_state_revision,proposal_json,proposal_hash) VALUES(?,'admin',?,?,?,?,?)`,
+    ).run(
+      operationId,
+      trigger,
+      revision,
+      revision + 1,
+      serialized,
+      proposalHash(proposal),
+    );
+    for (const c of transition.changes)
+      this.insertLifeChange(db, c, trigger ?? undefined);
+    db.prepare("UPDATE life_runtime SET state_json=? WHERE singleton_id=1").run(
+      canonicalJson(s),
+    );
+    const documents = this.loadDocuments(db);
+    documents.world_state = {
+      ...documents.world_state,
+      location: s.location,
+      activity: s.activity?.intent ?? "当前没有持续主活动",
+      life: s,
+    };
+    this.writeState(db, operationId, documents, revision + 1);
+    const cas = db
+      .prepare(
+        "UPDATE runtime_revision SET current_revision=? WHERE singleton_id=1 AND current_revision=?",
+      )
+      .run(revision + 1, revision);
+    if (cas.changes !== 1) throw new CommitRejected("life_revision_conflict");
+  }
+
+  acceptLifeInput(
+    id: string,
+    text: string,
+    owner: string,
+    at: string,
+  ): boolean {
+    return this.lifeTransaction((db) => {
+      const eventId = lifeId("feishu-input", id);
+      if (
+        db.prepare("SELECT 1 FROM world_events WHERE event_id=?").get(eventId)
+      )
+        return false;
+      const command = text.trim();
+      const meta = ["/mute", "/unmute", "/status"].includes(command);
+      const event: WorldEvent = {
+        schema_version: "1.0",
+        event_id: eventId,
+        origin: meta ? "admin" : "user",
+        kind: meta ? "life.admin" : "life.user.message",
+        channel: "private_im",
+        occurred_at: at,
+        received_at: at,
+        provenance: {
+          principal_id: owner,
+          connector_id: "feishu:private",
+          external_event_id: id,
+          trust: "authenticated",
+        },
+        privacy_scope: "private_im",
+        idempotency_key: eventId,
+        payload: { summary: text, salience: 1, owner },
+      };
+      this.schemas.validate("world-event.schema.json", event);
+      this.insertEventRows(db, event);
+      if (meta) {
+        if (command === "/mute")
+          db.prepare("UPDATE life_runtime SET muted=1").run();
+        if (command === "/unmute")
+          db.prepare("UPDATE life_runtime SET muted=0").run();
+        if (command === "/status") {
+          const row = db
+            .prepare("SELECT state_json,muted FROM life_runtime")
+            .get() as { state_json: string; muted: number };
+          const state = JSON.parse(row.state_json) as LifeStateV1;
+          const revision = new StateStore(db).currentRevision();
+          const operationId = lifeId("status", id);
+          this.commitLifeWorld(
+            db,
+            { state, changes: [] },
+            operationId,
+            eventId,
+            { command, id, revision },
+          );
+          if (!row.muted)
+            this.insertLifeSpeech(
+              db,
+              operationId,
+              eventId,
+              owner,
+              `[系统状态] 世界已推进到 ${state.at}；位置：${state.location}；活动：${state.activity?.intent ?? "无持续主活动"}。`,
+              [{ source_type: "event", source_id: eventId }],
+              at,
+            );
+        }
+      } else {
+        db.prepare(
+          `INSERT INTO messages(message_id,event_id,direction,channel,sender_principal_id,privacy_scope,content_json,created_at) VALUES(?,?,'inbound','private_im',?,'private_im',?,?)`,
+        ).run(eventId, eventId, owner, canonicalJson({ text }), at);
+        db.prepare("INSERT INTO life_event_queue(event_id) VALUES(?)").run(
+          eventId,
+        );
+      }
+      return true;
+    });
+  }
+
+  completeLifeEpisode(options: {
+    episodeId: string;
+    trigger: string;
+    baseRevision: number;
+    workingSelf: WorkingSelfV1;
+    policy: OpenPolicyResultV1;
+    command: LifeCommandV1;
+    owner: string;
+    at: string;
+    proactive: boolean;
+  }): void {
+    this.schemas.validate("life-command.schema.json", options.command);
+    this.schemas.validate(
+      "open-action-proposal.schema.json",
+      options.policy.action,
+    );
+    this.schemas.validate("working-self.schema.json", options.workingSelf);
+    this.lifeTransaction((db) => {
+      if (
+        db
+          .prepare("SELECT 1 FROM life_episodes WHERE episode_id=?")
+          .get(options.episodeId)
+      )
+        return;
+      const revision = new StateStore(db).currentRevision();
+      if (
+        revision !== options.baseRevision ||
+        options.policy.action.base_state_revision !== revision
+      )
+        throw new CommitRejected("life_stale_policy");
+      const input = options.workingSelf.input_closure;
+      if (
+        input.base_state_revision !== revision ||
+        input.closure_hash !==
+          computeInputClosureHash(revision, input.source_refs) ||
+        options.policy.action.source_closure_hash !== input.closure_hash
+      )
+        throw new CommitRejected("life_forged_closure");
+      closureFromInputs(db, input.source_refs).checkRefs(
+        options.policy.action.source_refs,
+      );
+      const allowed = new Set(
+        input.source_refs.map((s) => `${s.source_type}:${s.source_id}`),
+      );
+      if (
+        options.policy.action.source_refs.some(
+          (s) => !allowed.has(`${s.source_type}:${s.source_id}`),
+        )
+      )
+        throw new CommitRejected("life_unseen_action_source");
+      const row = db
+        .prepare("SELECT state_json,muted FROM life_runtime")
+        .get() as { state_json: string; muted: number };
+      const state = JSON.parse(row.state_json) as LifeStateV1;
+      const transition = adjudicateLife(
+        state,
+        options.command,
+        options.policy.action.intent,
+        options.at,
+      );
+      const operationId = lifeId("life-operation", options.episodeId);
+      this.commitLifeWorld(db, transition, operationId, options.trigger, {
+        ...options,
+        transition,
+      });
+      // Mute and feature gate are checked again at the authoritative commit boundary.
+      const isUser =
+        (
+          db
+            .prepare("SELECT origin FROM world_events WHERE event_id=?")
+            .get(options.trigger) as { origin: string }
+        ).origin === "user";
+      if (
+        options.command.primitive === "communicate" &&
+        options.command.target === "doctor" &&
+        options.command.text.trim() &&
+        !row.muted &&
+        (isUser || options.proactive)
+      ) {
+        this.insertLifeSpeech(
+          db,
+          operationId,
+          options.trigger,
+          options.owner,
+          options.command.text,
+          options.policy.action.source_refs,
+          options.at,
+        );
+      }
+      db.prepare(
+        "INSERT INTO life_episodes(episode_id,trigger_event_id,base_revision,input_json,result_json,created_at) VALUES(?,?,?,?,?,?)",
+      ).run(
+        options.episodeId,
+        options.trigger,
+        revision,
+        canonicalJson(options.workingSelf),
+        canonicalJson({
+          policy: options.policy,
+          command: options.command,
+          changes: transition.changes,
+        }),
+        options.at,
+      );
+      db.prepare(
+        "UPDATE life_event_queue SET status='done' WHERE event_id=?",
+      ).run(options.trigger);
+    });
+  }
+
+  private insertLifeSpeech(
+    db: DatabaseSync,
+    op: string,
+    trigger: string,
+    owner: string,
+    text: string,
+    sources: readonly SourceRef[],
+    at: string,
+  ): void {
+    const speech = lifeId("speech", op),
+      outbox = lifeId("outbox", op),
+      auth = lifeId("auth", op);
+    const capability = new StateStore(db).latestCapabilitySnapshot();
+    const payload = canonicalJson({ bubbles: [text] });
+    db.prepare(
+      `INSERT INTO speech_records(speech_id,operation_id,trigger_event_id,channel,recipient_principal_id,privacy_scope,capability_revision,authorization_decision_id,content,status,created_at) VALUES(?,?,?,'private_im',?,'private_im',?,?,?,'queued',?)`,
+    ).run(speech, op, trigger, owner, capability.revision, auth, payload, at);
+    sources.forEach((s, i) =>
+      db
+        .prepare(
+          "INSERT INTO speech_sources(speech_id,source_type,source_id,ordinal) VALUES(?,?,?,?)",
+        )
+        .run(speech, s.source_type, s.source_id, i),
+    );
+    db.prepare(
+      `INSERT INTO outbox(outbox_id,operation_id,speech_id,channel,recipient_principal_id,privacy_scope,capability_revision,authorization_decision_id,authorization_json,payload_json,idempotency_key,status,attempts,created_at) VALUES(?,?,?,'private_im',?,'private_im',?,?,?,?,?,'pending',0,?)`,
+    ).run(
+      outbox,
+      op,
+      speech,
+      owner,
+      capability.revision,
+      auth,
+      canonicalJson({
+        decision: "allowed",
+        recipient: owner,
+        version: "feishu-private.v1",
+      }),
+      payload,
+      outbox,
+      at,
+    );
+    const c = lifeChange(
+      at,
+      "life.speech.staged",
+      `你拟好了一条给博士的消息，已进入发送队列，尚未确认送达：${text}`,
+      0.05,
+    );
+    this.insertLifeChange(
+      db,
+      { ...c, id: lifeId("speech-event", op) },
+      trigger,
+    );
+  }
+
+  markLifeEvent(id: string, error?: string, at = utcnowIso()): void {
+    this.lifeTransaction((db) => {
+      if (error)
+        db.prepare(
+          "UPDATE life_event_queue SET attempts=attempts+1,last_error=?,next_attempt_at=? WHERE event_id=?",
+        ).run(error, new Date(Date.parse(at) + 60000).toISOString(), id);
+      else
+        db.prepare(
+          "UPDATE life_event_queue SET status='done' WHERE event_id=?",
+        ).run(id);
+    });
+  }
+
+  recordLifeAttempt(
+    phase: string,
+    input: unknown,
+    output: unknown,
+    error: string | null,
+    at: string,
+  ): void {
+    this.lifeTransaction((db) =>
+      db
+        .prepare(
+          "INSERT INTO life_model_attempts(attempt_id,phase,input_json,output_json,error_code,created_at) VALUES(?,?,?,?,?,?)",
+        )
+        .run(
+          newId("attempt"),
+          phase,
+          canonicalJson(input),
+          output === undefined ? null : canonicalJson(output),
+          error,
+          at,
+        ),
+    );
+  }
+
+  recoverLifeEnergy(account: CognitiveEnergyAccountV1): void {
+    this.lifeTransaction((db) => {
+      const current = db
+        .prepare("SELECT * FROM cognitive_energy_accounts WHERE actor_id=?")
+        .get(account.actor_id) as Record<string, unknown>;
+      const previous = this.cognitiveAccountFromRow(current);
+      if (
+        account.revision === previous.revision &&
+        canonicalJson(previous) === canonicalJson(account)
+      )
+        return;
+      if (
+        account.revision !== previous.revision + 1 ||
+        account.reserved !== previous.reserved ||
+        account.available + account.reserved > account.capacity
+      )
+        throw new CommitRejected("energy_recovery_conflict");
+      this.updateCognitiveAccount(db, previous, account);
+    });
+  }
+
+  bindLifeOwner(owner: string, app: string): void {
+    this.lifeTransaction((db) => {
+      const prior = db
+        .prepare("SELECT * FROM life_owner WHERE singleton_id=1")
+        .get() as { open_id: string; app_id: string } | undefined;
+      if (prior && (prior.open_id !== owner || prior.app_id !== app))
+        throw new CommitRejected("life_owner_binding_mismatch");
+      if (!prior)
+        db.prepare(
+          "INSERT INTO life_owner(singleton_id,open_id,app_id) VALUES(1,?,?)",
+        ).run(owner, app);
+    });
+  }
+
+  claimLifeDelivery(
+    at: string,
+  ): { outboxId: string; recipient: string; text: string; key: string } | null {
+    return this.lifeTransaction((db) => {
+      const ctrl = db.prepare("SELECT muted FROM life_runtime").get() as
+        | { muted: number }
+        | undefined;
+      if (!ctrl || ctrl.muted) return null;
+      const row = db
+        .prepare(
+          `SELECT o.*,l.lease_until,l.first_attempt_at FROM outbox o LEFT JOIN life_delivery_leases l USING(outbox_id) WHERE o.outbox_id LIKE 'outbox:%' AND ((o.status IN ('pending','retry') AND (o.next_attempt_at IS NULL OR o.next_attempt_at<=?)) OR (o.status='sending' AND l.lease_until<=?)) ORDER BY o.created_at,o.outbox_id LIMIT 1`,
+        )
+        .get(at, at) as Record<string, unknown> | undefined;
+      if (!row) return null;
+      const id = String(row.outbox_id);
+      const receipt = db
+        .prepare(
+          "SELECT provider_message_id FROM deliveries WHERE outbox_id=? AND status='delivered'",
+        )
+        .get(id);
+      if (receipt) {
+        db.prepare("UPDATE outbox SET status='sent' WHERE outbox_id=?").run(id);
+        return null;
+      }
+      // Stop uncertain retransmission before provider UUID deduplication expires.
+      if (
+        Number(row.attempts) >= 8 ||
+        (row.first_attempt_at &&
+          Date.parse(at) - Date.parse(String(row.first_attempt_at)) >
+            45 * 60000)
+      ) {
+        db.prepare(
+          "UPDATE outbox SET status='dead_letter',last_error='delivery_review_required' WHERE outbox_id=?",
+        ).run(id);
+        return null;
+      }
+      const lease = new Date(Date.parse(at) + 60000).toISOString();
+      db.prepare(
+        "INSERT INTO life_delivery_leases(outbox_id,lease_until,first_attempt_at) VALUES(?,?,?) ON CONFLICT(outbox_id) DO UPDATE SET lease_until=excluded.lease_until",
+      ).run(id, lease, at);
+      db.prepare(
+        "UPDATE outbox SET status='sending',attempts=attempts+1 WHERE outbox_id=?",
+      ).run(id);
+      return {
+        outboxId: id,
+        recipient: String(row.recipient_principal_id),
+        text: JSON.parse(String(row.payload_json)).bubbles.join("\n"),
+        key: String(row.idempotency_key),
+      };
+    });
+  }
+
+  finishLifeDelivery(id: string, providerId: string | null, at: string): void {
+    this.lifeTransaction((db) => {
+      const row = db
+        .prepare("SELECT * FROM outbox WHERE outbox_id=?")
+        .get(id) as Record<string, unknown>;
+      if (row.status === "sent") return;
+      const eventId = lifeId("delivery", { id, attempt: row.attempts });
+      if (providerId) {
+        db.prepare(
+          `INSERT INTO deliveries(delivery_id,outbox_id,connector_id,provider_message_id,status,observed_at) VALUES(?,?,'feishu:private',?,'delivered',?)`,
+        ).run(lifeId("receipt", { id, providerId }), id, providerId, at);
+        db.prepare(
+          "UPDATE outbox SET status='sent',sent_at=?,last_error=NULL WHERE outbox_id=?",
+        ).run(at, id);
+        db.prepare(
+          "UPDATE speech_records SET status='sent' WHERE speech_id=?",
+        ).run(row.speech_id as string);
+      } else {
+        db.prepare(
+          "UPDATE outbox SET status='retry',last_error='feishu_send_failed',next_attempt_at=? WHERE outbox_id=?",
+        ).run(
+          new Date(
+            Date.parse(at) + Math.min(30000, 1000 * 2 ** Number(row.attempts)),
+          ).toISOString(),
+          id,
+        );
+        db.prepare(
+          `INSERT INTO deliveries(delivery_id,outbox_id,connector_id,status,observed_at) VALUES(?,?,'feishu:private','unknown',?)`,
+        ).run(lifeId("receipt-failure", { id, attempt: row.attempts }), id, at);
+      }
+      this.insertLifeChange(
+        db,
+        {
+          ...lifeChange(
+            at,
+            providerId ? "life.delivery.delivered" : "life.delivery.unknown",
+            providerId
+              ? "飞书平台已确认消息送达；不代表博士已读。"
+              : "本次消息投递未确认，系统将按原消息标识恢复。",
+            0,
+          ),
+          id: eventId,
+        },
+        lifeId("speech-event", row.operation_id),
+      );
+    });
   }
 
   recordPromptRunStarted(run: PromptRunStarted): void {
@@ -947,7 +1527,7 @@ export class StateManager {
       inputSources,
     );
     if (
-      candidate.input_closure_hash !== expectedHash
+      candidate.input_closure_hash !== computeInputClosureHash(candidate.committed_revision, candidate.observation_refs)
       || decision.input_closure_hash !== expectedHash
       || decision.candidate_id !== candidate.candidate_id
       || decision.actor_id !== candidate.actor_id

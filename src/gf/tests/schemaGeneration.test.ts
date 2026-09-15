@@ -26,6 +26,8 @@ test("schema generation check fails closed when a generated type drifts", () => 
   try {
     for (const relativePath of [
       "schemas/common.schema.json",
+      "schemas/life-runtime.schema.json",
+      "src/gf/generated/lifeRuntimeTypes.ts",
       "schemas/cognitive-runtime.schema.json",
       "schemas/agent-pipeline.schema.json",
       "src/gf/generated/cognitiveRuntimeTypes.ts",

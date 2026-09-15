@@ -309,6 +309,25 @@ export class DeepSeekResponsesClient implements InferenceClient {
     });
   }
 
+  /** Structured provider seam for the new lifecycle; a supplied run is already reserved. */
+  async structured(
+    context: PromptContext,
+    schemaName: string,
+    runId?: string,
+    maxOutputTokens?: number,
+  ): Promise<Record<string, unknown>> {
+    return this.invoke(
+      context,
+      {
+        schemaName,
+        responseFormatName: "gf_structured",
+        parse: (text) => this.parseStructured(text, schemaName),
+      },
+      runId,
+      maxOutputTokens,
+    );
+  }
+
   private parseStructured(
     text: string,
     schemaName: string,
@@ -340,6 +359,8 @@ export class DeepSeekResponsesClient implements InferenceClient {
   private async invoke<T>(
     context: PromptContext,
     spec: InvocationSpec<T>,
+    reservedRunId?: string,
+    outputLimit?: number,
   ): Promise<T> {
     const promptVersion = context.promptVersion;
     if (!promptVersion) {
@@ -351,7 +372,7 @@ export class DeepSeekResponsesClient implements InferenceClient {
     const body: Record<string, unknown> = {
       model: this.modelId,
       input: context.messages,
-      max_output_tokens: this.maxOutputTokens,
+      max_output_tokens: outputLimit ?? this.maxOutputTokens,
       reasoning: { effort: this.reasoningEffort },
       text: spec.schemaName
         ? {
@@ -364,7 +385,7 @@ export class DeepSeekResponsesClient implements InferenceClient {
           }
         : { format: { type: "text" } },
     };
-    const runId = newId("run");
+    const runId = reservedRunId ?? newId("run");
     this.audit.recordPromptRunStarted({
       runId,
       promptName: context.callPoint,

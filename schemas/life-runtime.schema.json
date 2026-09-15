@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/life-runtime.schema.json",
+  "$defs": {
+    "LifeCommandV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primitive",
+        "target",
+        "detail",
+        "text"
+      ],
+      "properties": {
+        "primitive": {
+          "enum": [
+            "observe",
+            "move",
+            "use_object",
+            "wait",
+            "communicate",
+            "capability_gap"
+          ]
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 3000
+        }
+      }
+    },
+    "LifeActivityV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "intent",
+        "primitive",
+        "target",
+        "startedAt",
+        "endsAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "primitive": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "LifeStateV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "at",
+        "nextSampleAt",
+        "location",
+        "activity",
+        "water",
+        "energy",
+        "waterUsed",
+        "energyUsed",
+        "waterSupplied",
+        "energySupplied",
+        "moisture",
+        "pumpHealth",
+        "sampleNumber",
+        "dayNumber"
+      ],
+      "properties": {
+        "version": {
+          "const": "s4-life.v1"
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "nextSampleAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "location": {
+          "enum": [
+            "garden",
+            "office",
+            "home"
+          ]
+        },
+        "activity": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "intent",
+                "primitive",
+                "target",
+                "startedAt",
+                "endsAt"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "intent": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "primitive": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "target": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "water": {
+          "type": "number",
+          "minimum": 0
+        },
+        "energy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "waterUsed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "energyUsed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "waterSupplied": {
+          "type": "number",
+          "minimum": 0
+        },
+        "energySupplied": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moisture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "pumpHealth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sampleNumber": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dayNumber": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
