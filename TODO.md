@@ -609,7 +609,7 @@ Owner decision still needed: None for M20-019.
 | `M20-023` | `DONE` | ENG | `M20-022` | Implemented source-constrained social/environmental outcome proposal for NPC choice (accept/reject/negotiate), partial success (obstacle reduction), misunderstanding (communication noise), and side effects (opportunities/observations). Cannot bypass hard adjudication. |
 | `M20-024` | `DONE` | ENG | `M20-003`, `M20-023` | Implemented atomic StateManager.submitWorldOutcome with base revision CAS, source closure validation, idempotency via outcome_id, and replay support. |
 | `M20-025` | `DONE` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Implemented UnifiedCognitivePipeline routing user and non-user events through identical Cognitive Admission -> Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> Social Outcome -> submitWorldOutcome path. Single personality system for all event types. User events get reply queue lane priority. |
-| `M20-026` | `READY` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
+| `M20-026` | `DONE` | ENG | `M20-025` | Implemented UnifiedSpeechOutput routing proactive and reactive text through same SurfaceMessage -> StateManager.submitReply -> outbox path. Proactive delivery feature-disabled by default (proactiveEnabled config flag). Communication intent validated. |
 
 ### M20-020 Evidence (2026-09-07)
 
@@ -699,6 +699,21 @@ Checks: pnpm test (291/291); pnpm build passes; contract validation (50 schemas)
 Known residual risk: M20-026 must implement proactive/reactive text routing. Energy settlement (M20-018) coordination with outcome commits is not yet integrated. Speech rendering uses stub implementation. Adapters (admission, working self input, adjudication context, social context) are stub implementations.
 Rollback: Revert the M20-025 task commit; no schema, migration, or production database row changes.
 Owner decision still needed: None.
+```
+
+### M20-026 Evidence (2026-09-17)
+
+```text
+Task: M20-026
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented UnifiedSpeechOutput routing proactive and reactive text through same path: SurfaceMessage -> StateManager.submitReply -> outbox. Key features: (1) proactiveEnabled config flag (default false) gates proactive delivery until safety tests pass; (2) hasCommunicationIntent validates that policy intent contains communication keywords; (3) extractTextFromPlan extracts text from policy plan; (4) same SurfaceMessage structure for both reactive and proactive; (5) both types create outbox entries through submitReply.
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/operations/feishu-life-pilot.md (GF_PROACTIVE_ENABLED).
+Files changed: TODO.md; src/gf/delivery/unifiedSpeech.ts (new); src/gf/tests/unifiedSpeech.test.ts (new, 20 tests).
+Checks: pnpm test (311/311); pnpm build passes; contract validation (50 schemas); project validation passes.
+Known residual risk: Integration with UnifiedCognitivePipeline requires replacing StubSpeechRenderer with UnifiedSpeechOutput. Safety tests for proactive delivery not yet defined. Energy settlement coordination remains separate work.
+Rollback: Revert the M20-026 task commit; no schema, migration, or production database row changes.
+Owner decision still needed: Acceptance criteria for safety tests that enable proactive delivery.
 ```
 
 ### M21-007 Evidence (2026-09-17)
