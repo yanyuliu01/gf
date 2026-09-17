@@ -726,8 +726,31 @@ Outcome: Froze versioned JSON Schemas for docs/16 computable world model: Resour
 Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; docs/world/16 sections 0-16; OWN-001 sign-off.
 Files changed: TODO.md; schemas/world-runtime.schema.json and 9 entry schemas; scripts/generate-schema-types.mjs; src/gf/generated/worldRuntimeTypes.ts; src/gf/tests/worldRuntimeContracts.test.ts.
 Checks: pnpm test (16 world runtime contract tests pass); contract validation (50 schemas); pnpm build passes; git diff --check.
-Known residual risk: M21-008 must implement persistence and ledger for these contracts. Schemas define shapes, not cross-row conservation, CAS, or replay semantics.
+Known residual risk: M21-008 (persistence and ledger) is now DONE. M21-009 must implement discrete-event stepper.
 Rollback: Revert the M21-007 task commit; no migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M21-008 Evidence (2026-09-17)
+
+```text
+Task: M21-008
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented resource/process persistence with deterministic ledger. Key features:
+- ResourceLedger class with balanced transfers (double-entry accounting for stock/currency)
+- Non-negative stock enforcement (WM-P01)
+- Interval capacity reservations with overlap detection (WM-P03)
+- Source closure tracking via resource_ledger_sources table
+- Revision CAS via base_state_revision parameter
+- Idempotency via idempotency_key column
+- Property tests for conservation laws and capacity invariants
+Also wired UnifiedSpeechOutput into UnifiedCognitivePipeline (replacing StubSpeechRenderer) with proactiveEnabled default false and safety regression tests for proactive gating.
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 (sections 2-4, resource laws, production matrix, capacity reservations).
+Files changed: TODO.md; migrations/006_resource_ledger.sql; src/gf/world/resourceLedger.ts; src/gf/tests/resourceLedger.test.ts; src/gf/cognition/pipeline/unifiedCognitivePipeline.ts; src/gf/tests/unifiedCognitivePipeline.test.ts.
+Checks: pnpm test (337 tests pass, including 22 resource ledger tests and 4 property tests for WM-P01/P02/P03/P07); pnpm build passes; git diff --check.
+Known residual risk: M21-009 must implement discrete-event stepper using this ledger. Process definitions and activity records exist in schema but lifecycle management not yet complete.
+Rollback: Revert M21-008 commit and drop migration 006_resource_ledger.sql tables. No production data affected.
 Owner decision still needed: None.
 ```
 
@@ -791,8 +814,8 @@ consequences; protagonist association only changes attention.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M21-007` | `DONE` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. Completed 2026-09-17. |
-| `M21-008` | `READY` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
-| `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
+| `M21-008` | `DONE` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. Completed 2026-09-17. |
+| `M21-009` | `READY` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
 | `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
 | `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
 | `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
