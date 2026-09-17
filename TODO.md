@@ -803,8 +803,51 @@ Day-0 values from docs/16:
 Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 5.5, 6-8 (fixture values, ecology garden, physiology); OWN-001 sign-off (A2-A5, S-4 seed defaults).
 Files changed: TODO.md; src/gf/world/closedFixture.ts; src/gf/tests/closedFixture.test.ts.
 Checks: pnpm test (375 tests pass, including 22 closed fixture tests); pnpm build passes; git diff --check.
-Known residual risk: M21-011 must add ecology-department staff/instrument/budget/procurement queues. Process resource consumption and condition degradation not yet wired to ledger deltas.
+Known residual risk: M21-011 (service queues and boundary nodes) is now DONE. Process resource consumption not yet wired to ledger deltas.
 Rollback: Revert M21-010 commit. No migration or database changes.
+Owner decision still needed: None.
+```
+
+### M21-011 Evidence (2026-09-17)
+
+```text
+Task: M21-011
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented service queues and boundary nodes for ecology department and Trimounts:
+
+Service Queues:
+- ServiceQueue class with FIFO, priority, and reservation disciplines
+- Opening windows, capacity limits, maintenance/failure rules
+- Queue entry/start/complete lifecycle
+- Default queues: instrument_queue (reservation), technician_queue (priority), approval_queue (FIFO)
+
+Transport Boundary Nodes:
+- TransportNode with weather sensitivity and congestion factors
+- Default nodes: trimounts_metro (public, 25min base), rhine_shuttle (internal, free)
+- Deterministic travel time calculation with bounded delays
+
+Supplier Boundary Nodes:
+- SupplierNode with price volatility, stock levels, delivery variance
+- Order placement, delivery processing, price updates
+- Default suppliers: lab_supplies_vendor, equipment_parts_vendor
+
+Weather Boundary Node:
+- WeatherNode with seasonal bias, storm probability, temperature range
+- Deterministic weather updates affecting ecology garden
+- Calculated modifiers for irrigation, energy, and growth
+
+Key features:
+- All nodes support opening windows and operational status
+- Deterministic behavior with seed-based randomness
+- Weather affects transport and garden simultaneously
+- Supplier orders flow through delivery timeline
+
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 4.3, 5, 9.1-9.3.
+Files changed: TODO.md; src/gf/world/serviceQueues.ts; src/gf/tests/serviceQueues.test.ts.
+Checks: pnpm test (406 tests pass, including 31 service queue tests); pnpm build passes; git diff --check.
+Known residual risk: M21-012 must implement Feishu adapter. Queue/transport/supplier nodes not yet integrated into closed fixture step loop.
+Rollback: Revert M21-011 commit. No migration or database changes.
 Owner decision still needed: None.
 ```
 
@@ -871,11 +914,11 @@ consequences; protagonist association only changes attention.
 | `M21-008` | `DONE` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. Completed 2026-09-17. |
 | `M21-009` | `DONE` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. Completed 2026-09-17. |
 | `M21-010` | `DONE` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. Completed 2026-09-17. |
-| `M21-011` | `READY` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
-| `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
-| `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
-| `M21-002` | `BLOCKED` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
-| `M21-003` | `BLOCKED` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
+| `M21-011` | `DONE` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. Completed 2026-09-17. |
+| `M21-012` | `READY` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
+| `M21-001` | `READY` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
+| `M21-002` | `READY` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
+| `M21-003` | `READY` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
 | `M21-004` | `BLOCKED` | ENG | `M21-001..003`, `M21-009` | Offline aggregation advances to meaningful event boundaries rather than simulating each minute. Same state/clock/seed produces replayable event proposals and matches stepwise execution. |
 | `M21-005` | `BLOCKED` | ENG | `M20-013`, `M21-004` | Association sampler biases attention toward one concrete object but has no authority to assert that an external event occurred. |
 | `M21-006` | `BLOCKED` | ENG | `M21-001..005`, `M21-010..011` | Simulation fixture proves: coupled resource/process pressure + NPC request + prior commitment -> open action -> cost/partial outcome -> later memory/contact effect, with all facts, conservation, commands, and sources replayable. |
