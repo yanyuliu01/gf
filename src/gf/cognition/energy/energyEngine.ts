@@ -66,6 +66,8 @@ export interface UsageNormalizationProfileV1 {
   version: string;
   modelId: string;
   tokenizerVersion: string;
+  /** Explicit provider response aliases covered by this versioned profile. */
+  modelAliases?: readonly string[];
   semanticInputWeight: number;
   deliberationWeight: number;
   expressionWeight: number;
@@ -377,7 +379,8 @@ export class VersionedUsageSettlement
       throw new CognitiveCapacityError("settlement accounting version mismatch");
     }
     if (
-      receipt.model_id !== context.normalization.modelId
+      (receipt.model_id !== context.normalization.modelId
+        && !context.normalization.modelAliases?.includes(receipt.model_id))
       || receipt.tokenizer_version !== context.normalization.tokenizerVersion
     ) {
       throw new CognitiveCapacityError(

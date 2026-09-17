@@ -14,6 +14,7 @@ COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY schemas ./schemas
 COPY migrations ./migrations
+COPY prompts/slots/S1-immutable-v2.md ./prompts/slots/S1-immutable-v2.md
 RUN mkdir /data && chown node:node /data
 USER node
 ENV GF_LIFE_DB=/data/life.db

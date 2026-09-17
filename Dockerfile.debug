@@ -1,0 +1,6 @@
+FROM python:3.12-slim-bookworm
+WORKDIR /app
+COPY scripts/gf_debug.py /app/gf_debug.py
+USER 1000:1000
+ENV PYTHONDONTWRITEBYTECODE=1
+CMD ["python", "/app/gf_debug.py", "--db", "/data/life.db", "--serve", "--host", "0.0.0.0", "--port", "8787"]

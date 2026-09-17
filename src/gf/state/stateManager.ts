@@ -365,6 +365,7 @@ export class StateManager {
     text: string,
     owner: string,
     at: string,
+    sentAt: string = at,
   ): boolean {
     return this.lifeTransaction((db) => {
       const eventId = lifeId("feishu-input", id);
@@ -372,7 +373,7 @@ export class StateManager {
         db.prepare("SELECT 1 FROM world_events WHERE event_id=?").get(eventId)
       )
         return false;
-      const command = text.trim();
+      const command = text.trim() === "/stats" ? "/status" : text.trim();
       const meta = ["/mute", "/unmute", "/status"].includes(command);
       const event: WorldEvent = {
         schema_version: "1.0",
@@ -380,7 +381,7 @@ export class StateManager {
         origin: meta ? "admin" : "user",
         kind: meta ? "life.admin" : "life.user.message",
         channel: "private_im",
-        occurred_at: at,
+        occurred_at: sentAt,
         received_at: at,
         provenance: {
           principal_id: owner,
@@ -439,6 +440,7 @@ export class StateManager {
   completeLifeEpisode(options: {
     episodeId: string;
     trigger: string;
+    consumedEventIds?: readonly string[];
     baseRevision: number;
     workingSelf: WorkingSelfV1;
     policy: OpenPolicyResultV1;
@@ -486,6 +488,21 @@ export class StateManager {
         )
       )
         throw new CommitRejected("life_unseen_action_source");
+      const consumed = [...new Set(options.consumedEventIds ?? [options.trigger])];
+      if (!consumed.length || !consumed.includes(options.trigger))
+        throw new CommitRejected("life_invalid_input_batch");
+      for (const id of consumed) {
+        const queued = db.prepare(
+          "SELECT q.status,e.origin,e.principal_id FROM life_event_queue q JOIN world_events e USING(event_id) WHERE event_id=?",
+        ).get(id) as { status: string; origin: string; principal_id: string } | undefined;
+        if (!queued || queued.status !== "pending" || !allowed.has(`event:${id}`))
+          throw new CommitRejected("life_unseen_or_consumed_input");
+        if (consumed.length > 1 && (queued.origin !== "user" || queued.principal_id !== options.owner))
+          throw new CommitRejected("life_mixed_input_batch");
+        if (queued.origin === "user" && !options.workingSelf.evidence.some((e) =>
+          e.role === "current_input" && e.source_refs.some((r) => r.source_type === "event" && r.source_id === id)))
+          throw new CommitRejected("life_input_not_in_current_context");
+      }
       const row = db
         .prepare("SELECT state_json,muted FROM life_runtime")
         .get() as { state_json: string; muted: number };
@@ -536,12 +553,12 @@ export class StateManager {
           policy: options.policy,
           command: options.command,
           changes: transition.changes,
+          consumed_event_ids: consumed,
         }),
         options.at,
       );
-      db.prepare(
-        "UPDATE life_event_queue SET status='done' WHERE event_id=?",
-      ).run(options.trigger);
+      for (const id of consumed)
+        db.prepare("UPDATE life_event_queue SET status='done',last_error=NULL,next_attempt_at=NULL WHERE event_id=?").run(id);
     });
   }
 
@@ -601,15 +618,21 @@ export class StateManager {
   }
 
   markLifeEvent(id: string, error?: string, at = utcnowIso()): void {
+    this.markLifeEvents([id], error, at);
+  }
+
+  markLifeEvents(ids: readonly string[], error?: string, at = utcnowIso()): void {
     this.lifeTransaction((db) => {
-      if (error)
-        db.prepare(
-          "UPDATE life_event_queue SET attempts=attempts+1,last_error=?,next_attempt_at=? WHERE event_id=?",
-        ).run(error, new Date(Date.parse(at) + 60000).toISOString(), id);
-      else
-        db.prepare(
-          "UPDATE life_event_queue SET status='done' WHERE event_id=?",
-        ).run(id);
+      for (const id of new Set(ids)) {
+        if (error)
+          db.prepare(
+            "UPDATE life_event_queue SET attempts=attempts+1,last_error=?,next_attempt_at=? WHERE event_id=? AND status='pending'",
+          ).run(error, new Date(Date.parse(at) + 60000).toISOString(), id);
+        else
+          db.prepare(
+            "UPDATE life_event_queue SET status='done',last_error=NULL,next_attempt_at=NULL WHERE event_id=?",
+          ).run(id);
+      }
     });
   }
 

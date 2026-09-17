@@ -64,3 +64,9 @@ export interface LifeStateV1 {
   "sampleNumber": number;
   "dayNumber": number;
 }
+
+export interface LifeCompilationV2 {
+  "command": LifeCommandV1;
+  "action_quote": string;
+  "target_quote": string;
+}

@@ -40,7 +40,12 @@ export function acceptFeishuMessage(
   if (typeof text !== "string" || !text.trim() || text.length > 6000)
     return false;
   // Durable accept completes before ACK; inference is never awaited in the event handler.
-  return state.acceptLifeInput(m.message_id, text, owner, at);
+  const sentMs = Number(m.create_time);
+  const receivedMs = Date.parse(at);
+  // Preserve provider send time on reconnect; absent/invalid/future clocks use receipt time.
+  const sentAt = m.create_time && Number.isFinite(sentMs) && sentMs > 0 && sentMs <= receivedMs
+    ? new Date(sentMs).toISOString() : at;
+  return state.acceptLifeInput(m.message_id, text, owner, at, sentAt);
 }
 export class FeishuTextTransport implements FeishuTransport {
   constructor(

@@ -462,3 +462,47 @@ test("prompt audit closes its write transaction before awaiting DeepSeek", async
     rt.cleanup();
   }
 });
+
+
+test("open policy request types enum-only nodes and still rejects invalid local output", async () => {
+  const { rt, client } = createClient(async (_url, init) => {
+    const format = JSON.parse(String(init?.body)).text.format;
+    assert.equal(format.strict, false);
+    const schema = format.schema;
+    const ref = schema.properties.action.properties.source_refs.items;
+    assert.equal(ref.properties.source_type.type, "string");
+    assert.equal(ref.properties.observed_at.anyOf[0].format, undefined);
+    assert.deepEqual(ref.properties.source_type.enum,
+      ["message", "event", "claim", "external_action", "canon"]);
+    assert.equal(schema.properties.attention_intent.properties.scope.properties.kind.type, "string");
+    return response(JSON.stringify({ action: { intent: "wait", source_refs: [
+      { source_type: "invalid-source", source_id: "test" },
+    ] } }));
+  });
+  try {
+    await assert.rejects(client.structured(context("open_policy", "test.v1"),
+      "open-policy-draft.schema.json"), (error: unknown) =>
+        error instanceof DeepSeekInferenceError && error.code === "schema_invalid");
+    const original = new SchemaRegistry(join(ROOT, "schemas"))
+      .inlineDocument("open-policy-draft.schema.json") as any;
+    assert.equal(original.properties.action.properties.source_refs.items.properties.source_type.type, undefined);
+  } finally { rt.db.close(); }
+});
+
+test("plain chat in a structured call stays rejected with redacted output diagnostics", async () => {
+  const {rt,client}=createClient(async()=>response("还没下班。test-secret-never-persist"));
+  try {
+    await assert.rejects(client.structured(context("policy","test.v1"),"open-policy-draft.schema.json"),
+      (e:unknown)=> e instanceof DeepSeekInferenceError && e.code === "invalid_json"
+        && e.diagnostic?.outputText === "还没下班。[redacted]" && !!e.outputHash);
+  } finally {rt.cleanup();}
+});
+
+test("an incomplete provider response is rejected even if its fragment is valid JSON", async () => {
+  const {rt,client}=createClient(async()=>new Response(JSON.stringify({status:"incomplete",model:"deepseek-v4-flash",
+    output_text:'{"action":{"intent":"等待","source_refs":[]}}',usage:{input_tokens:5,output_tokens:20}}),{status:200}));
+  try {
+    await assert.rejects(client.structured(context("policy","test.v1"),"open-policy-draft.schema.json"),
+      (e:unknown)=>e instanceof DeepSeekInferenceError && e.code === "incomplete_output" && e.diagnostic?.responseStatus === "incomplete");
+  } finally {rt.cleanup();}
+});

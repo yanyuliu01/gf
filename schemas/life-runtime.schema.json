@@ -211,6 +211,28 @@
           "minimum": 0
         }
       }
+    },
+    "LifeCompilationV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "action_quote",
+        "target_quote"
+      ],
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/LifeCommandV1"
+        },
+        "action_quote": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "target_quote": {
+          "type": "string",
+          "maxLength": 4000
+        }
+      }
     }
   }
 }

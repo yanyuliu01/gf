@@ -231,7 +231,7 @@ export function adjudicateLife(
     change(
       at,
       "life.activity.started",
-      `开始活动：${intent}。预计 ${minutes} 分钟后到达完成节点，目前尚未完成。`,
+      `开始执行：${command.primitive}，对象/目的地：${command.target}。预计 ${minutes} 分钟后完成该步骤，目前尚未完成。这不代表整个计划已完成。`,
       0.1,
       { location: state.location },
     ),

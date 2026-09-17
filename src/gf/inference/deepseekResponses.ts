@@ -55,6 +55,7 @@ export interface DeepSeekApiKeyOptions {
 }
 
 export class DeepSeekInferenceError extends Error {
+  diagnostic?: { responseStatus?: string; outputText?: string; outputCharacters?: number; excerptTruncated?: boolean };
   constructor(
     readonly code: string,
     message: string,
@@ -67,6 +68,7 @@ export class DeepSeekInferenceError extends Error {
 }
 
 interface ResponseEnvelope {
+  status?: unknown;
   id?: unknown;
   model?: unknown;
   output_text?: unknown;
@@ -214,11 +216,53 @@ function errorCode(error: unknown): string {
 function isRejectedOutput(error: unknown): boolean {
   return error instanceof DeepSeekInferenceError
     && [
+      "incomplete_output",
       "empty_output",
       "invalid_json",
       "schema_invalid",
       "invalid_fast_reply",
     ].includes(error.code);
+}
+
+/** DeepSeek requires explicit types even for enum-only schema nodes. */
+function providerSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  const result = structuredClone(schema);
+  const visit = (node: Record<string, unknown>): void => {
+    if (node.type === undefined && Array.isArray(node.enum) && node.enum.length > 0) {
+      const types = [...new Set(node.enum.map((value: unknown) =>
+        value === null ? "null" : Array.isArray(value) ? "array" : typeof value,
+      ))];
+      node.type = types.length === 1 ? types[0] : types;
+    }
+    // Unsupported provider formats remain enforced by the local Ajv contract.
+    if (typeof node.format === "string" && !["email", "hostname", "ipv4", "ipv6", "uuid"].includes(node.format)) {
+      delete node.format;
+    }
+    for (const key of ["properties", "$defs", "definitions", "patternProperties"]) {
+      const children = node[key];
+      if (children && typeof children === "object") {
+        for (const child of Object.values(children)) {
+          if (child && typeof child === "object" && !Array.isArray(child)) visit(child);
+        }
+      }
+    }
+    for (const key of ["items", "additionalProperties", "contains", "not", "if", "then", "else"]) {
+      const child = node[key];
+      if (child && typeof child === "object" && !Array.isArray(child)) {
+        visit(child as Record<string, unknown>);
+      }
+    }
+    for (const key of ["anyOf", "oneOf", "allOf", "prefixItems"]) {
+      const children = node[key];
+      if (Array.isArray(children)) {
+        for (const child of children) {
+          if (child && typeof child === "object") visit(child);
+        }
+      }
+    }
+  };
+  visit(result);
+  return result;
 }
 
 export class DeepSeekResponsesClient implements InferenceClient {
@@ -379,8 +423,10 @@ export class DeepSeekResponsesClient implements InferenceClient {
             format: {
               type: "json_schema",
               name: spec.responseFormatName,
-              strict: true,
-              schema: this.schemas.inlineDocument(spec.schemaName),
+              // Strict mode requires every property; GF contracts allow omission.
+              // The original schema is always enforced locally before acceptance.
+              strict: false,
+              schema: providerSchema(this.schemas.inlineDocument(spec.schemaName)),
             },
           }
         : { format: { type: "text" } },
@@ -397,9 +443,17 @@ export class DeepSeekResponsesClient implements InferenceClient {
     });
 
     let rawOutputHash: string | undefined;
+    let outputText: string | undefined;
+    let responseStatus: string | undefined;
     try {
       const envelope = await this.request(body, runId);
+      responseStatus = typeof envelope.status === "string" ? envelope.status : undefined;
+      if (responseStatus === "incomplete") {
+        try { outputText = extractOutputText(envelope); rawOutputHash = sha256(outputText); } catch { /* No partial text is also valid for diagnostics. */ }
+        throw new DeepSeekInferenceError("incomplete_output", "DeepSeek response was incomplete", undefined, rawOutputHash);
+      }
       const text = extractOutputText(envelope);
+      outputText = text;
       rawOutputHash = sha256(text);
       const parsed = spec.parse(text);
       this.audit.recordPromptRunFinished({
@@ -410,6 +464,11 @@ export class DeepSeekResponsesClient implements InferenceClient {
       });
       return parsed;
     } catch (error) {
+      if (error instanceof DeepSeekInferenceError) {
+        const redacted = outputText?.replaceAll(this.apiKey, "[redacted]");
+        error.diagnostic = { responseStatus, outputText: redacted?.slice(0, 12000),
+          outputCharacters: outputText?.length, excerptTruncated: (redacted?.length ?? 0) > 12000 };
+      }
       const errorOutputHash =
         error instanceof DeepSeekInferenceError
           ? error.outputHash

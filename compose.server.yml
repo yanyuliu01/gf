@@ -1,0 +1,25 @@
+# Use with: docker compose -p gf -f compose.life.yml -f compose.server.yml ...
+services:
+  gf:
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+  debug:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    volumes:
+      - gf-life:/data:ro
+    ports:
+      - "127.0.0.1:8787:8787"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"

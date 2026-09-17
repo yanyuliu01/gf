@@ -36,13 +36,18 @@ import {
   normalizeSourceRefs,
 } from "../../validation/derivedInputClosure.js";
 import { lifeId } from "./kernel.js";
-import { OPEN_POLICY_PROMPT_VERSION } from "../../cognition/policy/openGenerativePolicy.js";
+import { LIFE_POLICY_PROMPT_VERSION } from "./prompts.js";
+import { projectLifeConversation } from "./conversation.js";
+import { eventTimeContext } from "./timeContext.js";
 export interface LifeEventRow {
   event_id: string;
+  ledger_order?: number;
   kind: string;
   origin: string;
   occurred_at: string;
   payload_json: string;
+  principal_id: string;
+  causation_event_id?: string | null;
 }
 export class LifeRuntime {
   private busy = false;
@@ -75,40 +80,64 @@ export class LifeRuntime {
         )
         .get(at) as unknown as LifeEventRow | undefined;
       if (!row) return;
+      // Freeze the input set before inference; later arrivals belong to another turn.
+      const batch = row.origin === "user" ? this.pendingUserBatch(at) : [row];
+      if (!batch.length) return;
       try {
-        await this.process(row, at);
+        await this.process(batch, at);
       } catch {
-        this.state.markLifeEvent(row.event_id, "cognition_failed", at);
+        this.state.markLifeEvents(batch.map((e) => e.event_id), "cognition_failed", at);
       }
     } finally {
       this.busy = false;
     }
   }
-  private async process(row: LifeEventRow, at: string) {
+  private pendingUserBatch(at: string): LifeEventRow[] {
+    const rows = this.db.prepare(
+      `SELECT e.* FROM life_event_queue q JOIN world_events e USING(event_id)
+       WHERE q.status='pending' AND e.origin='user' AND e.principal_id=?
+       AND (q.next_attempt_at IS NULL OR q.next_attempt_at<=?)
+       ORDER BY e.occurred_at,e.event_id LIMIT 8`,
+    ).all(this.owner, at) as unknown as LifeEventRow[];
+    const batch: LifeEventRow[] = [];
+    let chars = 0;
+    for (const row of rows) {
+      const size = JSON.parse(row.payload_json).summary.length;
+      if (batch.length && chars + size > 8000) break;
+      batch.push(row);
+      chars += size;
+    }
+    return batch;
+  }
+  private async process(batch: LifeEventRow[], at: string) {
+    const row = batch[0];
     const snapshot = this.state.lifeSnapshot()!;
     const source: SourceRef = { source_type: "event", source_id: row.event_id };
-    const payload = JSON.parse(row.payload_json) as {
-      summary: string;
-      salience: number;
-      location?: string;
-      device?: boolean;
-    };
     const user = row.origin === "user";
-    const visibility: PerceptionCandidate["visibility"] = user
-      ? {
-          kind: "direct_message",
-          channel_id: "private_im",
-          recipient_actor_ids: ["muelsyse"],
-        }
-      : payload.device
-        ? { kind: "device_feed", feed_id: "s4-sensor" }
-        : payload.location
-          ? { kind: "co_located", location_id: payload.location }
-          : { kind: "authorized_record", record_id: "self-actions" };
+    const batchIds = batch.map((e) => e.event_id);
+    const batchSources: SourceRef[] = batch.map((e) => ({ source_type: "event", source_id: e.event_id }));
     const previous = this.accumulations(row.kind);
     const result = this.admission.evaluate({
-      changes: [
-        {
+      changes: batch.map((row) => {
+        const payload = JSON.parse(row.payload_json) as {
+          summary: string;
+          salience: number;
+          location?: string;
+          device?: boolean;
+        };
+        const visibility: PerceptionCandidate["visibility"] = user
+          ? {
+              kind: "direct_message",
+              channel_id: "private_im",
+              recipient_actor_ids: ["muelsyse"],
+            }
+          : payload.device
+            ? { kind: "device_feed", feed_id: "s4-sensor" }
+            : payload.location
+              ? { kind: "co_located", location_id: payload.location }
+              : { kind: "authorized_record", record_id: "self-actions" };
+        const source: SourceRef = { source_type: "event", source_id: row.event_id };
+        return {
           changeId: row.event_id,
           aggregationKey: row.kind,
           eventKind: user ? "message.user" : row.kind,
@@ -123,7 +152,7 @@ export class LifeRuntime {
             row.kind === "life.speech.staged" ||
             row.kind.startsWith("life.delivery."),
           perceptionCandidate: {
-            summary: payload.summary,
+            summary: this.eventNarrative(row),
             occurred_at: row.occurred_at,
             privacy_scope: user ? "private_im" : "internal",
             source_refs: user
@@ -140,12 +169,12 @@ export class LifeRuntime {
             },
             visibility,
           },
-        },
-      ],
+        };
+      }),
       aggregation: {
         windowStartedAt: row.occurred_at,
         windowEndedAt: at,
-        accumulatorVersion: "life-aggregation.v1",
+        accumulatorVersion: "life-aggregation.v2",
       },
       perception: {
         actor_id: "muelsyse",
@@ -155,7 +184,7 @@ export class LifeRuntime {
         device_feed_ids: ["s4-sensor"],
         authorized_record_ids: ["self-actions"],
         projected_at: at,
-        projection_version: "life-perception.v1",
+        projection_version: "life-perception.v2",
         base_state_revision: snapshot.revision,
       },
       gate: {
@@ -179,7 +208,7 @@ export class LifeRuntime {
       },
     });
     if (!result.candidate || !result.decision) {
-      this.state.markLifeEvent(row.event_id);
+      this.state.markLifeEvents(batchIds);
       return;
     }
     this.state.recordWakeDecision(result.candidate, result.decision, {
@@ -187,31 +216,35 @@ export class LifeRuntime {
       affectMode: "off",
       affectContributed: false,
     });
-    this.state.submitCognitiveArtifacts(
-      { observations: [...result.observations] },
-      { inputSources: result.candidate.observation_refs },
-    );
+    // Admission projects each event separately; persist each exact projection closure.
+    for (const observation of result.observations)
+      this.state.submitCognitiveArtifacts(
+        { observations: [observation] },
+        { inputSources: observation.source_refs },
+      );
     if (result.decision.disposition !== "wake") {
-      this.state.markLifeEvent(row.event_id);
+      this.state.markLifeEvents(batchIds);
       return;
     }
     const evidence: WorkingSelfCandidate[] = result.observations.map((o) => ({
       evidenceId: o.observation_id,
       origin: user ? "current_input" : "current_fact",
-      narrative: o.summary,
+      narrative: this.observationNarrative(o, at, "本次触发"),
       sourceRefs: o.source_refs,
-      asOf: o.observed_at,
+      asOf: this.observationTime(o),
     }));
+    evidence.push(...this.recentSpeechEvidence(snapshot, at));
     const seed = this.db
       .prepare(
-        "SELECT event_id,payload_json FROM world_events WHERE kind='life.seed' LIMIT 1",
+        "SELECT event_id,payload_json,occurred_at FROM world_events WHERE kind='life.seed' LIMIT 1",
       )
-      .get() as { event_id: string; payload_json: string };
+      .get() as { event_id: string; payload_json: string; occurred_at: string };
     if (seed.event_id !== row.event_id)
       evidence.push({
         evidenceId: "identity:seed",
         origin: "persona",
-        narrative: JSON.parse(seed.payload_json).summary,
+        narrative: `身份与初始化记录（${seed.occurred_at}，其中进度只描述初始时刻）：${JSON.parse(seed.payload_json).summary}`,
+        asOf: seed.occurred_at,
         sourceRefs: [{ source_type: "event", source_id: seed.event_id }],
       });
     // Keep the currently running self-action even through a long conversation.
@@ -228,7 +261,7 @@ export class LifeRuntime {
         evidence.push({
           evidenceId: "current:activity",
           origin: "activity",
-          narrative: JSON.parse(event.payload_json).summary,
+          narrative: `本轮仍在进行的自身活动，开始于 ${activity.startedAt}，预计结束于 ${activity.endsAt}（只确认已执行的步骤；记录中的打算不代表已完成，引用他人话语不代表自己的经历）：${JSON.parse(event.payload_json).summary}`,
           sourceRefs: [{ source_type: "event", source_id: event.event_id }],
           asOf: at,
         });
@@ -236,7 +269,18 @@ export class LifeRuntime {
     // Retrieval is bounded and source-only. Recent rejected actions are protected counter-evidence.
     const memories = this.db
       .prepare(
-        "SELECT payload_json FROM observations WHERE actor_id='muelsyse' ORDER BY observed_at DESC,observation_id DESC LIMIT 24",
+        `WITH ranked AS (
+          SELECT o.payload_json,o.observation_id,o.observed_at,
+            COALESCE((SELECT MAX(e.occurred_at) FROM json_each(json_extract(o.payload_json,'$.source_refs')) ref
+              JOIN world_events e ON e.event_id=json_extract(ref.value,'$.source_id')
+              WHERE json_extract(ref.value,'$.source_type')='event'),o.observed_at) AS event_time,
+            ROW_NUMBER() OVER (
+              PARTITION BY json_extract(o.payload_json,'$.source_refs')
+              ORDER BY o.observed_at DESC,o.observation_id DESC
+            ) AS source_rank
+          FROM observations o WHERE o.actor_id='muelsyse'
+        ) SELECT payload_json FROM ranked WHERE source_rank=1
+          ORDER BY event_time DESC,observed_at DESC,observation_id DESC LIMIT 24`,
       )
       .all() as { payload_json: string }[];
     const seenSources = new Set(
@@ -260,9 +304,9 @@ export class LifeRuntime {
       memory.push({
         memory_id: o.observation_id,
         kind: "episodic",
-        summary: o.summary,
+        summary: this.observationNarrative(o, at, "历史背景"),
         source_refs: o.source_refs,
-        as_of: o.observed_at,
+        as_of: this.observationTime(o),
       });
       if (
         o.source_refs.some(
@@ -301,7 +345,7 @@ export class LifeRuntime {
             ),
             base_state_revision: snapshot.revision,
           },
-          retrieval_version: "life-recent-memory.v1",
+          retrieval_version: "life-recent-memory.v3",
           retrieved_at: at,
         }
       : undefined;
@@ -322,7 +366,10 @@ export class LifeRuntime {
     });
     const runId = lifeId("run", episodeId);
     // Budget bounds are engine-only. An authenticated input that cannot fit remains queued.
-    const mandatory = Math.max(1000, payload.summary.length * 2 + 1000);
+    const mandatory = Math.max(1000,
+      evidence.reduce((n, e) => n + e.narrative.length, 0)
+      + memory.filter((m) => counterIds.includes(m.memory_id)).reduce((n, m) => n + m.summary.length, 0)
+      + 1000);
     const reservation = new CognitiveBudgetPlanner().plan(
       result.decision,
       recovered,
@@ -340,13 +387,13 @@ export class LifeRuntime {
       },
     );
     if (!reservation) {
-      this.state.markLifeEvent(row.event_id, "capacity_wait", at);
+      this.state.markLifeEvents(batchIds, "capacity_wait", at);
       return;
     }
     const envelope = new CognitiveCapacityLimiter().limit(
       recovered,
       reservation,
-      [source],
+      batchSources,
       {
         mandatorySemanticUnits: mandatory,
         requestedOptionalSemanticUnits: 6000,
@@ -364,9 +411,19 @@ export class LifeRuntime {
       evidence,
       memoryBundle,
       capacityEnvelope: envelope,
-      assemblerVersion: "life-working-self.v1",
+      assemblerVersion: "life-working-self.v3",
       assembledAt: at,
     }) as WorkingSelfV1;
+    const conversation = projectLifeConversation(ws, ws.input_closure.source_refs
+      .filter(s => s.source_type === "event").flatMap(s => {
+        const event = this.db.prepare(`SELECT e.*,e.rowid AS ledger_order FROM world_events e
+          LEFT JOIN life_event_queue q USING(event_id)
+          LEFT JOIN world_events parent ON parent.event_id=e.causation_event_id
+          WHERE e.event_id=? AND (e.origin='user' OR e.kind='life.speech.staged')
+          AND (e.origin<>'user' OR q.status='done' OR e.event_id IN (${batchIds.map(() => "?").join(",")}))
+          AND (parent.origin IS NULL OR parent.origin<>'admin')`).get(s.source_id, ...batchIds) as unknown as LifeEventRow | undefined;
+        return event ? [event] : [];
+      }));
     const lifecycle = new CognitiveCallLifecycle(
       this.state,
       this.energy,
@@ -380,8 +437,8 @@ export class LifeRuntime {
       promptRunStarted: {
         runId,
         promptName: "open_policy",
-        promptVersion: OPEN_POLICY_PROMPT_VERSION,
-        promptManifestHash: hash(OPEN_POLICY_PROMPT_VERSION),
+        promptVersion: LIFE_POLICY_PROMPT_VERSION,
+        promptManifestHash: hash(LIFE_POLICY_PROMPT_VERSION),
         inputHash: hash(ws),
         modelId: this.model.modelId,
         startedAt: at,
@@ -411,8 +468,10 @@ export class LifeRuntime {
         accountingVersion: "life-energy.v1",
         settledAt: at,
         normalization: {
-          version: "life-deepseek-units.v1",
+          version: "life-deepseek-units.v2",
           modelId: this.model.modelId,
+          modelAliases: this.model.modelId === "deepseek-v4-flash"
+            ? ["deepseek-flash"] : [],
           tokenizerVersion: "deepseek.responses.usage.v1",
           semanticInputWeight: 1,
           deliberationWeight: 1,
@@ -425,6 +484,7 @@ export class LifeRuntime {
           ws,
           runId,
           envelope.max_expression_units,
+          conversation,
         );
         return {
           value: r.policy,
@@ -439,10 +499,11 @@ export class LifeRuntime {
         };
       },
     });
-    const command = await this.model.compile(value.value, ws);
+    const command = await this.model.compile(value.value, ws, conversation);
     this.state.completeLifeEpisode({
       episodeId,
       trigger: row.event_id,
+      consumedEventIds: batchIds,
       baseRevision: snapshot.revision,
       workingSelf: ws,
       policy: value.value,
@@ -451,6 +512,93 @@ export class LifeRuntime {
       at,
       proactive: this.proactive,
     });
+  }
+  /** Attribute legacy observations from their immutable source, not an inferred speaker. */
+  private eventNarrative(row: LifeEventRow): string {
+    const text = JSON.parse(row.payload_json).summary as string;
+    if (row.origin === "user")
+      return `博士 → 缪尔赛思；发送于 ${row.occurred_at}；博士原话：${JSON.stringify(text)}。这是对方的发言，不是你的自述。`;
+    if (row.kind === "life.speech.staged") {
+      const parent = row.causation_event_id
+        ? this.db.prepare("SELECT origin FROM world_events WHERE event_id=?").get(row.causation_event_id)
+        : undefined;
+      return `${parent?.origin === "admin" ? "系统通知（不是角色发言）" : "缪尔赛思 → 博士，自身发言"}；记录 ${row.event_id}；时间 ${row.occurred_at}：${text}`;
+    }
+    if (row.kind.startsWith("life.delivery."))
+      return `消息记录 ${row.causation_event_id ?? "未标识"} 的投递回执；时间 ${row.occurred_at}：${text}`;
+    if (row.kind === "life.action.rejected")
+      return `自身行动尝试记录（意图不是已发生的事实）：${text}`;
+    if (row.kind === "life.activity.started")
+      return `自身活动开始记录（只确认已执行步骤，整段意图不是事实）：${text}`;
+    return text;
+  }
+  private observationEvents(o: ObservationV1): LifeEventRow[] {
+    return o.source_refs.filter((r) => r.source_type === "event").flatMap((ref) => {
+      const row = this.db.prepare("SELECT * FROM world_events WHERE event_id=?").get(ref.source_id) as unknown as LifeEventRow | undefined;
+      return row ? [row] : [];
+    });
+  }
+  private observationTime(o: ObservationV1): string {
+    const times = this.observationEvents(o).map((e) => e.occurred_at).sort();
+    return times.at(-1) ?? o.observed_at;
+  }
+  private observationNarrative(o: ObservationV1, now: string, usage: "本次触发" | "历史背景" | "发言历史"): string {
+    const rows = this.observationEvents(o);
+    const content = rows.length ? rows.map((r) => this.eventNarrative(r)).join("\n") : o.summary;
+    const time = rows.length ? eventTimeContext(this.observationTime(o), now)
+      : `原始事件时间未知；观察记录时间 ${o.observed_at}`;
+    const meaning = usage === "本次触发"
+      ? "这是本轮实际处理的事件；其发生时间可能早于本轮。"
+      : "这里只是回看过去的记录，不表示此刻又发生一次，也不是新收到的请求。";
+    return `【${usage}】${time}。${meaning}\n${content}`;
+  }
+  /** Self-authored speech and delivery receipts cross the same Perception boundary,
+   * without waiting behind the inbound queue or recursively waking cognition. */
+  private recentSpeechEvidence(snapshot: NonNullable<ReturnType<StateManager["lifeSnapshot"]>>, at: string): WorkingSelfCandidate[] {
+    const rows = this.db.prepare(
+      `WITH recent AS (
+        SELECT * FROM world_events WHERE kind='life.speech.staged'
+        ORDER BY occurred_at DESC,event_id DESC LIMIT 4
+      ) SELECT * FROM recent UNION ALL
+        SELECT e.* FROM world_events e WHERE e.kind LIKE 'life.delivery.%'
+        AND e.causation_event_id IN (SELECT event_id FROM recent)
+      ORDER BY occurred_at,event_id`,
+    ).all() as unknown as LifeEventRow[];
+    const history = this.db.prepare(`SELECT e.* FROM world_events e
+      JOIN life_event_queue q USING(event_id) WHERE e.origin='user'
+      AND e.principal_id=? AND q.status='done'
+      ORDER BY e.occurred_at DESC,e.event_id DESC LIMIT 12`).all(this.owner) as unknown as LifeEventRow[];
+    let chars = 0;
+    for (const event of history) {
+      const size = JSON.parse(event.payload_json).summary.length;
+      if (chars + size > 8000) break;
+      chars += size;
+      rows.push(event);
+    }
+    if (!rows.length) return [];
+    const projection = new PerceptionProjector().project({
+      actor_id: "muelsyse", actor_location_id: snapshot.state.location,
+      private_channel_ids: ["private_im"], public_channel_ids: [], device_feed_ids: [],
+      authorized_record_ids: ["self-actions"], projected_at: at,
+      projection_version: "life-self-speech.v1", base_state_revision: snapshot.revision,
+      candidates: rows.map((row) => ({
+        summary: this.eventNarrative(row), occurred_at: row.occurred_at,
+        privacy_scope: "private_im", source_refs: row.origin === "user"
+          ? [{ source_type: "event", source_id: row.event_id }, { source_type: "message", source_id: row.event_id }]
+          : [{ source_type: "event", source_id: row.event_id }],
+        provenance: row.origin === "user"
+          ? { kind: "message", principal_id: this.owner, trust: "authenticated" }
+          : { kind: "record", principal_id: "muelsyse", trust: "verified" },
+        visibility: row.origin === "user"
+          ? { kind: "direct_message", channel_id: "private_im", recipient_actor_ids: ["muelsyse"] }
+          : { kind: "authorized_record", record_id: "self-actions" },
+      })),
+    });
+    this.state.submitCognitiveArtifacts({ observations: [...projection.observations] }, { inputSources: projection.source_refs });
+    return projection.observations.map((o) => ({
+      evidenceId: o.observation_id, origin: "current_fact", narrative: this.observationNarrative(o, at, this.observationEvents(o).some(e => e.origin === "user") ? "历史背景" : "发言历史"),
+      sourceRefs: o.source_refs, asOf: this.observationTime(o),
+    }));
   }
   private accumulations(kind: string): AccumulatedSignalContext[] {
     const rows = this.db

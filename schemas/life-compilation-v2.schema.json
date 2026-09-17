@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/life-compilation-v2.schema.json",
+  "$ref": "life-runtime.schema.json#/$defs/LifeCompilationV2"
+}
