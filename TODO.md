@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-09-15**
+Snapshot: **2026-09-17**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -549,8 +549,8 @@ Owner decision still needed: None for M20-019.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M20-020` | `DONE` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. Completed 2026-09-07. |
-| `M20-021` | `READY` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
-| `M20-022` | `BLOCKED` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
+| `M20-021` | `DONE` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. Completed 2026-09-17. |
+| `M20-022` | `READY` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
 | `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
 | `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
 | `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
@@ -568,6 +568,36 @@ Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/open-poli
 Checks: pnpm test (130/130, including generated-type drift, deterministic replay, optional-output omission, source-closure rejection, and model-input non-leakage); contract validation and full project audit (35 schemas, 29 positive samples, 31 negative contracts, migrations 001-004, 2758 canon entries, 10 diagrams); explicit negative contracts reject finite action candidates and engine accounting; git diff --check.
 Known residual risk: This task stops at the injectable model boundary and validated proposals. M20-021 compiles the open plan, M20-024 commits adjudicated outcomes, and M20-025 binds the real provider call to the M20-018 reserve/settle lifecycle and StateManager persistence. The prompt is versioned in code for this seam; provider request/audit integration must preserve that version and exact Working Self input hash.
 Rollback: Revert the M20-020 task commit. The prior Working Self, energy lifecycle, Attention compiler, schemas, migrations, provider adapter, and M1 paths remain independently usable; no world fact, model request, or outbound message is changed by this task.
+Owner decision still needed: None.
+```
+
+### M20-021 Evidence (2026-09-17)
+
+```text
+Task: M20-021
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented ActionCompiler bridging open semantic intent (E1) to finite execution primitives (E2). Added ActionCompilationResultV1 schema with status (compiled | capability_gap), ExecutionPrimitiveV1 for the five world kernel primitives (observe/move/use_object/wait/communicate), and CapabilityGapV1 for explicit unsupported semantics results. ActionCompiler (async, model-backed) with provenance verification, StubActionCompiler (sync, pattern-based) for deterministic testing. Never silently substitutes canned actions for unsupported semantics.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 E1-E4; docs/world/15; docs/world/16; M20-020 OpenActionProposal; M20-004 ActionCompilerPort.
+Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/action-compilation-result.schema.json; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/world/actionCompiler.ts; src/gf/world/actionPorts.ts; src/gf/tests/actionCompiler.test.ts.
+Checks: pnpm test (17 action compiler tests pass); contract validation (40 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); pnpm build passes; git diff --check.
+Known residual risk: M20-022 must implement deterministic hard adjudication using this compiler output. M20-024 commits adjudicated outcomes. The life-pilot model-backed compilation in model.ts remains a separate implementation path.
+Rollback: Revert the M20-021 task commit; no schema, migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M21-007 Evidence (2026-09-17)
+
+```text
+Task: M21-007
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Froze versioned JSON Schemas for docs/16 computable world model: ResourceTypeV1 (six resource laws), ResourceAccountV1 (balance tracking), ResourceReservationV1 (capacity reservations), ProcessDefinitionV1 (production recipes), ProcessInstanceV1 (running processes), ActivityRecordV1 (actor activities), WorldCommandV1 (15 execution primitives), WorldStepInputV1/WorldStepResultV1 (world engine stepping). Activity/process statuses are machine execution lifecycle, not semantic action candidates. Generated TypeScript types from schemas.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; docs/world/16 sections 0-16; OWN-001 sign-off.
+Files changed: TODO.md; schemas/world-runtime.schema.json and 9 entry schemas; scripts/generate-schema-types.mjs; src/gf/generated/worldRuntimeTypes.ts; src/gf/tests/worldRuntimeContracts.test.ts.
+Checks: pnpm test (16 world runtime contract tests pass); contract validation (50 schemas); pnpm build passes; git diff --check.
+Known residual risk: M21-008 must implement persistence and ledger for these contracts. Schemas define shapes, not cross-row conservation, CAS, or replay semantics.
+Rollback: Revert the M21-007 task commit; no migration, database row, provider call, committed world fact, or outbound message changes.
 Owner decision still needed: None.
 ```
 
@@ -630,8 +660,8 @@ consequences; protagonist association only changes attention.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M21-007` | `READY` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. |
-| `M21-008` | `BLOCKED` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
+| `M21-007` | `DONE` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. Completed 2026-09-17. |
+| `M21-008` | `READY` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
 | `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
 | `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
 | `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
