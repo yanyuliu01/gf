@@ -4,6 +4,11 @@
  * Meta commands (leading `/`) never enter the WorldEvent ledger. Ordinary
  * messages are buffered into a debounce window and flushed as one `user`
  * WorldEvent; the payload keeps the ordered content parts.
+ *
+ * Debounce behavior: Lines within the debounce window are aggregated. A
+ * flush occurs when (a) the window expires, checked via `checkFlush()` or
+ * the next `handleLine()`, or (b) a meta command arrives, or (c) `flush()`
+ * is called explicitly. Single-line messages flush after the timeout.
  */
 
 import { newId, utcnowIso } from "../domain/ids.js";
@@ -13,6 +18,7 @@ export interface GatewayResult {
   events: WorldEvent[];
   meta?: { name: string; args: string[] };
   dropped: boolean;
+  flushDueInMs?: number;
 }
 
 interface BufferedLine {
@@ -73,22 +79,60 @@ export class Gateway {
       }
       return { events: [], meta: { name, args }, dropped: true };
     }
+
+    if (this.debounceSeconds <= 0) {
+      this.buffer.push({ text: trimmed, at: utcnowIso() });
+      if (this.firstMessageId === null) {
+        this.firstMessageId = newId("msg");
+      }
+      return { events: this.flush(), dropped: false };
+    }
+
+    const nowMs = this.now().getTime();
+    const windowMs = this.debounceSeconds * 1000;
+
+    if (
+      this.lastLineAt !== null &&
+      nowMs - this.lastLineAt >= windowMs
+    ) {
+      const flushed = this.flush();
+      this.buffer.push({ text: trimmed, at: utcnowIso() });
+      this.firstMessageId = newId("msg");
+      this.lastLineAt = nowMs;
+      return { events: flushed, dropped: false, flushDueInMs: windowMs };
+    }
+
     this.buffer.push({ text: trimmed, at: utcnowIso() });
     if (this.firstMessageId === null) {
       this.firstMessageId = newId("msg");
     }
-    if (this.debounceSeconds <= 0) {
-      return { events: this.flush(), dropped: false };
+    this.lastLineAt = nowMs;
+
+    const elapsed = this.lastLineAt !== null ? nowMs - this.lastLineAt : 0;
+    const remaining = Math.max(0, windowMs - elapsed);
+    return { events: [], dropped: false, flushDueInMs: remaining };
+  }
+
+  checkFlush(): WorldEvent[] {
+    if (this.buffer.length === 0 || this.lastLineAt === null) {
+      return [];
     }
     const nowMs = this.now().getTime();
-    if (
-      this.lastLineAt !== null &&
-      nowMs - this.lastLineAt >= this.debounceSeconds * 1000
-    ) {
-      return { events: this.flush(), dropped: false };
+    const elapsed = nowMs - this.lastLineAt;
+    if (elapsed >= this.debounceSeconds * 1000) {
+      return this.flush();
     }
-    this.lastLineAt = nowMs;
-    return { events: [], dropped: false };
+    return [];
+  }
+
+  msUntilFlush(): number | null {
+    if (this.buffer.length === 0 || this.lastLineAt === null) {
+      return null;
+    }
+    const nowMs = this.now().getTime();
+    const elapsed = nowMs - this.lastLineAt;
+    const remaining = this.debounceSeconds * 1000 - elapsed;
+    return remaining > 0 ? remaining : 0;
   }
 
   flush(): WorldEvent[] {
