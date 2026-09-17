@@ -606,8 +606,8 @@ Owner decision still needed: None for M20-019.
 | `M20-020` | `DONE` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. Completed 2026-09-07. |
 | `M20-021` | `DONE` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. Completed 2026-09-17. |
 | `M20-022` | `DONE` | ENG | `M20-021`, `OWN-001` | Implemented deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. WorldAdjudicator validates compiled primitives against world state and returns accepted/partial/rejected outcomes with explicit constraint classes. |
-| `M20-023` | `READY` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
-| `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
+| `M20-023` | `DONE` | ENG | `M20-022` | Implemented source-constrained social/environmental outcome proposal for NPC choice (accept/reject/negotiate), partial success (obstacle reduction), misunderstanding (communication noise), and side effects (opportunities/observations). Cannot bypass hard adjudication. |
+| `M20-024` | `READY` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
 | `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
 | `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
 
@@ -653,6 +653,21 @@ Files changed: TODO.md; src/gf/world/worldAdjudicator.ts (new); src/gf/tests/wor
 Checks: pnpm test (236/236); pnpm build passes; contract validation (50 schemas); project validation passes.
 Known residual risk: M20-023 must implement source-constrained social outcomes. M20-024 commits adjudicated outcomes through StateManager. Hard constraint checks are synchronous pure functions; the async WorldAdjudicatorPort wrapper enables future I/O-backed NPC consultation.
 Rollback: Revert the M20-022 task commit; no schema, migration, database row, or provider call changes.
+Owner decision still needed: None.
+```
+
+### M20-023 Evidence (2026-09-17)
+
+```text
+Task: M20-023
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented source-constrained social/environmental outcome proposal. SocialOutcomeProposer adds NPC choice (accept/reject/negotiate based on availability and disposition), partial success (obstacle/distraction severity reduces effect), misunderstanding (noise in communication channel), and side effects (opportunities discovered, observations triggered). Key invariant: cannot bypass hard adjudication—if M20-022 rejected an action, it stays rejected. Social outcomes only apply to accepted/partial actions. EnrichedOutcomeProposal extends WorldOutcomeProposalV1 with social_outcomes array.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; docs/world/15 §10; docs/world/16 §12-13.
+Files changed: TODO.md; src/gf/world/socialOutcome.ts (new); src/gf/tests/socialOutcome.test.ts (new, 30 tests).
+Checks: pnpm test (266/266); pnpm build passes; contract validation (50 schemas); project validation passes.
+Known residual risk: M20-024 must atomically commit enriched outcomes through StateManager. NPC decision boundaries are simplified; production would need richer NPC state models. Environmental factors are passed in context rather than derived from world state.
+Rollback: Revert the M20-023 task commit; no schema, migration, database row, or provider call changes.
 Owner decision still needed: None.
 ```
 
