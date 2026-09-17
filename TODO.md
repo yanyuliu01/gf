@@ -772,8 +772,39 @@ Outcome: Implemented WorldEngine for pure TypeScript discrete-event simulation. 
 Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 11-12 (world autonomous running algorithm).
 Files changed: TODO.md; src/gf/world/worldEngine.ts; src/gf/tests/worldEngine.test.ts.
 Checks: pnpm test (353 tests pass, including 16 world engine tests and property tests for WM-P07 determinism); pnpm build passes; git diff --check.
-Known residual risk: M21-010 must integrate WorldEngine with StateManager commit and CognitiveGate. Process lifecycle management and reservation integration not yet complete.
+Known residual risk: M21-010 (closed fixture) is now DONE. M21-011 must add ecology-department queues.
 Rollback: Revert M21-009 commit. No migration or database changes.
+Owner decision still needed: None.
+```
+
+### M21-010 Evidence (2026-09-17)
+
+```text
+Task: M21-010
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented closed fixture for world simulation using OWN-001-approved docs/16 engineering defaults. Key components:
+- WorldClock: manages simulation time with day phases (morning/afternoon/evening/night)
+- ClosedFixture: integrates WorldClock -> WorldEngine.step -> ResourceLedger commit -> PerceptionProjector -> CognitiveAdmissionPipeline
+- Day-0 state from simulation_fixture_v1: 19 resource types (stock/currency/capacity/condition/information), 18 accounts with normalized values
+- Process definitions: s4_daily_cultivation, s4_observation, report_review, circulation_pump_maintenance
+- Full pipeline execution: Activity/Process work advances without continuous Policy calls
+- Deterministic execution: same seed produces identical results
+
+Day-0 values from docs/16:
+- Garden water: 3.0 NDD (covers ~3 days without resupply)
+- Daily energy: 1.25 NDD/day (25% peak margin)
+- Pump health: 0.62 (approaching maintenance threshold)
+- S-4 health: 0.48 (alive but weak)
+- S-4 stress: 0.35 (accumulated stress, unverified cause)
+- Body energy: 0.72 (normal working state)
+- Sleep pressure: 0.28 (normal daytime level)
+
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 5.5, 6-8 (fixture values, ecology garden, physiology); OWN-001 sign-off (A2-A5, S-4 seed defaults).
+Files changed: TODO.md; src/gf/world/closedFixture.ts; src/gf/tests/closedFixture.test.ts.
+Checks: pnpm test (375 tests pass, including 22 closed fixture tests); pnpm build passes; git diff --check.
+Known residual risk: M21-011 must add ecology-department staff/instrument/budget/procurement queues. Process resource consumption and condition degradation not yet wired to ledger deltas.
+Rollback: Revert M21-010 commit. No migration or database changes.
 Owner decision still needed: None.
 ```
 
@@ -839,8 +870,8 @@ consequences; protagonist association only changes attention.
 | `M21-007` | `DONE` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. Completed 2026-09-17. |
 | `M21-008` | `DONE` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. Completed 2026-09-17. |
 | `M21-009` | `DONE` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. Completed 2026-09-17. |
-| `M21-010` | `READY` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
-| `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
+| `M21-010` | `DONE` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. Completed 2026-09-17. |
+| `M21-011` | `READY` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
 | `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
 | `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
 | `M21-002` | `BLOCKED` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
