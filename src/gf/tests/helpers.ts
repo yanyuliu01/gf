@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../state/db.js";
 import { connect } from "../state/db.js";
 import { MigrationRunner } from "../state/migrator.js";
 import {

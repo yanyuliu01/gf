@@ -7,7 +7,7 @@
  * visible to a call. Sequential canon ids are not runtime references.
  */
 
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../state/db.js";
 import type { SourceRef } from "../generated/agentPipelineTypes.js";
 
 export type { SourceRef } from "../generated/agentPipelineTypes.js";

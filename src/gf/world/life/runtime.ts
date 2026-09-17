@@ -1,4 +1,4 @@
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../../state/db.js";
 import type {
   ObservationV1,
   WorkingSelfV1,
@@ -520,7 +520,7 @@ export class LifeRuntime {
       return `博士 → 缪尔赛思；发送于 ${row.occurred_at}；博士原话：${JSON.stringify(text)}。这是对方的发言，不是你的自述。`;
     if (row.kind === "life.speech.staged") {
       const parent = row.causation_event_id
-        ? this.db.prepare("SELECT origin FROM world_events WHERE event_id=?").get(row.causation_event_id)
+        ? this.db.prepare("SELECT origin FROM world_events WHERE event_id=?").get(row.causation_event_id) as { origin?: string } | undefined
         : undefined;
       return `${parent?.origin === "admin" ? "系统通知（不是角色发言）" : "缪尔赛思 → 博士，自身发言"}；记录 ${row.event_id}；时间 ${row.occurred_at}：${text}`;
     }

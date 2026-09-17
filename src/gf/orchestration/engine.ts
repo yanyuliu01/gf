@@ -7,7 +7,7 @@
  * settlement runs on idle or rollover.
  */
 
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../state/db.js";
 import { dirname, join } from "node:path";
 import { newId } from "../domain/ids.js";
 import type { InferenceClient } from "../inference/base.js";

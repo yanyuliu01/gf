@@ -646,9 +646,9 @@ test("stats alias produces a system response and never enters the cognitive queu
   try {
     r.stateManager.initializeLife(AT);
     acceptFeishuMessage(event("stats", "/stats"), owner, r.stateManager, AT);
-    const row = r.db.prepare("SELECT origin,kind FROM world_events WHERE external_event_id='stats'").get();
+    const row = r.db.prepare("SELECT origin,kind FROM world_events WHERE external_event_id='stats'").get() as { origin?: string; kind?: string } | undefined;
     assert.equal(row?.origin, "admin");
-    assert.match(String(r.db.prepare("SELECT content FROM speech_records").get()?.content), /系统状态/);
+    assert.match(String((r.db.prepare("SELECT content FROM speech_records").get() as { content?: string } | undefined)?.content), /系统状态/);
     assert.equal((r.db.prepare("SELECT count(*) n FROM life_event_queue q JOIN world_events e USING(event_id) WHERE e.external_event_id='stats'").get() as {n:number}).n, 0);
   } finally { r.cleanup(); }
 });
@@ -703,7 +703,7 @@ test("StateManager rejects consuming a message that was not in the frozen input"
     const model=fakeModel(); const original=model.compile;
     model.compile=async (policy,ws)=>{
       acceptFeishuMessage(event("unseen","新消息"),owner,r.stateManager,AT);
-      const id=String(r.db.prepare("SELECT event_id FROM world_events WHERE external_event_id='unseen'").get()!.event_id);
+      const id=String((r.db.prepare("SELECT event_id FROM world_events WHERE external_event_id='unseen'").get() as { event_id: string })!.event_id);
       const trigger=ws.evidence.find((e)=>e.role==="current_input")!.source_refs.find((s)=>s.source_type==="event")!.source_id;
       const compiled=await original(policy,ws);
       assert.throws(()=>r.stateManager.completeLifeEpisode({
@@ -727,7 +727,7 @@ test("Feishu reconnect preserves original send time and duplicate IDs never requ
     const input = event("replayed", "刚才问过了");
     input.message = { ...input.message, create_time: String(Date.parse(AT)) } as typeof input.message;
     assert.equal(acceptFeishuMessage(input, owner, r.stateManager, received), true);
-    const row = r.db.prepare("SELECT occurred_at,received_at FROM world_events WHERE external_event_id='replayed'").get();
+    const row = r.db.prepare("SELECT occurred_at,received_at FROM world_events WHERE external_event_id='replayed'").get() as { occurred_at?: string; received_at?: string } | undefined;
     assert.equal(row?.occurred_at, AT);
     assert.equal(row?.received_at, received);
     await new LifeRuntime(r.db, r.stateManager, fakeModel(), owner, false).cycle(received);
@@ -777,7 +777,7 @@ test("re-observing an old source many times cannot refresh its event time or cro
     const next="2026-09-15T09:00:00.000Z";
     acceptFeishuMessage(event("newer-source","九点有新的情况"),owner,r.stateManager,next);
     await new LifeRuntime(r.db,r.stateManager,fakeModel(command("wait")),owner,false).cycle(next);
-    const sourceId=String(r.db.prepare("SELECT event_id FROM world_events WHERE external_event_id='old-source'").get()!.event_id);
+    const sourceId=String((r.db.prepare("SELECT event_id FROM world_events WHERE external_event_id='old-source'").get() as { event_id: string })!.event_id);
     const revision=r.stateManager.lifeSnapshot()!.revision;
     for(let i=0;i<30;i++) {
       const projection=new PerceptionProjector().project({
@@ -834,8 +834,8 @@ test("native dialogue survives restart with exact roles and excludes arrivals du
     const restarted = new StateManager(() => connect(r.dbPath),schemas);
     await new LifeRuntime(r.db,restarted,model,owner,false).cycle("2026-09-15T08:01:00.000Z");
     assert.ok(checked);
-    assert.equal(r.db.prepare("SELECT count(*) n FROM life_episodes").get()?.n,2);
-    assert.equal(r.db.prepare("SELECT count(*) n FROM life_event_queue q JOIN world_events e USING(event_id) WHERE e.origin='user' AND q.status='pending'").get()?.n,1);
+    assert.equal((r.db.prepare("SELECT count(*) n FROM life_episodes").get() as { n: number } | undefined)?.n,2);
+    assert.equal((r.db.prepare("SELECT count(*) n FROM life_event_queue q JOIN world_events e USING(event_id) WHERE e.origin='user' AND q.status='pending'").get() as { n: number } | undefined)?.n,1);
   } finally {r.cleanup();}
 });
 
@@ -867,8 +867,8 @@ test("provider receives native roles and world wakes end at a non-user turn boun
     };
     await new LifeRuntime(r.db,r.stateManager,new DeepSeekLifeModel("test",schemas,r.stateManager,mock),owner,false).cycle("2026-09-15T08:01:00.000Z");
     assert.equal(calls,2);
-    assert.equal(r.db.prepare("SELECT count(*) n FROM life_episodes").get()?.n,2);
-    assert.equal(r.db.prepare("SELECT count(*) n FROM outbox").get()?.n,1);
+    assert.equal((r.db.prepare("SELECT count(*) n FROM life_episodes").get() as { n: number } | undefined)?.n,2);
+    assert.equal((r.db.prepare("SELECT count(*) n FROM outbox").get() as { n: number } | undefined)?.n,1);
   } finally {r.cleanup();}
 });
 
@@ -890,10 +890,10 @@ test("plain chat failure is persisted precisely and never sent as a fallback", a
     };
     await new LifeRuntime(r.db,r.stateManager,new DeepSeekLifeModel("test",schemas,r.stateManager,mock),owner,false).cycle(AT);
     assert.equal(requests,1);
-    const attempt=r.db.prepare("SELECT error_code,output_json FROM life_model_attempts").get()!;
+    const attempt=r.db.prepare("SELECT error_code,output_json FROM life_model_attempts").get() as { error_code: string; output_json: string };
     assert.equal(attempt.error_code,"invalid_json");
     assert.equal(JSON.parse(String(attempt.output_json)).failure.diagnostic.outputText,"还没呢，灯还亮着。");
-    assert.equal(r.db.prepare("SELECT count(*) n FROM outbox").get()?.n,0);
-    assert.equal(r.db.prepare("SELECT status FROM life_event_queue q JOIN world_events e USING(event_id) WHERE e.origin='user'").get()?.status,"pending");
+    assert.equal((r.db.prepare("SELECT count(*) n FROM outbox").get() as { n: number } | undefined)?.n,0);
+    assert.equal((r.db.prepare("SELECT status FROM life_event_queue q JOIN world_events e USING(event_id) WHERE e.origin='user'").get() as { status: string } | undefined)?.status,"pending");
   } finally {r.cleanup();}
 });

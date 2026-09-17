@@ -7,7 +7,7 @@
  * character impulses.
  */
 
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../state/db.js";
 import { newId } from "../domain/ids.js";
 import type { WorldEvent } from "../state/stateManager.js";
 import {

@@ -29,7 +29,7 @@ import {
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "./db.js";
 import { newId, parseIso, utcnowIso } from "../domain/ids.js";
 import type {
   BeliefProposalV1,

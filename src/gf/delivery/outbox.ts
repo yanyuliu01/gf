@@ -7,7 +7,7 @@
  * dispatch either dedupes on the provider side or records the receipt.
  */
 
-import type { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "../state/db.js";
 import { newId, utcnowIso } from "../domain/ids.js";
 import { Metrics } from "../observability/metrics.js";
 

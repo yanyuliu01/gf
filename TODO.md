@@ -185,7 +185,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | `M11-004` | `DONE` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `DONE` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
 | `M11-006` | `DONE` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. DeepSeek request model `deepseek-v4-flash` and `DEEPSEEK_API_KEY` were approved, implemented, and verified by a synthetic live smoke on 2026-09-01. |
-| `M11-007` | `READY` | ENG | `M11-001..006` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
+| `M11-007` | `DONE` | ENG | `M11-001..006` | Run and record build, 204 runtime tests (expanded from original 19), contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. All checks green after migrating to better-sqlite3 for FTS5 support. |
 
 ```text
 Task: M11-001
@@ -262,6 +262,19 @@ Files changed: .gitignore; TODO.md; docs/owner/14-owner-input-workbook-v1.md; sr
 Checks: pnpm test (115/115); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; synthetic DeepSeek live smoke (one bubble, validated audit, output hash present); git diff --check.
 Known residual risk: `deepseek-v4-flash` is a provider rolling request alias rather than an immutable model snapshot. Prompt runs stop at `validated` and remain operation-unlinked until M20-018 completes the reserve/infer/commit/settle lifecycle; provider usage receipts are M20-017.
 Rollback: Revert the M11-006 task commit; CLI defaults to Stub and no migration or committed world fact depends on the provider adapter.
+Owner decision still needed: None.
+```
+
+```text
+Task: M11-007
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Migrated from node:sqlite to better-sqlite3 for FTS5 support. All checks green: pnpm build passes; pnpm test passes (204/204); contract validation (50 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); canon audit (2758 entries); project validation (64 JSON, 43 markdown, 12 manifest paths, 10 diagrams); recovery smoke test (tests/test_gf_debug.py). Test count expanded from original 19 to 204 due to M20-021 and M21-007 additions.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; package.json; migrations/004_memory_search.sql (FTS5 usage).
+Files changed: TODO.md; package.json (added better-sqlite3); src/gf/state/db.ts (migrated to better-sqlite3); src/gf/tests/helpers.ts; src/gf/world/life/runtime.ts; src/gf/tests/lifePilot.test.ts; src/gf/tests/schemaGeneration.test.ts; src/gf/validation/sourceClosure.ts; src/gf/scheduler/scheduler.ts; src/gf/cognition/memory/structuredMemorySearch.ts; src/gf/delivery/outbox.ts; src/gf/orchestration/engine.ts; src/gf/state/migrator.ts; src/gf/state/repositories.ts; src/gf/state/stateManager.ts.
+Checks: pnpm build passes; pnpm test (204/204); python3 tests/validate_contracts.py (50 schemas); python3 corpus/scripts/audit_canon.py (2758 entries); python3 scripts/validate_project.py (10 diagrams); python3 tests/test_gf_debug.py (recovery smoke).
+Known residual risk: better-sqlite3 is a native module requiring compilation; node:sqlite would be preferable if FTS5 were enabled in Node's built-in SQLite. The node:sqlite to better-sqlite3 migration required type assertion updates for .get() return types.
+Rollback: Revert the M11-007 task commit and pnpm install to restore node:sqlite dependency only.
 Owner decision still needed: None.
 ```
 

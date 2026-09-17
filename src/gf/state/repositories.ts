@@ -5,7 +5,7 @@
  * read paths plus small write helpers used by the engine and outbox worker.
  */
 
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "./db.js";
 import { newId, utcnowIso } from "../domain/ids.js";
 
 export type Row = Record<string, unknown>;
