@@ -851,6 +851,51 @@ Rollback: Revert M21-011 commit. No migration or database changes.
 Owner decision still needed: None.
 ```
 
+### M21-001 Evidence (2026-09-17)
+
+```text
+Task: M21-001
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented commitment/schedule driver for converting obligations into production demand:
+
+CommitmentDriver class with:
+- Ledger entry recording with idempotency
+- Fulfillment/release/broken evidence tracking
+- Evaluate() returns events, demands, and conflicts
+
+Event emissions:
+- overdue: commitment passes due_at without fulfillment
+- fulfilled: condition is satisfied (e.g., deliver:observation_data:1)
+- conflict: competing commitments exceed capacity
+- broken: explicitly recorded or detected impossible
+- released: mutual agreement to release obligation
+
+Production demand:
+- Derives remaining requirements from unfulfilled conditions
+- Priority increases as due_at approaches (100 for overdue, 90 for <24h, etc.)
+- Tracks requiredOutputTypeId and requiredAmount
+
+Conflict detection:
+- Compares total demand against available capacity
+- Groups demands by output type
+- Emits conflict events with all affected commitments
+
+Projection:
+- projectCommitment() returns CommitmentV1 compliant with schema
+- derived_from_ledger: true, projection_scope: adjudication_audit_only
+- Status derived from evidence, not written directly
+
+All event emissions are idempotent via processedEventKeys tracking.
+
+Authority read: AGENTS.md; TODO.md; docs/invariants/19 B2-B3; docs/world/16 section 8.2; schemas/commitment.schema.json.
+Files changed: TODO.md; src/gf/world/commitmentDriver.ts; src/gf/tests/commitmentDriver.test.ts.
+Checks: pnpm test (427 tests pass, including 21 commitment driver tests); pnpm build passes; git diff --check.
+Known residual risk: M21-004 depends on M21-001..003. Production demand not yet wired to process scheduler.
+Rollback: Revert M21-001 commit. No migration or database changes.
+Owner decision still needed: None.
+```
+
 ---
 
 ## M2.1 (M21): Independent World Life
@@ -916,7 +961,7 @@ consequences; protagonist association only changes attention.
 | `M21-010` | `DONE` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. Completed 2026-09-17. |
 | `M21-011` | `DONE` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. Completed 2026-09-17. |
 | `M21-012` | `READY` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
-| `M21-001` | `READY` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
+| `M21-001` | `DONE` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. Completed 2026-09-17. |
 | `M21-002` | `READY` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
 | `M21-003` | `READY` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
 | `M21-004` | `BLOCKED` | ENG | `M21-001..003`, `M21-009` | Offline aggregation advances to meaningful event boundaries rather than simulating each minute. Same state/clock/seed produces replayable event proposals and matches stepwise execution. |
