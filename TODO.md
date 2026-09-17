@@ -749,8 +749,31 @@ Also wired UnifiedSpeechOutput into UnifiedCognitivePipeline (replacing StubSpee
 Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 (sections 2-4, resource laws, production matrix, capacity reservations).
 Files changed: TODO.md; migrations/006_resource_ledger.sql; src/gf/world/resourceLedger.ts; src/gf/tests/resourceLedger.test.ts; src/gf/cognition/pipeline/unifiedCognitivePipeline.ts; src/gf/tests/unifiedCognitivePipeline.test.ts.
 Checks: pnpm test (337 tests pass, including 22 resource ledger tests and 4 property tests for WM-P01/P02/P03/P07); pnpm build passes; git diff --check.
-Known residual risk: M21-009 must implement discrete-event stepper using this ledger. Process definitions and activity records exist in schema but lifecycle management not yet complete.
+Known residual risk: M21-009 (discrete-event stepper) is now DONE. M21-010 must implement first closed fixture.
 Rollback: Revert M21-008 commit and drop migration 006_resource_ledger.sql tables. No production data affected.
+Owner decision still needed: None.
+```
+
+### M21-009 Evidence (2026-09-17)
+
+```text
+Task: M21-009
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented WorldEngine for pure TypeScript discrete-event simulation. Key features:
+- step() is pure computation: no database writes, no model calls (WM-P13)
+- Same state/commands/rules/seed produces byte-identical output (WM-P07)
+- Process queues with status transitions (queued -> running -> completed/failed)
+- Bounded seeded distributions with explicit random draws recorded in audit
+- Next-event calculation from running processes and activities
+- Support for all 15 world command primitives (reserve_resource, transfer_resource, start_process, pause_process, resume_process, cancel_process, move_actor, start_activity, complete_activity, cancel_activity, observe, communicate, wait, use_object, release_resource)
+- Completion/failure based on failure_model percentage
+- Duration models support fixed and range formats (e.g., "60 minutes", "30-60 minutes")
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 11-12 (world autonomous running algorithm).
+Files changed: TODO.md; src/gf/world/worldEngine.ts; src/gf/tests/worldEngine.test.ts.
+Checks: pnpm test (353 tests pass, including 16 world engine tests and property tests for WM-P07 determinism); pnpm build passes; git diff --check.
+Known residual risk: M21-010 must integrate WorldEngine with StateManager commit and CognitiveGate. Process lifecycle management and reservation integration not yet complete.
+Rollback: Revert M21-009 commit. No migration or database changes.
 Owner decision still needed: None.
 ```
 
@@ -815,8 +838,8 @@ consequences; protagonist association only changes attention.
 |---|---|---|---|---|
 | `M21-007` | `DONE` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. Completed 2026-09-17. |
 | `M21-008` | `DONE` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. Completed 2026-09-17. |
-| `M21-009` | `READY` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
-| `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
+| `M21-009` | `DONE` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. Completed 2026-09-17. |
+| `M21-010` | `READY` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
 | `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
 | `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
 | `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
