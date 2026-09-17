@@ -605,8 +605,8 @@ Owner decision still needed: None for M20-019.
 |---|---|---|---|---|
 | `M20-020` | `DONE` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. Completed 2026-09-07. |
 | `M20-021` | `DONE` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. Completed 2026-09-17. |
-| `M20-022` | `READY` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
-| `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
+| `M20-022` | `DONE` | ENG | `M20-021`, `OWN-001` | Implemented deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. WorldAdjudicator validates compiled primitives against world state and returns accepted/partial/rejected outcomes with explicit constraint classes. |
+| `M20-023` | `READY` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
 | `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
 | `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
 | `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
@@ -638,6 +638,21 @@ Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/action-co
 Checks: pnpm test (17 action compiler tests pass); contract validation (40 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); pnpm build passes; git diff --check.
 Known residual risk: M20-022 must implement deterministic hard adjudication using this compiler output. M20-024 commits adjudicated outcomes. The life-pilot model-backed compilation in model.ts remains a separate implementation path.
 Rollback: Revert the M20-021 task commit; no schema, migration, database row, provider call, committed world fact, or outbound message changes.
+Owner decision still needed: None.
+```
+
+### M20-022 Evidence (2026-09-17)
+
+```text
+Task: M20-022
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented deterministic hard adjudication for seven constraint classes: location (adjacent/reachable checks), time (phase restrictions), resource (capacity availability), capability (required abilities), knowledge (known locations/targets), permission (use permissions), and world_rule (immutable rule checks). WorldAdjudicator validates ActionCompilationResultV1 primitives against ActorState and WorldSnapshot, producing WorldOutcomeProposalV1 with status (accepted/partial/rejected), explicit hard_constraint_classes for rejections, and proposed_effects for accepted actions. StubWorldAdjudicator for deterministic testing.
+Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 A2-A3, B3; docs/world/16 §10-12.
+Files changed: TODO.md; src/gf/world/worldAdjudicator.ts (new); src/gf/tests/worldAdjudicator.test.ts (new, 27 tests).
+Checks: pnpm test (236/236); pnpm build passes; contract validation (50 schemas); project validation passes.
+Known residual risk: M20-023 must implement source-constrained social outcomes. M20-024 commits adjudicated outcomes through StateManager. Hard constraint checks are synchronous pure functions; the async WorldAdjudicatorPort wrapper enables future I/O-backed NPC consultation.
+Rollback: Revert the M20-022 task commit; no schema, migration, database row, or provider call changes.
 Owner decision still needed: None.
 ```
 
