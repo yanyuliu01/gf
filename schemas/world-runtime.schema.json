@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gf.local/schemas/world-runtime.schema.json",
+  "title": "GF world runtime shared definitions",
+  "$defs": {
+    "sourceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": { "$ref": "common.schema.json#/$defs/sourceRef" }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "resourceLaw": {
+      "enum": ["stock", "currency", "capacity", "condition", "information", "permission"],
+      "description": "Physical/economic semantics determining conservation and transfer rules"
+    },
+    "ResourceTypeV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "resource_type_id", "law", "unit", "version"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "law": { "$ref": "#/$defs/resourceLaw" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "min_balance": { "type": "number" },
+        "max_balance": { "type": "number" },
+        "decay_model": { "type": "string", "maxLength": 256 },
+        "version": { "$ref": "common.schema.json#/$defs/id" }
+      }
+    },
+    "ResourceAccountV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "account_id", "resource_type_id", "owner_id", "balance",
+        "reserved", "revision"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "account_id": { "$ref": "common.schema.json#/$defs/id" },
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "owner_id": { "$ref": "common.schema.json#/$defs/id" },
+        "location_id": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "balance": { "type": "number" },
+        "reserved": { "type": "number", "minimum": 0 },
+        "revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "reservationStatus": {
+      "enum": ["pending", "active", "released", "expired", "cancelled"]
+    },
+    "ResourceReservationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "reservation_id", "account_id", "resource_type_id",
+        "amount", "status", "reserved_at", "expires_at", "purpose", "revision"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "reservation_id": { "$ref": "common.schema.json#/$defs/id" },
+        "account_id": { "$ref": "common.schema.json#/$defs/id" },
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "amount": { "type": "number", "minimum": 0 },
+        "status": { "$ref": "#/$defs/reservationStatus" },
+        "reserved_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "expires_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "purpose": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "process_instance_id": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "activity_id": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "idempotency_key": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ResourceAmountV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource_type_id", "amount"],
+      "properties": {
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "amount": { "type": "number" }
+      }
+    },
+    "CapacityRequirementV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource_type_id", "amount_per_unit_time", "time_unit"],
+      "properties": {
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "amount_per_unit_time": { "type": "number", "minimum": 0 },
+        "time_unit": { "enum": ["minute", "hour", "day"] }
+      }
+    },
+    "interruptibility": {
+      "enum": ["none", "lossy", "safe"]
+    },
+    "ProcessDefinitionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "definition_id", "version", "inputs", "outputs",
+        "capacities", "duration_model", "output_model", "failure_model",
+        "interruptibility"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "definition_id": { "$ref": "common.schema.json#/$defs/id" },
+        "version": { "$ref": "common.schema.json#/$defs/id" },
+        "inputs": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "#/$defs/ResourceAmountV1" }
+        },
+        "outputs": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "#/$defs/ResourceAmountV1" }
+        },
+        "capacities": {
+          "type": "array", "maxItems": 16,
+          "items": { "$ref": "#/$defs/CapacityRequirementV1" }
+        },
+        "duration_model": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "output_model": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "failure_model": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "precondition_rule_ids": {
+          "type": "array", "maxItems": 16, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "required_permission_ids": {
+          "type": "array", "maxItems": 16, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "interruptibility": { "$ref": "#/$defs/interruptibility" }
+      }
+    },
+    "processStatus": {
+      "enum": ["queued", "reserved", "running", "paused", "completed", "failed", "cancelled", "rework_required"]
+    },
+    "ProcessInstanceV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "instance_id", "definition_id", "definition_version",
+        "status", "progress", "base_state_revision", "random_seed"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "instance_id": { "$ref": "common.schema.json#/$defs/id" },
+        "definition_id": { "$ref": "common.schema.json#/$defs/id" },
+        "definition_version": { "$ref": "common.schema.json#/$defs/id" },
+        "status": { "$ref": "#/$defs/processStatus" },
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reservations": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "started_at": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        },
+        "expected_completion_at": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "random_seed": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "activityStatus": {
+      "enum": ["running", "waiting", "paused", "completed", "cancelled"]
+    },
+    "ActivityRecordV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "activity_id", "actor_id", "semantic_description",
+        "status", "interruptibility", "started_at", "source_refs", "revision"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "activity_id": { "$ref": "common.schema.json#/$defs/id" },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "semantic_description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "status": { "$ref": "#/$defs/activityStatus" },
+        "execution_refs": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "reservations": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "interruptibility": { "$ref": "#/$defs/interruptibility" },
+        "started_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "expected_boundary_at": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "worldCommandPrimitive": {
+      "enum": [
+        "reserve_resource", "release_resource", "transfer_resource",
+        "start_process", "pause_process", "resume_process", "cancel_process",
+        "move_actor", "start_activity", "complete_activity", "cancel_activity",
+        "observe", "communicate", "wait", "use_object"
+      ]
+    },
+    "WorldCommandV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "command_id", "primitive", "target_id", "parameters",
+        "actor_id", "source_refs"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "command_id": { "$ref": "common.schema.json#/$defs/id" },
+        "primitive": { "$ref": "#/$defs/worldCommandPrimitive" },
+        "target_id": { "$ref": "common.schema.json#/$defs/id" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "actor_id": { "$ref": "common.schema.json#/$defs/id" },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" }
+      }
+    },
+    "WorldStepInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "from_time", "until_time", "base_state_revision",
+        "commands", "source_refs", "rule_set_version", "random_seed", "idempotency_key"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "from_time": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "until_time": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "commands": {
+          "type": "array", "maxItems": 64,
+          "items": { "$ref": "#/$defs/WorldCommandV1" }
+        },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" },
+        "rule_set_version": { "$ref": "common.schema.json#/$defs/id" },
+        "random_seed": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "idempotency_key": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "ResourceDeltaV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["account_id", "resource_type_id", "delta", "reason"],
+      "properties": {
+        "account_id": { "$ref": "common.schema.json#/$defs/id" },
+        "resource_type_id": { "$ref": "common.schema.json#/$defs/id" },
+        "delta": { "type": "number" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "ProcessDeltaV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instance_id", "from_status", "to_status"],
+      "properties": {
+        "instance_id": { "$ref": "common.schema.json#/$defs/id" },
+        "from_status": { "$ref": "#/$defs/processStatus" },
+        "to_status": { "$ref": "#/$defs/processStatus" },
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "ActivityDeltaV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activity_id", "from_status", "to_status"],
+      "properties": {
+        "activity_id": { "$ref": "common.schema.json#/$defs/id" },
+        "from_status": { "$ref": "#/$defs/activityStatus" },
+        "to_status": { "$ref": "#/$defs/activityStatus" }
+      }
+    },
+    "WorldEventProposalV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_kind", "summary", "occurred_at", "source_refs"],
+      "properties": {
+        "event_kind": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "occurred_at": { "$ref": "common.schema.json#/$defs/timestamp" },
+        "location_id": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "entity_ids": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "salience": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source_refs": { "$ref": "#/$defs/sourceRefs" }
+      }
+    },
+    "WorldStepAuditV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine_version", "rule_set_version", "random_draws"],
+      "properties": {
+        "engine_version": { "$ref": "common.schema.json#/$defs/id" },
+        "rule_set_version": { "$ref": "common.schema.json#/$defs/id" },
+        "random_draws": {
+          "type": "array", "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["coordinate", "value"],
+            "properties": {
+              "coordinate": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "value": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "WorldStepResultV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "base_state_revision", "proposed_events",
+        "resource_deltas", "process_deltas", "activity_deltas",
+        "input_hash", "audit"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "base_state_revision": { "type": "integer", "minimum": 0 },
+        "proposed_events": {
+          "type": "array", "maxItems": 64,
+          "items": { "$ref": "#/$defs/WorldEventProposalV1" }
+        },
+        "resource_deltas": {
+          "type": "array", "maxItems": 128,
+          "items": { "$ref": "#/$defs/ResourceDeltaV1" }
+        },
+        "process_deltas": {
+          "type": "array", "maxItems": 64,
+          "items": { "$ref": "#/$defs/ProcessDeltaV1" }
+        },
+        "activity_deltas": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "#/$defs/ActivityDeltaV1" }
+        },
+        "next_event_time": {
+          "anyOf": [
+            { "$ref": "common.schema.json#/$defs/timestamp" },
+            { "type": "null" }
+          ]
+        },
+        "input_hash": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+        "audit": { "$ref": "#/$defs/WorldStepAuditV1" }
+      }
+    }
+  }
+}
