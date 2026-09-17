@@ -9,7 +9,7 @@ import {
   StubWorkingSelfInputAdapter,
   StubAdjudicationContextAdapter,
   StubSocialContextAdapter,
-  StubSpeechRenderer,
+  StubSpeechOutputAdapter,
   type PipelineEvent,
   type CognitivePipelineConfig,
   type CognitivePipelineDependencies,
@@ -99,6 +99,7 @@ function makeConfig(overrides: Partial<CognitivePipelineConfig> = {}): Cognitive
     pipelineVersion: "test.v1",
     enableSpeechOutput: true,
     speechChannel: "private_im",
+    proactiveEnabled: false,
     ...overrides,
   };
 }
@@ -186,7 +187,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const event = makeEvent({ eventId: "evt_test" });
@@ -226,7 +227,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const event = makeEvent({
@@ -260,7 +261,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const event = makeEvent();
@@ -299,7 +300,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     await pipeline.process(makeEvent({ eventId: "evt_test", origin: "user" }));
@@ -338,7 +339,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     await pipeline.process(makeEvent({ eventId: "evt_test", origin: "user" }));
@@ -369,7 +370,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const userEvent = makeEvent({ eventId: "evt_test", origin: "user" });
@@ -397,7 +398,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const worldEvent = makeEvent({
@@ -429,7 +430,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const event = makeEvent({ eventId: "evt_test" });
@@ -468,7 +469,7 @@ describe("M20-025: Unified Cognitive Pipeline", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     const event = makeEvent({ eventId: "evt_test" });
@@ -534,7 +535,7 @@ describe("Invariant: Single Personality System", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     await pipeline.process(makeEvent({ eventId: "evt_test", origin: "user" }));
@@ -577,7 +578,7 @@ describe("Invariant: Single Personality System", () => {
       new StubWorkingSelfInputAdapter(),
       new StubAdjudicationContextAdapter(),
       new StubSocialContextAdapter(),
-      new StubSpeechRenderer(),
+      new StubSpeechOutputAdapter(),
     );
 
     await pipeline.process(makeEvent({ eventId: "evt_test", origin: "user" }));
@@ -589,5 +590,135 @@ describe("Invariant: Single Personality System", () => {
 
     assert.ok(decisionPaths.includes("admission:user"));
     assert.ok(decisionPaths.includes("admission:world"));
+  });
+});
+
+describe("Safety Regression: Proactive Gating", () => {
+  let rt: TestRuntime;
+
+  beforeEach(() => {
+    rt = setupRuntime();
+
+    rt.db.prepare(`INSERT INTO world_events(
+      event_id, schema_version, origin, kind, occurred_at, received_at,
+      principal_id, trust, privacy_scope, idempotency_key, payload_json
+    ) VALUES (
+      'evt_test', '1.0', 'user', 'im.message.received', datetime('now'), datetime('now'),
+      'doctor', 'authenticated', 'private_im', 'idem_test', '{}'
+    )`).run();
+
+    rt.db.prepare(`INSERT INTO action_proposal_audit(
+      proposal_id, schema_version, actor_id, policy_run_id, intent,
+      source_closure_hash, base_state_revision, payload_json, proposed_at
+    ) VALUES ('act_test', '1.0', 'muelsyse', 'pol_test', 'test intent',
+      '${TEST_HASH}', 0, '{}', datetime('now'))`).run();
+  });
+
+  afterEach(() => {
+    rt.cleanup();
+  });
+
+  test("proactive speech is blocked by default (proactiveEnabled: false)", async () => {
+    const config = makeConfig({ proactiveEnabled: false, enableSpeechOutput: true });
+    const deps: CognitivePipelineDependencies = {
+      stateManager: rt.stateManager,
+      workingSelfBuilder: new StubWorkingSelfBuilder(),
+      openPolicy: new StubOpenPolicy("communicate status update"),
+      actionCompiler: new TestStubActionCompiler(),
+      worldAdjudicator: new TestStubWorldAdjudicator(),
+      socialProposer: new StubSocialOutcomeProposer(),
+    };
+
+    const pipeline = new UnifiedCognitivePipeline(
+      config,
+      deps,
+      new StubAdmissionAdapter(true, true),
+      new StubWorkingSelfInputAdapter(),
+      new StubAdjudicationContextAdapter(),
+      new StubSocialContextAdapter(),
+      new StubSpeechOutputAdapter(false),
+    );
+
+    const worldEvent = makeEvent({
+      eventId: "evt_test",
+      origin: "world",
+      kind: "activity.completed",
+    });
+    const result = await pipeline.process(worldEvent);
+
+    assert.ok(result.woke, "Event should have woken the pipeline");
+    assert.ok(result.speechResult, "Should have speech result");
+    assert.equal(result.speechResult?.submitted, false, "Proactive speech should be blocked");
+    assert.equal(result.speechResult?.blocked, "proactive_disabled", "Should be blocked due to proactive disabled");
+    assert.equal(result.speechIds.length, 0, "No speech IDs should be generated");
+  });
+
+  test("reactive speech is NOT blocked even when proactiveEnabled is false", async () => {
+    const config = makeConfig({ proactiveEnabled: false, enableSpeechOutput: true });
+    const deps: CognitivePipelineDependencies = {
+      stateManager: rt.stateManager,
+      workingSelfBuilder: new StubWorkingSelfBuilder(),
+      openPolicy: new StubOpenPolicy("communicate response"),
+      actionCompiler: new TestStubActionCompiler(),
+      worldAdjudicator: new TestStubWorldAdjudicator(),
+      socialProposer: new StubSocialOutcomeProposer(),
+    };
+
+    const pipeline = new UnifiedCognitivePipeline(
+      config,
+      deps,
+      new StubAdmissionAdapter(true, false),
+      new StubWorkingSelfInputAdapter(),
+      new StubAdjudicationContextAdapter(),
+      new StubSocialContextAdapter(),
+      new StubSpeechOutputAdapter(false),
+    );
+
+    const userEvent = makeEvent({ eventId: "evt_test", origin: "user" });
+    const result = await pipeline.process(userEvent);
+
+    assert.ok(result.woke, "Event should have woken the pipeline");
+    assert.ok(result.speechResult, "Should have speech result");
+    assert.equal(result.speechResult?.submitted, true, "Reactive speech should NOT be blocked");
+    assert.ok(result.speechIds.length > 0, "Speech IDs should be generated");
+  });
+
+  test("proactive speech is allowed when proactiveEnabled is true", async () => {
+    const config = makeConfig({ proactiveEnabled: true, enableSpeechOutput: true });
+    const deps: CognitivePipelineDependencies = {
+      stateManager: rt.stateManager,
+      workingSelfBuilder: new StubWorkingSelfBuilder(),
+      openPolicy: new StubOpenPolicy("communicate status update"),
+      actionCompiler: new TestStubActionCompiler(),
+      worldAdjudicator: new TestStubWorldAdjudicator(),
+      socialProposer: new StubSocialOutcomeProposer(),
+    };
+
+    const pipeline = new UnifiedCognitivePipeline(
+      config,
+      deps,
+      new StubAdmissionAdapter(true, true),
+      new StubWorkingSelfInputAdapter(),
+      new StubAdjudicationContextAdapter(),
+      new StubSocialContextAdapter(),
+      new StubSpeechOutputAdapter(true),
+    );
+
+    const worldEvent = makeEvent({
+      eventId: "evt_test",
+      origin: "world",
+      kind: "activity.completed",
+    });
+    const result = await pipeline.process(worldEvent);
+
+    assert.ok(result.woke, "Event should have woken the pipeline");
+    assert.ok(result.speechResult, "Should have speech result");
+    assert.equal(result.speechResult?.submitted, true, "Proactive speech should be allowed");
+    assert.ok(result.speechIds.length > 0, "Speech IDs should be generated");
+  });
+
+  test("default config has proactiveEnabled: false", () => {
+    const config = makeConfig();
+    assert.equal(config.proactiveEnabled, false, "Default proactiveEnabled must be false for safety");
   });
 });

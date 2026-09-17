@@ -29,6 +29,15 @@ import type { AsyncActionCompilerPort } from "../../world/actionPorts.js";
 import type { AdjudicationContext, WorldAdjudicator } from "../../world/worldAdjudicator.js";
 import type { SocialOutcomeProposer, SocialContext, EnrichedOutcomeProposal } from "../../world/socialOutcome.js";
 import type { OpenPolicyResultV1 } from "../policy/openGenerativePolicy.js";
+import {
+  UnifiedSpeechOutput,
+  hasCommunicationIntent,
+  extractTextFromPlan,
+  type SpeechTrigger,
+  type SpeechIntent,
+  type SpeechResult,
+  type UnifiedSpeechConfig,
+} from "../../delivery/unifiedSpeech.js";
 import { newId, utcnowIso } from "../../domain/ids.js";
 
 export type PipelineEventOrigin = "user" | "world" | "scheduled" | "internal";
@@ -57,6 +66,7 @@ export interface PipelineResult {
   hardOutcome?: WorldOutcomeProposalV1;
   enrichedOutcome?: EnrichedOutcomeProposal;
   committed: boolean;
+  speechResult?: SpeechResult;
   speechIds: string[];
   outboxIds: string[];
   error?: string;
@@ -67,6 +77,8 @@ export interface CognitivePipelineConfig {
   pipelineVersion: string;
   enableSpeechOutput: boolean;
   speechChannel: string;
+  recipientPrincipalId?: string;
+  proactiveEnabled: boolean;
 }
 
 export interface ActionCompilerAdapter {
@@ -124,6 +136,21 @@ export interface SocialContextAdapter {
   ): SocialContext;
 }
 
+export interface SpeechOutputAdapter {
+  submit(
+    intent: SpeechIntent,
+    triggerEvent: WorldEvent,
+    sceneId: string,
+  ): SpeechResult;
+
+  createIntentFromPolicy(
+    actionProposal: OpenPolicyResultV1["action"],
+    trigger: SpeechTrigger,
+    recipientPrincipalId: string,
+    capabilityRevision: number,
+  ): SpeechIntent | null;
+}
+
 export interface SpeechRenderer {
   render(
     policyResult: OpenPolicyResultV1,
@@ -153,7 +180,7 @@ export class UnifiedCognitivePipeline {
     private readonly workingSelfAdapter: WorkingSelfInputAdapter,
     private readonly adjudicationAdapter: AdjudicationContextAdapter,
     private readonly socialAdapter: SocialContextAdapter,
-    private readonly speechRenderer: SpeechRenderer,
+    private readonly speechOutput: SpeechOutputAdapter,
   ) {}
 
   async process(event: PipelineEvent): Promise<PipelineResult> {
@@ -239,17 +266,27 @@ export class UnifiedCognitivePipeline {
 
       let speechIds: string[] = [];
       let outboxIds: string[] = [];
+      let speechResult: SpeechResult | undefined;
 
-      if (this.config.enableSpeechOutput && this.hasCommunicationIntent(policyResult)) {
-        const speech = this.speechRenderer.render(policyResult, event, this.config);
-        if (speech) {
-          const speechResult = this.deps.stateManager.submitReply(speech, {
-            triggerEvent: this.toWorldEvent(event),
-            scene: { scene_id: this.getOrCreateSceneId() },
-            inputSources: event.sourceRefs,
-          });
-          speechIds = speechResult.speechIds;
-          outboxIds = speechResult.outboxIds;
+      if (this.config.enableSpeechOutput) {
+        const trigger: SpeechTrigger = event.origin === "user" ? "reactive" : "proactive";
+        const speechIntent = this.speechOutput.createIntentFromPolicy(
+          policyResult.action,
+          trigger,
+          this.config.recipientPrincipalId ?? "doctor",
+          0,
+        );
+
+        if (speechIntent) {
+          speechResult = this.speechOutput.submit(
+            speechIntent,
+            this.toWorldEvent(event),
+            this.getOrCreateSceneId(),
+          );
+          if (speechResult.submitted) {
+            speechIds = speechResult.speechId ? [speechResult.speechId] : [];
+            outboxIds = speechResult.outboxIds ?? [];
+          }
         }
       }
 
@@ -263,6 +300,7 @@ export class UnifiedCognitivePipeline {
         hardOutcome,
         enrichedOutcome,
         committed: commitResult.committed,
+        speechResult,
         speechIds,
         outboxIds,
       };
@@ -282,16 +320,6 @@ export class UnifiedCognitivePipeline {
 
   private getBaseRevision(): number {
     return 0;
-  }
-
-  private hasCommunicationIntent(result: OpenPolicyResultV1): boolean {
-    const intent = result.action.intent.toLowerCase();
-    return intent.includes("communicate")
-      || intent.includes("reply")
-      || intent.includes("respond")
-      || intent.includes("say")
-      || intent.includes("tell")
-      || intent.includes("ask");
   }
 
   private toWorldEvent(event: PipelineEvent): WorldEvent {
@@ -464,6 +492,56 @@ export class StubSocialContextAdapter implements SocialContextAdapter {
       environmental_factors: [],
       communication_channel: "private_im",
       source_refs: [],
+    };
+  }
+}
+
+/**
+ * Stub speech output adapter for testing.
+ * Always succeeds for reactive, blocks proactive when proactiveEnabled is false.
+ */
+export class StubSpeechOutputAdapter implements SpeechOutputAdapter {
+  constructor(private readonly proactiveEnabled: boolean = false) {}
+
+  submit(
+    intent: SpeechIntent,
+    _triggerEvent: WorldEvent,
+    _sceneId: string,
+  ): SpeechResult {
+    if (intent.trigger === "proactive" && !this.proactiveEnabled) {
+      return { submitted: false, blocked: "proactive_disabled" };
+    }
+
+    if (!hasCommunicationIntent(intent.actionProposal.intent)) {
+      return { submitted: false, blocked: "no_intent" };
+    }
+
+    return {
+      submitted: true,
+      speechId: newId("sp"),
+      outboxIds: [newId("outbox")],
+    };
+  }
+
+  createIntentFromPolicy(
+    actionProposal: OpenPolicyResultV1["action"],
+    trigger: SpeechTrigger,
+    recipientPrincipalId: string,
+    capabilityRevision: number,
+  ): SpeechIntent | null {
+    if (!hasCommunicationIntent(actionProposal.intent)) {
+      return null;
+    }
+
+    const text = extractTextFromPlan(actionProposal.plan) ?? actionProposal.intent;
+
+    return {
+      trigger,
+      recipientPrincipalId,
+      text,
+      sourceRefs: actionProposal.source_refs,
+      actionProposal,
+      capabilityRevision,
     };
   }
 }
