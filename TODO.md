@@ -608,8 +608,8 @@ Owner decision still needed: None for M20-019.
 | `M20-022` | `DONE` | ENG | `M20-021`, `OWN-001` | Implemented deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. WorldAdjudicator validates compiled primitives against world state and returns accepted/partial/rejected outcomes with explicit constraint classes. |
 | `M20-023` | `DONE` | ENG | `M20-022` | Implemented source-constrained social/environmental outcome proposal for NPC choice (accept/reject/negotiate), partial success (obstacle reduction), misunderstanding (communication noise), and side effects (opportunities/observations). Cannot bypass hard adjudication. |
 | `M20-024` | `DONE` | ENG | `M20-003`, `M20-023` | Implemented atomic StateManager.submitWorldOutcome with base revision CAS, source closure validation, idempotency via outcome_id, and replay support. |
-| `M20-025` | `READY` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
-| `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
+| `M20-025` | `DONE` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Implemented UnifiedCognitivePipeline routing user and non-user events through identical Cognitive Admission -> Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> Social Outcome -> submitWorldOutcome path. Single personality system for all event types. User events get reply queue lane priority. |
+| `M20-026` | `READY` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
 
 ### M20-020 Evidence (2026-09-07)
 
@@ -683,6 +683,21 @@ Files changed: TODO.md; src/gf/state/stateManager.ts (WorldOutcomeCommitResult i
 Checks: pnpm test (280/280); pnpm build passes; contract validation (50 schemas); project validation passes.
 Known residual risk: M20-025 must integrate submitWorldOutcome into unified event routing. Energy settlement via M20-018 lifecycle must be coordinated with outcome commits. Actual world state changes (beyond audit) would require additional StateManager methods.
 Rollback: Revert the M20-024 task commit; no schema, migration, or production database row changes. The world_outcome_audit table remains empty until the pipeline is integrated.
+Owner decision still needed: None.
+```
+
+### M20-025 Evidence (2026-09-17)
+
+```text
+Task: M20-025
+Assignee: Codex
+Started / completed: 2026-09-17 / 2026-09-17
+Outcome: Implemented UnifiedCognitivePipeline that routes both user and non-user events through identical cognitive path: Cognitive Admission -> Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> Social Outcome Proposer -> submitWorldOutcome. Key features: (1) single personality system for all event types; (2) user events get "reply" queue lane for priority; (3) world events get "normal" queue lane; (4) submitWorldOutcome integrates with pipeline for atomic commits; (5) communication intents create speech via SurfaceMessage/outbox; (6) errors captured without crashing pipeline.
+Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/cognition/20 (Cognitive Admission); docs/cognition/13 (Working Self); docs/world/15-16.
+Files changed: TODO.md; src/gf/cognition/pipeline/unifiedCognitivePipeline.ts (new); src/gf/tests/unifiedCognitivePipeline.test.ts (new, 11 tests).
+Checks: pnpm test (291/291); pnpm build passes; contract validation (50 schemas); project validation passes.
+Known residual risk: M20-026 must implement proactive/reactive text routing. Energy settlement (M20-018) coordination with outcome commits is not yet integrated. Speech rendering uses stub implementation. Adapters (admission, working self input, adjudication context, social context) are stub implementations.
+Rollback: Revert the M20-025 task commit; no schema, migration, or production database row changes.
 Owner decision still needed: None.
 ```
 
