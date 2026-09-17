@@ -1,6 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gf.local/schemas/action-compilation-result.schema.json",
-  "title": "Action compilation result v1",
-  "$ref": "cognitive-runtime.schema.json#/$defs/ActionCompilationResultV1"
-}

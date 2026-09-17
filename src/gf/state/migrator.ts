@@ -9,7 +9,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { DatabaseSync } from "./db.js";
+import { DatabaseSync } from "node:sqlite";
 
 export class MigrationRunner {
   constructor(

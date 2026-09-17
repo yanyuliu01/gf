@@ -20,10 +20,6 @@ const targets = [
     schemaName: "agent-pipeline.schema.json",
     outputName: "agentPipelineTypes.ts",
   },
-  {
-    schemaName: "world-runtime.schema.json",
-    outputName: "worldRuntimeTypes.ts",
-  },
 ];
 
 const localNames = new Map([

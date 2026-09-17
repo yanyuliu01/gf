@@ -1,6 +1,6 @@
 # GF Project Backlog
 
-Snapshot: **2026-09-17**
+Snapshot: **2026-09-15**
 Project handoff: [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md)
 Owner workbook: [`docs/owner/14-owner-input-workbook-v1.md`](docs/owner/14-owner-input-workbook-v1.md)
 
@@ -95,7 +95,7 @@ account, envelope, or Policy contracts.
 | `PM-002` | `DONE` | ENG | none | Add `PROJECT-HANDOFF.md`, this board, `AGENTS.md`, Owner workbook, and repository navigation. Evidence: project-management documentation commit. |
 | `PM-003` | `RECURRING` | current assignee | every task | Update task status, dependencies, acceptance evidence, and dated project snapshot in the same commit as material work. |
 | `PM-004` | `READY` | ENG | `PM-002` | Add a lightweight decision-log/ADR convention for architecture changes that replace an existing decision. Historical docs remain intact. The convention must satisfy `docs/invariants/19` §2: an ADR names the entry it overturns, the runtime evidence, and the cost; the superseded entry is retained and marked, never deleted. |
-| `PM-006` | `DONE` | ENG + OWNER review | none | Triaged and fixed the three blocking runtime defects from `docs/history/README.md`: M11-008 (gateway debounce), M11-009 (validation failure crash), M11-010 (outbox stuck in sending). Remaining items (four from §6, fourteen spec/contract divergences) documented in `docs/history/README.md` for future triage. |
+| `PM-006` | `READY` | ENG + OWNER review | none | Triage the unprocessed findings listed in `docs/history/README.md` — four from `12-...-v2` §6 (thread status enum regression, seed never loaded, `contact_reason` missing, observability vacuous), fourteen spec/contract divergences, and three blocking runtime defects (debounce never fires on a single line, validation failure silently consumes the user message and kills the REPL, outbox rows stuck in `sending` are never retried). Each becomes a task, is folded into an existing task, or is closed with a written reason. **The three runtime defects pass all 19 current tests**, so `M11-007` green is not evidence against them. |
 | `PM-005` | `LATER` | ENG | first multi-person sprint | Add GitHub issue templates mapping issue title/body to Task ID, authority, acceptance, rollback, and test evidence. |
 
 ### PM-001 Notes
@@ -185,10 +185,7 @@ weakening schemas, hashes, provenance, or recovery assertions.
 | `M11-004` | `DONE` | ENG | none | Introduce a world `Clock`/timezone configuration. Phase/day functions use configured world time and deterministic tests cover UTC/Shanghai boundary cases. |
 | `M11-005` | `DONE` | ENG | none | Make `InferenceClient` methods async and inject the interface into `Engine`, not `StubClient`. No database transaction remains open across a model call. Stub tests stay deterministic. |
 | `M11-006` | `DONE` | ENG | `M11-005` | Add one real provider adapter behind the neutral interface with pinned model ID, timeout, retry budget, structured output, and prompt-run audit. Provider choice must not leak into domain modules. DeepSeek request model `deepseek-v4-flash` and `DEEPSEEK_API_KEY` were approved, implemented, and verified by a synthetic live smoke on 2026-09-01. |
-| `M11-007` | `DONE` | ENG | `M11-001..006` | Run and record build, 204 runtime tests (expanded from original 19), contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. All checks green after migrating to better-sqlite3 for FTS5 support. |
-| `M11-008` | `DONE` | ENG | none | Fixed gateway debounce: added `checkFlush()` for timer-based flush after debounce timeout, `msUntilFlush()` for timing, and `flushDueInMs` return value. Single-line messages now flush correctly. Tests added for single-line flush, timing, and window separation. |
-| `M11-009` | `DONE` | ENG | none | Fixed validation failure crash: wrapped `handleUser` in try/catch, returns `kind: "error"` result instead of crashing. Message appending moved to after successful commit, so failed messages remain pending for retry. Test added for error recovery. |
-| `M11-010` | `DONE` | ENG | none | Fixed outbox stuck in `sending`: `dispatchPending` now recovers stale `sending` rows (>60s) back to `retry` before querying. Rows stuck due to crashes between `markSending` and `markSent` are now retried. Test added for stuck row recovery. |
+| `M11-007` | `READY` | ENG | `M11-001..006` | Run and record build, 19 runtime tests, contract validation, canon audit, Markdown/diagram validation, and recovery smoke test. Update this snapshot only when all are green. |
 
 ```text
 Task: M11-001
@@ -265,58 +262,6 @@ Files changed: .gitignore; TODO.md; docs/owner/14-owner-input-workbook-v1.md; sr
 Checks: pnpm test (115/115); contract validation (34 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); full project audit including 2758 canon entries and 10 diagrams; synthetic DeepSeek live smoke (one bubble, validated audit, output hash present); git diff --check.
 Known residual risk: `deepseek-v4-flash` is a provider rolling request alias rather than an immutable model snapshot. Prompt runs stop at `validated` and remain operation-unlinked until M20-018 completes the reserve/infer/commit/settle lifecycle; provider usage receipts are M20-017.
 Rollback: Revert the M11-006 task commit; CLI defaults to Stub and no migration or committed world fact depends on the provider adapter.
-Owner decision still needed: None.
-```
-
-```text
-Task: M11-007
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Migrated from node:sqlite to better-sqlite3 for FTS5 support. All checks green: pnpm build passes; pnpm test passes (204/204); contract validation (50 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); canon audit (2758 entries); project validation (64 JSON, 43 markdown, 12 manifest paths, 10 diagrams); recovery smoke test (tests/test_gf_debug.py). Test count expanded from original 19 to 204 due to M20-021 and M21-007 additions.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; package.json; migrations/004_memory_search.sql (FTS5 usage).
-Files changed: TODO.md; package.json (added better-sqlite3); src/gf/state/db.ts (migrated to better-sqlite3); src/gf/tests/helpers.ts; src/gf/world/life/runtime.ts; src/gf/tests/lifePilot.test.ts; src/gf/tests/schemaGeneration.test.ts; src/gf/validation/sourceClosure.ts; src/gf/scheduler/scheduler.ts; src/gf/cognition/memory/structuredMemorySearch.ts; src/gf/delivery/outbox.ts; src/gf/orchestration/engine.ts; src/gf/state/migrator.ts; src/gf/state/repositories.ts; src/gf/state/stateManager.ts.
-Checks: pnpm build passes; pnpm test (204/204); python3 tests/validate_contracts.py (50 schemas); python3 corpus/scripts/audit_canon.py (2758 entries); python3 scripts/validate_project.py (10 diagrams); python3 tests/test_gf_debug.py (recovery smoke).
-Known residual risk: better-sqlite3 is a native module requiring compilation; node:sqlite would be preferable if FTS5 were enabled in Node's built-in SQLite. The node:sqlite to better-sqlite3 migration required type assertion updates for .get() return types.
-Rollback: Revert the M11-007 task commit and pnpm install to restore node:sqlite dependency only.
-Owner decision still needed: None.
-```
-
-```text
-Task: M11-008
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Fixed gateway debounce to properly flush single-line messages. Added checkFlush() method for timer-based flush after debounce timeout, msUntilFlush() for timing queries, and flushDueInMs return field. Single-line messages now flush via checkFlush() after the debounce window expires. Messages arriving after the window correctly flush the previous batch first.
-Authority read: AGENTS.md; TODO.md; docs/history/README.md (defect list).
-Files changed: TODO.md; src/gf/gateway/gateway.ts; src/gf/tests/gateway.test.ts.
-Checks: pnpm test (209/209); pnpm build passes.
-Known residual risk: Caller must poll checkFlush() or use msUntilFlush() to implement timer; no built-in async timer mechanism.
-Rollback: Revert the M11-008 task commit.
-Owner decision still needed: None.
-```
-
-```text
-Task: M11-009
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Fixed validation failure crash in engine. Wrapped handleUser in try/catch and returned kind="error" result instead of crashing the REPL. Moved appendMessage to after successful commit so failed messages remain pending for retry. Added user_message_errors metric.
-Authority read: AGENTS.md; TODO.md; docs/history/README.md (defect list).
-Files changed: TODO.md; src/gf/orchestration/engine.ts; src/gf/tests/engine.test.ts.
-Checks: pnpm test (209/209); pnpm build passes.
-Known residual risk: Error result logged but not persisted; a future enhancement could persist failure diagnostics.
-Rollback: Revert the M11-009 task commit.
-Owner decision still needed: None.
-```
-
-```text
-Task: M11-010
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Fixed outbox rows stuck in 'sending' forever. dispatchPending now recovers stale sending rows (>60s since sent_at or NULL sent_at) back to retry status before querying. Rows stuck due to crashes between markSending and markSent are now retried. Added outbox_stuck_recovered metric.
-Authority read: AGENTS.md; TODO.md; docs/history/README.md (defect list).
-Files changed: TODO.md; src/gf/delivery/outbox.ts; src/gf/tests/engine.test.ts.
-Checks: pnpm test (209/209); pnpm build passes.
-Known residual risk: 60s stale threshold is hardcoded; could be configurable. No dead-letter queue for permanently failing rows.
-Rollback: Revert the M11-010 task commit.
 Owner decision still needed: None.
 ```
 
@@ -604,12 +549,12 @@ Owner decision still needed: None for M20-019.
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
 | `M20-020` | `DONE` | ENG | `M20-001`, `M20-014`, `M20-018` | Implement open generative Policy. From lived evidence under actual capacity limits it produces one open semantic intent/plan plus optional free-form SelfExperienceProposal and optional source-linked AttentionIntent. AttentionIntent expresses what future perceptible change should matter; it does not contain runtime watcher rules. Policy receives no counters, envelope, fatigue tiers, capability prose, finite action list, or dialogue-example corpus. Completed 2026-09-07. |
-| `M20-021` | `DONE` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. Completed 2026-09-17. |
-| `M20-022` | `DONE` | ENG | `M20-021`, `OWN-001` | Implemented deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. WorldAdjudicator validates compiled primitives against world state and returns accepted/partial/rejected outcomes with explicit constraint classes. |
-| `M20-023` | `DONE` | ENG | `M20-022` | Implemented source-constrained social/environmental outcome proposal for NPC choice (accept/reject/negotiate), partial success (obstacle reduction), misunderstanding (communication noise), and side effects (opportunities/observations). Cannot bypass hard adjudication. |
-| `M20-024` | `DONE` | ENG | `M20-003`, `M20-023` | Implemented atomic StateManager.submitWorldOutcome with base revision CAS, source closure validation, idempotency via outcome_id, and replay support. |
-| `M20-025` | `DONE` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Implemented UnifiedCognitivePipeline routing user and non-user events through identical Cognitive Admission -> Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> Social Outcome -> submitWorldOutcome path. Single personality system for all event types. User events get reply queue lane priority. |
-| `M20-026` | `DONE` | ENG | `M20-025` | Implemented UnifiedSpeechOutput routing proactive and reactive text through same SurfaceMessage -> StateManager.submitReply -> outbox path. Proactive delivery feature-disabled by default (proactiveEnabled config flag). Communication intent validated. |
+| `M20-021` | `READY` | ENG | `M20-020`, `OWN-001` | Implement action compiler from open plan to finite execution primitives. Unsupported semantics produce a capability-gap result, not silent replacement with a canned action. |
+| `M20-022` | `BLOCKED` | ENG | `M20-021`, `OWN-001` | Implement deterministic hard adjudication for location, time, resource, capability, knowledge, permission, and immutable world rules. |
+| `M20-023` | `BLOCKED` | ENG | `M20-022` | Implement source-constrained social/environmental outcome proposal for NPC choice, partial success, misunderstanding, and side effects. It cannot bypass hard adjudication. |
+| `M20-024` | `BLOCKED` | ENG | `M20-003`, `M20-023` | Validate and atomically commit outcomes through StateManager with base revision, source closure, idempotency, and replay tests. |
+| `M20-025` | `BLOCKED` | ENG | `M20-015`, `M20-018`, `M20-020`, `M20-024` | Route user and non-user events through the same Cognitive Admission / Working Self / Open Policy pipeline. Preserve the existing user-message response contract and a low-latency surface-rendering path, but not a second personality or decision system. |
+| `M20-026` | `BLOCKED` | ENG | `M20-025` | Route proactive and reactive text through the same SurfaceMessage/StateManager/outbox path. Proactive delivery stays feature-disabled until safety tests pass. |
 
 ### M20-020 Evidence (2026-09-07)
 
@@ -623,276 +568,6 @@ Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/open-poli
 Checks: pnpm test (130/130, including generated-type drift, deterministic replay, optional-output omission, source-closure rejection, and model-input non-leakage); contract validation and full project audit (35 schemas, 29 positive samples, 31 negative contracts, migrations 001-004, 2758 canon entries, 10 diagrams); explicit negative contracts reject finite action candidates and engine accounting; git diff --check.
 Known residual risk: This task stops at the injectable model boundary and validated proposals. M20-021 compiles the open plan, M20-024 commits adjudicated outcomes, and M20-025 binds the real provider call to the M20-018 reserve/settle lifecycle and StateManager persistence. The prompt is versioned in code for this seam; provider request/audit integration must preserve that version and exact Working Self input hash.
 Rollback: Revert the M20-020 task commit. The prior Working Self, energy lifecycle, Attention compiler, schemas, migrations, provider adapter, and M1 paths remain independently usable; no world fact, model request, or outbound message is changed by this task.
-Owner decision still needed: None.
-```
-
-### M20-021 Evidence (2026-09-17)
-
-```text
-Task: M20-021
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented ActionCompiler bridging open semantic intent (E1) to finite execution primitives (E2). Added ActionCompilationResultV1 schema with status (compiled | capability_gap), ExecutionPrimitiveV1 for the five world kernel primitives (observe/move/use_object/wait/communicate), and CapabilityGapV1 for explicit unsupported semantics results. ActionCompiler (async, model-backed) with provenance verification, StubActionCompiler (sync, pattern-based) for deterministic testing. Never silently substitutes canned actions for unsupported semantics.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 E1-E4; docs/world/15; docs/world/16; M20-020 OpenActionProposal; M20-004 ActionCompilerPort.
-Files changed: TODO.md; schemas/cognitive-runtime.schema.json; schemas/action-compilation-result.schema.json; src/gf/generated/cognitiveRuntimeTypes.ts; src/gf/world/actionCompiler.ts; src/gf/world/actionPorts.ts; src/gf/tests/actionCompiler.test.ts.
-Checks: pnpm test (17 action compiler tests pass); contract validation (40 schemas, 29 positive samples, 31 negative contracts, migrations 001-004); pnpm build passes; git diff --check.
-Known residual risk: M20-022 must implement deterministic hard adjudication using this compiler output. M20-024 commits adjudicated outcomes. The life-pilot model-backed compilation in model.ts remains a separate implementation path.
-Rollback: Revert the M20-021 task commit; no schema, migration, database row, provider call, committed world fact, or outbound message changes.
-Owner decision still needed: None.
-```
-
-### M20-022 Evidence (2026-09-17)
-
-```text
-Task: M20-022
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented deterministic hard adjudication for seven constraint classes: location (adjacent/reachable checks), time (phase restrictions), resource (capacity availability), capability (required abilities), knowledge (known locations/targets), permission (use permissions), and world_rule (immutable rule checks). WorldAdjudicator validates ActionCompilationResultV1 primitives against ActorState and WorldSnapshot, producing WorldOutcomeProposalV1 with status (accepted/partial/rejected), explicit hard_constraint_classes for rejections, and proposed_effects for accepted actions. StubWorldAdjudicator for deterministic testing.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 A2-A3, B3; docs/world/16 §10-12.
-Files changed: TODO.md; src/gf/world/worldAdjudicator.ts (new); src/gf/tests/worldAdjudicator.test.ts (new, 27 tests).
-Checks: pnpm test (236/236); pnpm build passes; contract validation (50 schemas); project validation passes.
-Known residual risk: M20-023 must implement source-constrained social outcomes. M20-024 commits adjudicated outcomes through StateManager. Hard constraint checks are synchronous pure functions; the async WorldAdjudicatorPort wrapper enables future I/O-backed NPC consultation.
-Rollback: Revert the M20-022 task commit; no schema, migration, database row, or provider call changes.
-Owner decision still needed: None.
-```
-
-### M20-023 Evidence (2026-09-17)
-
-```text
-Task: M20-023
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented source-constrained social/environmental outcome proposal. SocialOutcomeProposer adds NPC choice (accept/reject/negotiate based on availability and disposition), partial success (obstacle/distraction severity reduces effect), misunderstanding (noise in communication channel), and side effects (opportunities discovered, observations triggered). Key invariant: cannot bypass hard adjudication—if M20-022 rejected an action, it stays rejected. Social outcomes only apply to accepted/partial actions. EnrichedOutcomeProposal extends WorldOutcomeProposalV1 with social_outcomes array.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; docs/world/15 §10; docs/world/16 §12-13.
-Files changed: TODO.md; src/gf/world/socialOutcome.ts (new); src/gf/tests/socialOutcome.test.ts (new, 30 tests).
-Checks: pnpm test (266/266); pnpm build passes; contract validation (50 schemas); project validation passes.
-Known residual risk: M20-024 must atomically commit enriched outcomes through StateManager. NPC decision boundaries are simplified; production would need richer NPC state models. Environmental factors are passed in context rather than derived from world state.
-Rollback: Revert the M20-023 task commit; no schema, migration, database row, or provider call changes.
-Owner decision still needed: None.
-```
-
-### M20-024 Evidence (2026-09-17)
-
-```text
-Task: M20-024
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented StateManager.submitWorldOutcome for atomic world outcome commits. Features: (1) base_state_revision CAS rejecting stale revisions; (2) source closure validation ensuring all source_refs are in legal closure; (3) idempotency via outcome_id returning replay=true on duplicates; (4) derived input closure persistence in derived_input_closures table; (5) full world_outcome_audit and world_outcome_sources persistence. The commit is atomic (BEGIN IMMEDIATE/COMMIT/ROLLBACK) and validates schema before any database writes.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19 A1-A3; migrations/002 world_outcome_audit; src/gf/validation/sourceClosure.ts.
-Files changed: TODO.md; src/gf/state/stateManager.ts (WorldOutcomeCommitResult interface, submitWorldOutcome method, extended insertDerivedInputClosure types); src/gf/tests/worldOutcomeCommit.test.ts (new, 14 tests).
-Checks: pnpm test (280/280); pnpm build passes; contract validation (50 schemas); project validation passes.
-Known residual risk: M20-025 must integrate submitWorldOutcome into unified event routing. Energy settlement via M20-018 lifecycle must be coordinated with outcome commits. Actual world state changes (beyond audit) would require additional StateManager methods.
-Rollback: Revert the M20-024 task commit; no schema, migration, or production database row changes. The world_outcome_audit table remains empty until the pipeline is integrated.
-Owner decision still needed: None.
-```
-
-### M20-025 Evidence (2026-09-17)
-
-```text
-Task: M20-025
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented UnifiedCognitivePipeline that routes both user and non-user events through identical cognitive path: Cognitive Admission -> Working Self -> Open Policy -> Action Compiler -> World Adjudicator -> Social Outcome Proposer -> submitWorldOutcome. Key features: (1) single personality system for all event types; (2) user events get "reply" queue lane for priority; (3) world events get "normal" queue lane; (4) submitWorldOutcome integrates with pipeline for atomic commits; (5) communication intents create speech via SurfaceMessage/outbox; (6) errors captured without crashing pipeline.
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/cognition/20 (Cognitive Admission); docs/cognition/13 (Working Self); docs/world/15-16.
-Files changed: TODO.md; src/gf/cognition/pipeline/unifiedCognitivePipeline.ts (new); src/gf/tests/unifiedCognitivePipeline.test.ts (new, 11 tests).
-Checks: pnpm test (291/291); pnpm build passes; contract validation (50 schemas); project validation passes.
-Known residual risk: M20-026 must implement proactive/reactive text routing. Energy settlement (M20-018) coordination with outcome commits is not yet integrated. Speech rendering uses stub implementation. Adapters (admission, working self input, adjudication context, social context) are stub implementations.
-Rollback: Revert the M20-025 task commit; no schema, migration, or production database row changes.
-Owner decision still needed: None.
-```
-
-### M20-026 Evidence (2026-09-17)
-
-```text
-Task: M20-026
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented UnifiedSpeechOutput routing proactive and reactive text through same path: SurfaceMessage -> StateManager.submitReply -> outbox. Key features: (1) proactiveEnabled config flag (default false) gates proactive delivery until safety tests pass; (2) hasCommunicationIntent validates that policy intent contains communication keywords; (3) extractTextFromPlan extracts text from policy plan; (4) same SurfaceMessage structure for both reactive and proactive; (5) both types create outbox entries through submitReply.
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/operations/feishu-life-pilot.md (GF_PROACTIVE_ENABLED).
-Files changed: TODO.md; src/gf/delivery/unifiedSpeech.ts (new); src/gf/tests/unifiedSpeech.test.ts (new, 20 tests).
-Checks: pnpm test (311/311); pnpm build passes; contract validation (50 schemas); project validation passes.
-Known residual risk: Integration with UnifiedCognitivePipeline requires replacing StubSpeechRenderer with UnifiedSpeechOutput. Safety tests for proactive delivery not yet defined. Energy settlement coordination remains separate work.
-Rollback: Revert the M20-026 task commit; no schema, migration, or production database row changes.
-Owner decision still needed: Acceptance criteria for safety tests that enable proactive delivery.
-```
-
-### M21-007 Evidence (2026-09-17)
-
-```text
-Task: M21-007
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Froze versioned JSON Schemas for docs/16 computable world model: ResourceTypeV1 (six resource laws), ResourceAccountV1 (balance tracking), ResourceReservationV1 (capacity reservations), ProcessDefinitionV1 (production recipes), ProcessInstanceV1 (running processes), ActivityRecordV1 (actor activities), WorldCommandV1 (15 execution primitives), WorldStepInputV1/WorldStepResultV1 (world engine stepping). Activity/process statuses are machine execution lifecycle, not semantic action candidates. Generated TypeScript types from schemas.
-Authority read: AGENTS.md; TODO.md; docs/README.md; docs/invariants/19; docs/world/16 sections 0-16; OWN-001 sign-off.
-Files changed: TODO.md; schemas/world-runtime.schema.json and 9 entry schemas; scripts/generate-schema-types.mjs; src/gf/generated/worldRuntimeTypes.ts; src/gf/tests/worldRuntimeContracts.test.ts.
-Checks: pnpm test (16 world runtime contract tests pass); contract validation (50 schemas); pnpm build passes; git diff --check.
-Known residual risk: M21-008 (persistence and ledger) is now DONE. M21-009 must implement discrete-event stepper.
-Rollback: Revert the M21-007 task commit; no migration, database row, provider call, committed world fact, or outbound message changes.
-Owner decision still needed: None.
-```
-
-### M21-008 Evidence (2026-09-17)
-
-```text
-Task: M21-008
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented resource/process persistence with deterministic ledger. Key features:
-- ResourceLedger class with balanced transfers (double-entry accounting for stock/currency)
-- Non-negative stock enforcement (WM-P01)
-- Interval capacity reservations with overlap detection (WM-P03)
-- Source closure tracking via resource_ledger_sources table
-- Revision CAS via base_state_revision parameter
-- Idempotency via idempotency_key column
-- Property tests for conservation laws and capacity invariants
-Also wired UnifiedSpeechOutput into UnifiedCognitivePipeline (replacing StubSpeechRenderer) with proactiveEnabled default false and safety regression tests for proactive gating.
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 (sections 2-4, resource laws, production matrix, capacity reservations).
-Files changed: TODO.md; migrations/006_resource_ledger.sql; src/gf/world/resourceLedger.ts; src/gf/tests/resourceLedger.test.ts; src/gf/cognition/pipeline/unifiedCognitivePipeline.ts; src/gf/tests/unifiedCognitivePipeline.test.ts.
-Checks: pnpm test (337 tests pass, including 22 resource ledger tests and 4 property tests for WM-P01/P02/P03/P07); pnpm build passes; git diff --check.
-Known residual risk: M21-009 (discrete-event stepper) is now DONE. M21-010 must implement first closed fixture.
-Rollback: Revert M21-008 commit and drop migration 006_resource_ledger.sql tables. No production data affected.
-Owner decision still needed: None.
-```
-
-### M21-009 Evidence (2026-09-17)
-
-```text
-Task: M21-009
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented WorldEngine for pure TypeScript discrete-event simulation. Key features:
-- step() is pure computation: no database writes, no model calls (WM-P13)
-- Same state/commands/rules/seed produces byte-identical output (WM-P07)
-- Process queues with status transitions (queued -> running -> completed/failed)
-- Bounded seeded distributions with explicit random draws recorded in audit
-- Next-event calculation from running processes and activities
-- Support for all 15 world command primitives (reserve_resource, transfer_resource, start_process, pause_process, resume_process, cancel_process, move_actor, start_activity, complete_activity, cancel_activity, observe, communicate, wait, use_object, release_resource)
-- Completion/failure based on failure_model percentage
-- Duration models support fixed and range formats (e.g., "60 minutes", "30-60 minutes")
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 11-12 (world autonomous running algorithm).
-Files changed: TODO.md; src/gf/world/worldEngine.ts; src/gf/tests/worldEngine.test.ts.
-Checks: pnpm test (353 tests pass, including 16 world engine tests and property tests for WM-P07 determinism); pnpm build passes; git diff --check.
-Known residual risk: M21-010 (closed fixture) is now DONE. M21-011 must add ecology-department queues.
-Rollback: Revert M21-009 commit. No migration or database changes.
-Owner decision still needed: None.
-```
-
-### M21-010 Evidence (2026-09-17)
-
-```text
-Task: M21-010
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented closed fixture for world simulation using OWN-001-approved docs/16 engineering defaults. Key components:
-- WorldClock: manages simulation time with day phases (morning/afternoon/evening/night)
-- ClosedFixture: integrates WorldClock -> WorldEngine.step -> ResourceLedger commit -> PerceptionProjector -> CognitiveAdmissionPipeline
-- Day-0 state from simulation_fixture_v1: 19 resource types (stock/currency/capacity/condition/information), 18 accounts with normalized values
-- Process definitions: s4_daily_cultivation, s4_observation, report_review, circulation_pump_maintenance
-- Full pipeline execution: Activity/Process work advances without continuous Policy calls
-- Deterministic execution: same seed produces identical results
-
-Day-0 values from docs/16:
-- Garden water: 3.0 NDD (covers ~3 days without resupply)
-- Daily energy: 1.25 NDD/day (25% peak margin)
-- Pump health: 0.62 (approaching maintenance threshold)
-- S-4 health: 0.48 (alive but weak)
-- S-4 stress: 0.35 (accumulated stress, unverified cause)
-- Body energy: 0.72 (normal working state)
-- Sleep pressure: 0.28 (normal daytime level)
-
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 5.5, 6-8 (fixture values, ecology garden, physiology); OWN-001 sign-off (A2-A5, S-4 seed defaults).
-Files changed: TODO.md; src/gf/world/closedFixture.ts; src/gf/tests/closedFixture.test.ts.
-Checks: pnpm test (375 tests pass, including 22 closed fixture tests); pnpm build passes; git diff --check.
-Known residual risk: M21-011 (service queues and boundary nodes) is now DONE. Process resource consumption not yet wired to ledger deltas.
-Rollback: Revert M21-010 commit. No migration or database changes.
-Owner decision still needed: None.
-```
-
-### M21-011 Evidence (2026-09-17)
-
-```text
-Task: M21-011
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented service queues and boundary nodes for ecology department and Trimounts:
-
-Service Queues:
-- ServiceQueue class with FIFO, priority, and reservation disciplines
-- Opening windows, capacity limits, maintenance/failure rules
-- Queue entry/start/complete lifecycle
-- Default queues: instrument_queue (reservation), technician_queue (priority), approval_queue (FIFO)
-
-Transport Boundary Nodes:
-- TransportNode with weather sensitivity and congestion factors
-- Default nodes: trimounts_metro (public, 25min base), rhine_shuttle (internal, free)
-- Deterministic travel time calculation with bounded delays
-
-Supplier Boundary Nodes:
-- SupplierNode with price volatility, stock levels, delivery variance
-- Order placement, delivery processing, price updates
-- Default suppliers: lab_supplies_vendor, equipment_parts_vendor
-
-Weather Boundary Node:
-- WeatherNode with seasonal bias, storm probability, temperature range
-- Deterministic weather updates affecting ecology garden
-- Calculated modifiers for irrigation, energy, and growth
-
-Key features:
-- All nodes support opening windows and operational status
-- Deterministic behavior with seed-based randomness
-- Weather affects transport and garden simultaneously
-- Supplier orders flow through delivery timeline
-
-Authority read: AGENTS.md; TODO.md; docs/invariants/19; docs/world/16 sections 4.3, 5, 9.1-9.3.
-Files changed: TODO.md; src/gf/world/serviceQueues.ts; src/gf/tests/serviceQueues.test.ts.
-Checks: pnpm test (406 tests pass, including 31 service queue tests); pnpm build passes; git diff --check.
-Known residual risk: M21-012 must implement Feishu adapter. Queue/transport/supplier nodes not yet integrated into closed fixture step loop.
-Rollback: Revert M21-011 commit. No migration or database changes.
-Owner decision still needed: None.
-```
-
-### M21-001 Evidence (2026-09-17)
-
-```text
-Task: M21-001
-Assignee: Codex
-Started / completed: 2026-09-17 / 2026-09-17
-Outcome: Implemented commitment/schedule driver for converting obligations into production demand:
-
-CommitmentDriver class with:
-- Ledger entry recording with idempotency
-- Fulfillment/release/broken evidence tracking
-- Evaluate() returns events, demands, and conflicts
-
-Event emissions:
-- overdue: commitment passes due_at without fulfillment
-- fulfilled: condition is satisfied (e.g., deliver:observation_data:1)
-- conflict: competing commitments exceed capacity
-- broken: explicitly recorded or detected impossible
-- released: mutual agreement to release obligation
-
-Production demand:
-- Derives remaining requirements from unfulfilled conditions
-- Priority increases as due_at approaches (100 for overdue, 90 for <24h, etc.)
-- Tracks requiredOutputTypeId and requiredAmount
-
-Conflict detection:
-- Compares total demand against available capacity
-- Groups demands by output type
-- Emits conflict events with all affected commitments
-
-Projection:
-- projectCommitment() returns CommitmentV1 compliant with schema
-- derived_from_ledger: true, projection_scope: adjudication_audit_only
-- Status derived from evidence, not written directly
-
-All event emissions are idempotent via processedEventKeys tracking.
-
-Authority read: AGENTS.md; TODO.md; docs/invariants/19 B2-B3; docs/world/16 section 8.2; schemas/commitment.schema.json.
-Files changed: TODO.md; src/gf/world/commitmentDriver.ts; src/gf/tests/commitmentDriver.test.ts.
-Checks: pnpm test (427 tests pass, including 21 commitment driver tests); pnpm build passes; git diff --check.
-Known residual risk: M21-004 depends on M21-001..003. Production demand not yet wired to process scheduler.
-Rollback: Revert M21-001 commit. No migration or database changes.
 Owner decision still needed: None.
 ```
 
@@ -955,15 +630,15 @@ consequences; protagonist association only changes attention.
 
 | ID | Status | Owner | Depends on | Deliverable and acceptance |
 |---|---|---|---|---|
-| `M21-007` | `DONE` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. Completed 2026-09-17. |
-| `M21-008` | `DONE` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. Completed 2026-09-17. |
-| `M21-009` | `DONE` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. Completed 2026-09-17. |
-| `M21-010` | `DONE` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. Completed 2026-09-17. |
-| `M21-011` | `DONE` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. Completed 2026-09-17. |
-| `M21-012` | `READY` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
-| `M21-001` | `DONE` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. Completed 2026-09-17. |
-| `M21-002` | `READY` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
-| `M21-003` | `READY` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
+| `M21-007` | `READY` | ENG | `OWN-001`, `M20-001` | Freeze versioned ResourceType, Account, Reservation, ProcessDefinition/Instance, ActivityRecord, WorldCommand, and WorldStep schemas from docs/16. Activity/process statuses and resource laws are machine execution semantics, not semantic action candidates; TS types are generated. |
+| `M21-008` | `BLOCKED` | ENG | `M21-007`, `M20-003` | Add resource/process persistence and a deterministic ledger with balanced transfers, non-negative stocks, interval capacity reservations, source closure, revision CAS, and property tests. |
+| `M21-009` | `BLOCKED` | ENG | `M21-008` | Implement the pure TypeScript discrete-event stepper, process queues, bounded seeded distributions, completion/failure/rework, and next-event calculation. Same state/commands/rules/seed is byte-stable. No model calls occur inside the stepper. |
+| `M21-010` | `BLOCKED` | ENG + OWNER | `M21-009` | Implement and calibrate one closed fixture: physiology + manifestation load + ecology-garden water/energy/pump + S-4 cultivation/observation. It traverses WorldClock -> pure WorldStep proposal -> StateManager commit -> legal Perception -> CognitiveGate; accepted Activity/Process work advances without continuous Policy calls. Offline and stepwise execution match. |
+| `M21-011` | `BLOCKED` | ENG + OWNER | `M21-009` | Add ecology-department staff/instrument/budget/procurement queues plus bounded Trimounts transport, supplier, weather, and service boundary nodes. Macro-economy remains outside scope. |
+| `M21-012` | `BLOCKED` | ENG + OWNER | `M20-026`, `M21-010` | Implement the Feishu private-text adapter and deliver the first source-grounded autonomous message. The adapter declares/version-controls its capabilities and has idempotent receipts, retry recovery, and explicit failure events. Deterministic evidence uses a frozen Policy fixture to prove: no inbound user message -> committed S-4 change -> legal Perception -> WakeDecision -> communicate proposal -> atomic speech/outbox -> adapter receipt, with `/mute` blocking delivery and retry never duplicating the message. Live evidence then runs an Owner-authorized closed S-4 scene with the real Open Policy and captures the first delivered message plus its full source chain. A silent real-Policy episode is valid but does not complete live-delivery evidence; do not tune contact pressure or manufacture events to force speech. |
+| `M21-001` | `BLOCKED` | ENG | `M20-002`, `M21-009` | Commitment/schedule driver converts accepted obligations into due production demand and emits conflict, overdue, fulfilled, broken, or released events with stable idempotency. |
+| `M21-002` | `BLOCKED` | ENG | `M20-010`, `M21-009` | NPC driver supplies role capacity and advances accepted routine work without continuous LLM calls; acceptance, refusal, negotiation, and risk decisions use limited-knowledge focus Policy. |
+| `M21-003` | `BLOCKED` | ENG | `M20-010`, `M21-009` | Environment driver advances configured stock/flow and exogenous processes such as weather, equipment condition, location access, and bounded failures without manufacturing drama. |
 | `M21-004` | `BLOCKED` | ENG | `M21-001..003`, `M21-009` | Offline aggregation advances to meaningful event boundaries rather than simulating each minute. Same state/clock/seed produces replayable event proposals and matches stepwise execution. |
 | `M21-005` | `BLOCKED` | ENG | `M20-013`, `M21-004` | Association sampler biases attention toward one concrete object but has no authority to assert that an external event occurred. |
 | `M21-006` | `BLOCKED` | ENG | `M21-001..005`, `M21-010..011` | Simulation fixture proves: coupled resource/process pressure + NPC request + prior commitment -> open action -> cost/partial outcome -> later memory/contact effect, with all facts, conservation, commands, and sources replayable. |

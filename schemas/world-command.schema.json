@@ -1,6 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gf.local/schemas/world-command.schema.json",
-  "title": "World command v1",
-  "$ref": "world-runtime.schema.json#/$defs/WorldCommandV1"
-}

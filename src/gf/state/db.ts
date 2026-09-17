@@ -1,23 +1,20 @@
 /**
- * SQLite connection management.
+ * SQLite connection management over the built-in `node:sqlite` driver.
  *
- * Uses better-sqlite3 for FTS5 support. Every connection runs with
- * `PRAGMA foreign_keys = ON` (per migrations/README.md) and WAL mode;
- * the single-writer StateManager relies on `BEGIN IMMEDIATE` to serialize
- * writers.
+ * Every connection runs with `PRAGMA foreign_keys = ON` (per
+ * migrations/README.md) and WAL mode; the single-writer StateManager relies on
+ * `BEGIN IMMEDIATE` to serialize writers.
  */
 
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import Database from "better-sqlite3";
-
-export type DatabaseSync = Database.Database;
+import { DatabaseSync } from "node:sqlite";
 
 export function connect(dbPath: string): DatabaseSync {
   if (dbPath !== ":memory:") {
     mkdirSync(dirname(dbPath), { recursive: true });
   }
-  const db = new Database(dbPath);
+  const db = new DatabaseSync(dbPath);
   db.exec("PRAGMA foreign_keys = ON");
   db.exec("PRAGMA busy_timeout = 30000");
   db.exec("PRAGMA journal_mode = WAL");

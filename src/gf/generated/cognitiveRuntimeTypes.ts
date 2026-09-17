@@ -243,32 +243,3 @@ export interface SelfExperienceProposalV2 {
   "base_state_revision": number;
   "as_of": Timestamp;
 }
-
-export interface ExecutionPrimitiveV1 {
-  "primitive": "observe" | "move" | "use_object" | "wait" | "communicate";
-  "target": string;
-  "detail": string;
-  "text"?: string;
-}
-
-export interface CapabilityGapV1 {
-  "gap_class": "uncompilable_semantics" | "unknown_target" | "unknown_primitive" | "provenance_mismatch" | "model_output_invalid";
-  "unsupported_semantics": string;
-  "intent_quote": string;
-}
-
-export interface ActionCompilationResultV1 {
-  "schema_version": "1.0";
-  "compilation_id": Id;
-  "action_proposal_id": Id;
-  "actor_id": Id;
-  "status": "compiled" | "capability_gap";
-  "primitives"?: ExecutionPrimitiveV1[];
-  "capability_gap"?: CapabilityGapV1;
-  "action_quote"?: string;
-  "target_quote"?: string;
-  "compiler_version": Id;
-  "source_closure_hash": Sha256Hash;
-  "base_state_revision": number;
-  "compiled_at": Timestamp;
-}

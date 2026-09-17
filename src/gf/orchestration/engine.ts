@@ -7,7 +7,7 @@
  * settlement runs on idle or rollover.
  */
 
-import type { DatabaseSync } from "../state/db.js";
+import type { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
 import { newId } from "../domain/ids.js";
 import type { InferenceClient } from "../inference/base.js";
@@ -30,12 +30,11 @@ import { OutboxWorker } from "../delivery/outbox.js";
 import { EventQueue } from "./queue.js";
 
 export interface EngineEvent {
-  kind: "reply" | "tick" | "settle" | "idle" | "error";
+  kind: "reply" | "tick" | "settle" | "idle";
   eventId?: string;
   operationId?: string;
   sceneId?: string;
   outboxIds?: string[];
-  error?: string;
 }
 
 export interface EngineConfig {
@@ -112,67 +111,62 @@ export class Engine {
     if (!messageRow) {
       return { kind: "idle", eventId: event.event_id };
     }
-    const sceneId = scene.scene_id as string;
-    const messageId = messageRow.message_id as string;
+    this.stores.scenes.appendMessage(scene.scene_id as string, messageRow.message_id as string);
 
-    try {
-      const tail = this.stores.scenes.sceneTail(sceneId);
-      const assembler = new FastReplyAssembler(
-        this.manifest,
-        join(dirname(this.manifest.path), "10-fast-reply.md"),
+    const tail = this.stores.scenes.sceneTail(scene.scene_id as string);
+    const assembler = new FastReplyAssembler(
+      this.manifest,
+      join(dirname(this.manifest.path), "10-fast-reply.md"),
+      {
+      worldState: this.stores.state.stateDocuments().world_state,
+      persona: this.stores.state.stateDocuments().persona,
+      recentEvents: this.stores.events.recentEvents(5),
+      },
+    );
+    const context = assembler.assemble(
+      tail,
+      [
         {
-          worldState: this.stores.state.stateDocuments().world_state,
-          persona: this.stores.state.stateDocuments().persona,
-          recentEvents: this.stores.events.recentEvents(5),
-        },
-      );
-      const context = assembler.assemble(tail, [
-        {
-          message_id: messageId,
+          message_id: messageRow.message_id,
           content: JSON.parse(messageRow.content_json as string),
         },
-      ]);
-      const output = await this.inference.fastReply(context);
-      const capability = this.stores.state.latestCapabilitySnapshot();
-      const speech: SurfaceMessage = {
-        schema_version: "1.0",
-        speech_id: newId("sp"),
-        operation_id: newId("op"),
-        channel: "private_im",
-        recipient_principal_id: event.provenance.principal_id,
-        privacy_scope: "private_im",
-        capability_revision: capability.revision,
-        authorization_decision_id: newId("authz"),
-        source_refs: [{ source_type: "message", source_id: messageId }],
-        bubbles: output.bubbles,
-      };
-      const result = this.stateManager.submitReply(speech, {
-        triggerEvent: event,
-        scene: { scene_id: sceneId },
-        inputSources: context.inputSources,
-      });
-      if (result.committed) {
-        this.stores.scenes.appendMessage(sceneId, messageId);
-        this.metrics.incr("replies_committed");
-        this.outbox.dispatchPending();
-      }
-      return {
-        kind: "reply",
-        eventId: event.event_id,
-        operationId: result.operationId,
-        sceneId,
-        outboxIds: result.outboxIds,
-      };
-    } catch (err) {
-      this.metrics.incr("user_message_errors");
-      const message = err instanceof Error ? err.message : String(err);
-      return {
-        kind: "error",
-        eventId: event.event_id,
-        sceneId,
-        error: message,
-      };
+      ],
+    );
+    const output = await this.inference.fastReply(context);
+    const capability = this.stores.state.latestCapabilitySnapshot();
+    const speech: SurfaceMessage = {
+      schema_version: "1.0",
+      speech_id: newId("sp"),
+      operation_id: newId("op"),
+      channel: "private_im",
+      recipient_principal_id: event.provenance.principal_id,
+      privacy_scope: "private_im",
+      capability_revision: capability.revision,
+      authorization_decision_id: newId("authz"),
+      source_refs: [
+        {
+          source_type: "message",
+          source_id: messageRow.message_id as string,
+        },
+      ],
+      bubbles: output.bubbles,
+    };
+    const result = this.stateManager.submitReply(speech, {
+      triggerEvent: event,
+      scene: { scene_id: scene.scene_id as string },
+      inputSources: context.inputSources,
+    });
+    if (result.committed) {
+      this.metrics.incr("replies_committed");
+      this.outbox.dispatchPending();
     }
+    return {
+      kind: "reply",
+      eventId: event.event_id,
+      operationId: result.operationId,
+      sceneId: scene.scene_id as string,
+      outboxIds: result.outboxIds,
+    };
   }
 
   private async handleWorld(event: WorldEvent): Promise<EngineEvent> {

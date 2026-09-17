@@ -1,6 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gf.local/schemas/resource-account.schema.json",
-  "title": "Resource account v1",
-  "$ref": "world-runtime.schema.json#/$defs/ResourceAccountV1"
-}

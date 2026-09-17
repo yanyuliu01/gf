@@ -30,10 +30,8 @@ test("schema generation check fails closed when a generated type drifts", () => 
       "src/gf/generated/lifeRuntimeTypes.ts",
       "schemas/cognitive-runtime.schema.json",
       "schemas/agent-pipeline.schema.json",
-      "schemas/world-runtime.schema.json",
       "src/gf/generated/cognitiveRuntimeTypes.ts",
       "src/gf/generated/agentPipelineTypes.ts",
-      "src/gf/generated/worldRuntimeTypes.ts",
     ]) {
       copy(relativePath, targetRoot);
     }

@@ -158,32 +158,6 @@ test("outbox crash recovery does not duplicate delivery", async () => {
   }
 });
 
-test("outbox rows stuck in 'sending' are recovered and retried", async () => {
-  const rt = buildEngine({});
-  try {
-    const gateway = new Gateway({ debounceSeconds: 0 });
-    const event = gateway.handleLine("测试消息").events[0];
-    rt.stateManager.ingestEvent(event);
-    await rt.engine.processOnce();
-    assert.equal(rt.sent.length, 1);
-
-    rt.db.prepare("UPDATE outbox SET status = 'sending', sent_at = NULL").run();
-    rt.db.prepare("DELETE FROM deliveries").run();
-    rt.sent.length = 0;
-
-    rt.outbox.dispatchPending();
-    assert.equal(rt.metrics.snapshot()["outbox_stuck_recovered"], 1, "should recover stuck row");
-    assert.equal(rt.sent.length, 1, "should retry delivery");
-
-    const outboxRows = rt.db
-      .prepare("SELECT * FROM outbox WHERE status = 'sent'")
-      .all();
-    assert.equal(outboxRows.length, 1, "should be marked sent after retry");
-  } finally {
-    rt.cleanup();
-  }
-});
-
 test("idle scene settles and closes", async () => {
   const rt = buildEngine({ idleSettleSeconds: 0, rolloverMessages: 30 });
   try {
@@ -219,38 +193,6 @@ test("injected stub reply bubbles are committed verbatim", async () => {
     const outcome = await rt.engine.processOnce();
     assert.equal(outcome.kind, "reply");
     assert.deepEqual(rt.sent, ["第一段", "第二段"]);
-  } finally {
-    rt.cleanup();
-  }
-});
-
-test("validation failure returns error instead of crashing REPL", async () => {
-  const inference: InferenceClient = {
-    modelId: "failing-test-v1",
-    async fastReply() {
-      throw new Error("Simulated validation failure");
-    },
-    async tick(context) {
-      return new StubClient().tick(context);
-    },
-    async sceneSettle(context) {
-      return new StubClient().sceneSettle(context);
-    },
-  };
-  const rt = buildEngine({ inference });
-  try {
-    const event = userEvent("触发验证失败");
-    rt.stateManager.ingestEvent(event);
-    const outcome = await rt.engine.processOnce();
-    assert.equal(outcome.kind, "error", "should return error kind instead of crashing");
-    assert.ok(outcome.error?.includes("Simulated validation failure"));
-    assert.equal(rt.metrics.snapshot()["user_message_errors"], 1);
-
-    const pendingCount = rt.events.pendingEventIds().length;
-    assert.equal(pendingCount, 1, "event should remain pending for retry");
-
-    const sceneMessages = rt.scenes.messagesInScene(outcome.sceneId!);
-    assert.equal(sceneMessages.length, 0, "message should not be added to scene on failure");
   } finally {
     rt.cleanup();
   }

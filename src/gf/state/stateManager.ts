@@ -2,7 +2,7 @@ import type {
   LifeStateV1,
   LifeCommandV1,
 } from "../generated/lifeRuntimeTypes.js";
-import type { WorkingSelfV1, WorldOutcomeProposalV1 } from "../generated/agentPipelineTypes.js";
+import type { WorkingSelfV1 } from "../generated/agentPipelineTypes.js";
 import type { OpenPolicyResultV1 } from "../cognition/policy/openGenerativePolicy.js";
 import {
   seedLife,
@@ -29,7 +29,7 @@ import {
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import type { DatabaseSync } from "./db.js";
+import type { DatabaseSync } from "node:sqlite";
 import { newId, parseIso, utcnowIso } from "../domain/ids.js";
 import type {
   BeliefProposalV1,
@@ -114,13 +114,6 @@ export interface CognitiveLeaseCommitResult {
   committed: boolean;
   replay: boolean;
   account: CognitiveEnergyAccountV1;
-}
-
-export interface WorldOutcomeCommitResult {
-  committed: boolean;
-  replay: boolean;
-  baseRevision: number;
-  outcomeId: string;
 }
 
 export interface WorldEvent {
@@ -2128,138 +2121,6 @@ export class StateManager {
     }
   }
 
-  /**
-   * Commit a world outcome proposal through the single authoritative writer.
-   *
-   * Implements M20-024: atomic commit with base revision CAS, source closure
-   * validation, idempotency via outcome_id, and replay support.
-   *
-   * Key invariants:
-   * - Cannot bypass hard adjudication (M20-022)
-   * - Source-constrained: all source_refs must be in legal closure
-   * - Base revision must match current state revision (CAS)
-   * - Duplicate outcome_id returns replay result
-   */
-  submitWorldOutcome(
-    proposal: WorldOutcomeProposalV1,
-    options: {
-      inputSources: readonly SourceRef[];
-      actionProposal?: { proposal_id: string };
-    },
-  ): WorldOutcomeCommitResult {
-    this.schemas.validate("world-outcome-proposal.schema.json", proposal);
-
-    let inputSources: SourceRef[];
-    try {
-      inputSources = normalizeSourceRefs(options.inputSources);
-    } catch (error) {
-      throw new CommitRejected(String(error));
-    }
-    if (inputSources.length === 0) {
-      throw new CommitRejected("world outcome requires input sources");
-    }
-
-    const db = this.connFactory();
-    try {
-      db.exec("BEGIN IMMEDIATE");
-
-      const existing = db
-        .prepare("SELECT outcome_id FROM world_outcome_audit WHERE outcome_id = ?")
-        .get(proposal.outcome_id) as { outcome_id: string } | undefined;
-      if (existing) {
-        db.exec("COMMIT");
-        return {
-          committed: false,
-          replay: true,
-          baseRevision: proposal.base_state_revision,
-          outcomeId: proposal.outcome_id,
-        };
-      }
-
-      const currentRevision = new StateStore(db).currentRevision();
-      if (proposal.base_state_revision !== currentRevision) {
-        throw new CommitRejected(
-          `stale base_state_revision ${proposal.base_state_revision} != current ${currentRevision}`,
-        );
-      }
-
-      const closure = closureFromInputs(db, inputSources);
-      closure.checkRefs(proposal.source_refs);
-
-      for (const effect of proposal.proposed_effects) {
-        closure.checkRefs(effect.source_refs);
-      }
-
-      if (options.actionProposal) {
-        const actionExists = db
-          .prepare("SELECT proposal_id FROM action_proposal_audit WHERE proposal_id = ?")
-          .get(options.actionProposal.proposal_id);
-        if (!actionExists) {
-          throw new CommitRejected(
-            `action proposal ${options.actionProposal.proposal_id} does not exist`,
-          );
-        }
-      }
-
-      db.prepare(
-        `INSERT INTO world_outcome_audit(
-          outcome_id, schema_version, action_proposal_id, actor_id,
-          status, summary, hard_constraint_classes_json, proposed_effects_json,
-          adjudicator_version, rule_version, source_closure_hash,
-          base_state_revision, payload_json, proposed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(
-        proposal.outcome_id,
-        proposal.schema_version,
-        proposal.action_proposal_id,
-        proposal.actor_id,
-        proposal.status,
-        proposal.summary,
-        JSON.stringify(proposal.hard_constraint_classes),
-        JSON.stringify(proposal.proposed_effects),
-        proposal.adjudicator_version,
-        proposal.rule_version,
-        proposal.source_closure_hash,
-        proposal.base_state_revision,
-        canonicalJson(proposal),
-        proposal.proposed_at,
-      );
-
-      const insertSource = db.prepare(
-        `INSERT INTO world_outcome_sources(outcome_id, source_type, source_id)
-         VALUES (?, ?, ?)`,
-      );
-      for (const ref of proposal.source_refs) {
-        insertSource.run(proposal.outcome_id, ref.source_type, ref.source_id);
-      }
-
-      this.insertDerivedInputClosure(db, {
-        artifactKind: "world_outcome",
-        artifactId: proposal.outcome_id,
-        closureHash: proposal.source_closure_hash,
-        baseRevision: currentRevision,
-        createdAt: proposal.proposed_at,
-        inputSources,
-      });
-
-      db.exec("COMMIT");
-      return {
-        committed: true,
-        replay: false,
-        baseRevision: currentRevision,
-        outcomeId: proposal.outcome_id,
-      };
-    } catch (error) {
-      db.exec("ROLLBACK");
-      if (error instanceof CommitRejected || error instanceof ValidationError) {
-        throw error;
-      }
-      throw new CommitRejected(String(error));
-    } finally {
-      db.close();
-    }
-  }
-
   /** Write a rebuildable structured/FTS memory index through the single writer. */
   submitMemoryIndexDocuments(
     documents: readonly MemoryIndexDocumentV1[],
@@ -2943,7 +2804,7 @@ export class StateManager {
   private insertDerivedInputClosure(
     db: DatabaseSync,
     options: {
-      artifactKind: "observation" | "belief_proposal" | "world_outcome";
+      artifactKind: "observation" | "belief_proposal";
       artifactId: string;
       closureHash: string;
       baseRevision: number;

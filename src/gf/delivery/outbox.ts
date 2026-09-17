@@ -7,7 +7,7 @@
  * dispatch either dedupes on the provider side or records the receipt.
  */
 
-import type { DatabaseSync } from "../state/db.js";
+import type { DatabaseSync } from "node:sqlite";
 import { newId, utcnowIso } from "../domain/ids.js";
 import { Metrics } from "../observability/metrics.js";
 
@@ -36,19 +36,6 @@ export class OutboxWorker {
     const delivered: string[] = [];
     const db = this.connFactory();
     try {
-      const staleMs = 60_000;
-      const staleThreshold = new Date(Date.now() - staleMs).toISOString();
-      const recovered = db
-        .prepare(
-          `UPDATE outbox SET status = 'retry'
-           WHERE status = 'sending'
-             AND (sent_at IS NULL OR sent_at < ?)`,
-        )
-        .run(staleThreshold);
-      if (typeof recovered === "object" && "changes" in recovered && (recovered.changes as number) > 0) {
-        this.metrics.incr("outbox_stuck_recovered", recovered.changes as number);
-      }
-
       const rows = db
         .prepare(
           `
